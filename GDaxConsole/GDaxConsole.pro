@@ -16,3 +16,16 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
         main.cpp
+
+#OTHER_FILES += ../GDaxLib/GDaxLib.pro
+
+#LIBS += -L../GDaxLib/debug/GDax.lib
+
+#QMAKE_LIBS += ../GDaxLib/debug/GDaxLib
+
+debug { LIBS += -L../GDaxLib/debug -lGDaxLib }
+
+release
+{
+    LIBS += -L../GDaxLib/release -lGDaxLib
+}

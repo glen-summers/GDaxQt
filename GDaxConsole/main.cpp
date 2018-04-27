@@ -1,10 +1,14 @@
 #include <QCoreApplication>
 #include <iostream>
+#include "../GDaxLib/gdaxlib.h"
 
 int main(int argc, char *argv[])
 {
-    QCoreApplication a(argc, argv);
     std::cout << "Qt" << std::endl;
+
+    QCoreApplication a(argc, argv);
+
+    GDaxLib g;
 
     // event loop
     // return a.exec();
