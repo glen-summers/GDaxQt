@@ -1,3 +1,6 @@
+!include("..\GDaxLib\GDaxLib.pri") {
+    warning("GDaxLib.pri not found")
+}
 
 TEMPLATE = app
 CONFIG += console c++11

@@ -1,10 +1,6 @@
-#include(C:\Users\Glen\source\repos\GDaxQt\GDaxLib\GDaxLib.pri)
-#!include(C:\Users\Glen\source\repos\GDaxQt\GDaxLib\GDaxLib.pri)
-#{
-#    error( "Lib not found" )
-#}
-
-#error($$(PWD))
+!include("..\GDaxLib\GDaxLib.pri") {
+    warning("GDaxLib.pri not found")
+}
 
 QT -= gui
 

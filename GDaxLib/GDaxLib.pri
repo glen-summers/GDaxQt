@@ -1,9 +1,10 @@
+
 debug
 {
-    LIBS += -L./debug -lGDaxLib
+    LIBS += -L../GDaxLib/debug -lGDaxLib
 }
 
 release
 {
-    LIBS += -L./release -lGDaxLib
+    LIBS += -L../GDaxLib/release -lGDaxLib
 }
