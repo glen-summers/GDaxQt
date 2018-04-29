@@ -21,7 +21,7 @@
 
 		<!-- simplify-->
 		<QmlDebug Condition="'$(Config)'=='Debug'"> "CONFIG+=qml_debug"</QmlDebug>
-		<QmlDebug Condition="'$(Config)'=='Release'"></QmlDebug>
+		<QmlDebug Condition="'$(Config)'=='Release'"/>
 
 		<BuildCmd>qmake.exe $(Root)\$(Project).pro -spec $(Spec) "CONFIG+=$(Config)"$(QmlDebug)</BuildCmd>
 		<BuildTarget>$(Parent)\build-$(Project)-$(QtKit)-$(Config)</BuildTarget>
@@ -29,8 +29,11 @@
 	
 
 	<Target Name="Clean">
-		<Exec Command='"$(Jom)" distclean' WorkingDirectory="$(BuildTarget)"/>
-		<!-- remove BuildTarget-->
+		<Exec Command='"$(Jom)" distclean' WorkingDirectory="$(BuildTarget)" Condition="Exists('$(BuildTarget)\Makefile')"/>
+		<ItemGroup>
+			<DirectoriesToRemove Include="$(BuildTarget)"/>
+		</ItemGroup>
+		<RemoveDir Directories="@(DirectoriesToRemove)"/>
 	</Target>
 
 	<Target Name="Compile">
