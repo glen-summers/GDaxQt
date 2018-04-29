@@ -1,0 +1,47 @@
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003" ToolsVersion="14.0">
+	
+	<!-- Boilerplate -->
+	<PropertyGroup>
+		<Root>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)\..'))</Root>
+		<Parent>$([System.IO.Path]::GetFullPath('$(Root)\..'))</Parent>
+	</PropertyGroup>
+
+	<!-- ProjectConfig -->
+	<PropertyGroup>
+		<Project>GDaxQt</Project>
+		<Config>Release</Config>
+	</PropertyGroup>
+
+	<!-- QTConfig -->
+	<PropertyGroup>
+		<Qt>C:\Qt</Qt>
+		<Jom>$(Qt)\Tools\QtCreator\bin\jom.exe</Jom>
+		<QtKit>Desktop_Qt_5_10_1_MSVC2017_64bit</QtKit>
+		<Spec>win32-msvc</Spec>
+
+		<!-- simplify-->
+		<BuildCmd Condition="'$(Config)'=='Debug'">qmake.exe $(Root)\$(Project).pro -spec $(Spec) "CONFIG+=$(Config)" "CONFIG+=qml_debug"</BuildCmd>
+		<BuildCmd Condition="'$(Config)'=='Release'">qmake.exe $(Root)\$(Project).pro -spec $(Spec) "CONFIG+=$(Config)"</BuildCmd>
+		<BuildTarget>$(Parent)\build-$(Project)-$(QtKit)-$(Config)</BuildTarget>
+	</PropertyGroup>
+	
+
+	<Target Name="Clean">
+		<Exec Command='"$(Jom)" distclean' WorkingDirectory="$(BuildTarget)"/>
+		<!-- remove BuildTarget-->
+	</Target>
+
+	<Target Name="Compile">
+		<ItemGroup>
+			<Properties Remove="@(Properties)"/>
+		</ItemGroup>
+	
+		<MakeDir Directories="$(BuildTarget)"/>
+		<exec command="$(BuildCmd)" WorkingDirectory="$(BuildTarget)"/>
+		<Exec Command='"$(Jom)" qmake_all' WorkingDirectory="$(BuildTarget)"/>
+		<Exec Command='"$(Jom)"' WorkingDirectory="$(BuildTarget)"/>
+	</Target>
+
+	<Target Name="Build" DependsOnTargets="Compile"/>
+
+</Project>

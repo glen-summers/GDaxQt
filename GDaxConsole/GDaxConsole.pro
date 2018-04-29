@@ -1,3 +1,11 @@
+#include(C:\Users\Glen\source\repos\GDaxQt\GDaxLib\GDaxLib.pri)
+#!include(C:\Users\Glen\source\repos\GDaxQt\GDaxLib\GDaxLib.pri)
+#{
+#    error( "Lib not found" )
+#}
+
+#error($$(PWD))
+
 QT -= gui
 
 CONFIG += c++11 console
@@ -8,12 +16,3 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
         main.cpp
 
-debug
-{
-    LIBS += -L../GDaxLib/debug -lGDaxLib
-}
-
-release
-{
-    LIBS += -L../GDaxLib/release -lGDaxLib
-}

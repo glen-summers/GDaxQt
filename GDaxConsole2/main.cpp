@@ -1,7 +1,10 @@
 #include <iostream>
 
+//#include "../GDaxLib/gdaxlib.h"
+
 int main()
 {
-    std::cout << "Hello World!" << std::endl;
+    std::cout << "GDax" << std::endl;
+    //GDaxLib g;
     return 0;
 }

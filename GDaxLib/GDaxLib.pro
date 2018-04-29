@@ -11,3 +11,6 @@ SOURCES += \
 
 HEADERS += \
         gdaxlib.h
+
+DISTFILES += \
+    GDaxLib.pri
