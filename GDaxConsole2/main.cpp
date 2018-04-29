@@ -5,6 +5,6 @@
 int main()
 {
     std::cout << "GDax" << std::endl;
-    GDaxLib g;
+    GDaxLib g("");
     return 0;
 }

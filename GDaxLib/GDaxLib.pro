@@ -1,4 +1,5 @@
-QT       -= gui
+QT -= gui
+QT += websockets
 
 TARGET = GDaxLib
 TEMPLATE = lib
