@@ -2,24 +2,22 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include "ui_mainwindow.h"
 #include "../GDaxLib/gdaxlib.h"
-
-namespace Ui
-{
-class MainWindow;
-}
+#include <memory>
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
+    std::unique_ptr<Ui::MainWindow> ui;
     GDaxLib g;
-public:
-    explicit MainWindow(QWidget *parent = 0);
-    ~MainWindow();
 
-private:
-    Ui::MainWindow *ui;
+public:
+    explicit MainWindow(QWidget *parent = nullptr);
+
+protected:
+    void paintEvent(QPaintEvent*) override;
 };
 
-#endif // MAINWINDOW_H
+#endif
