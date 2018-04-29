@@ -20,8 +20,10 @@
 		<Spec>win32-msvc</Spec>
 
 		<!-- simplify-->
-		<BuildCmd Condition="'$(Config)'=='Debug'">qmake.exe $(Root)\$(Project).pro -spec $(Spec) "CONFIG+=$(Config)" "CONFIG+=qml_debug"</BuildCmd>
-		<BuildCmd Condition="'$(Config)'=='Release'">qmake.exe $(Root)\$(Project).pro -spec $(Spec) "CONFIG+=$(Config)"</BuildCmd>
+		<QmlDebug Condition="'$(Config)'=='Debug'"> "CONFIG+=qml_debug"</QmlDebug>
+		<QmlDebug Condition="'$(Config)'=='Release'"></QmlDebug>
+
+		<BuildCmd>qmake.exe $(Root)\$(Project).pro -spec $(Spec) "CONFIG+=$(Config)"$(QmlDebug)</BuildCmd>
 		<BuildTarget>$(Parent)\build-$(Project)-$(QtKit)-$(Config)</BuildTarget>
 	</PropertyGroup>
 	
