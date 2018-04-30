@@ -1,28 +1,28 @@
 #ifndef GDAXLIB_H
 #define GDAXLIB_H
 
+// discover/relative path/ or use unofficial QDecimal
+#define DEC_NAMESPACE DecNs
+#include <C:\Users\Glen\source\github\decimal_for_cpp\include\decimal.h>
+
 #include <QObject>
-//QT_FORWARD_DECLARE_CLASS(QWebSocket)
-#include <QWebSocket> // fwd
+#include <QWebSocket>
+QT_FORWARD_DECLARE_CLASS(QJsonObject)
+
+#include <map>
 
 class GDaxLib : public QObject
 {
-    static constexpr const char * url = "wss://ws-feed.gdax.com";
-
-    static constexpr const char * subscribeMessage = R"(
-    {
-    "type": "subscribe",
-    "product_ids": [
-        "BTC-EUR"
-    ],
-    "channels": [
-        "level2"
-    ]
-})";
+    typedef DecNs::decimal<10> Decimal;
 
     Q_OBJECT
 
     QWebSocket webSocket;
+
+    std::map<Decimal, Decimal> bids, asks;
+    Decimal priceMin;
+    Decimal priceMax;
+    Decimal amountMax;
 
 public:
     explicit GDaxLib(QObject * parent = nullptr);
@@ -37,6 +37,9 @@ private Q_SLOTS:
 
     void onError(QAbstractSocket::SocketError error);
     void onSslErrors(const QList<QSslError> &errors);
+
+    void ProcessSnapshot(const QJsonObject & object);
+    void ProcessUpdate(const QJsonObject & object);
 };
 
 #endif // GDAXLIB_H

@@ -4,6 +4,7 @@ SUBDIRS += \
     GDaxLib \
     GDaxConsole \
     GDaxConsole2 \
-    GDaxGui
+    GDaxGui \
+    GDaxTests \
 
 CONFIG += ordered

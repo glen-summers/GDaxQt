@@ -9,6 +9,7 @@
 	<!-- ProjectConfig -->
 	<PropertyGroup>
 		<Project>GDaxQt</Project>
+		<TestProject>GDaxTests</TestProject>
 		<Config>Release</Config>
 	</PropertyGroup>
 
@@ -25,6 +26,7 @@
 
 		<BuildCmd>qmake.exe $(Root)\$(Project).pro -spec $(Spec) "CONFIG+=$(Config)"$(QmlDebug)</BuildCmd>
 		<BuildTarget>$(Parent)\build-$(Project)-$(QtKit)-$(Config)</BuildTarget>
+		<TestExecutable>$(BuildTarget)\$(TestProject)\$(Config)\$(TestProject).exe</TestExecutable>
 	</PropertyGroup>
 	
 
@@ -46,7 +48,11 @@
 		<Exec Command='"$(Jom)" qmake_all' WorkingDirectory="$(BuildTarget)"/>
 		<Exec Command='"$(Jom)"' WorkingDirectory="$(BuildTarget)"/>
 	</Target>
+	
+	<Target Name="Test">
+		<Exec command="$(TestExecutable)"/>
+	</Target>
 
-	<Target Name="Build" DependsOnTargets="Compile"/>
+	<Target Name="Build" DependsOnTargets="Compile;Test"/>
 
 </Project>
