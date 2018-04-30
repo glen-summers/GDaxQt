@@ -8,10 +8,12 @@ CONFIG += staticlib
 DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
-        gdaxlib.cpp
+    gdaxlib.cpp \
+    utils.cpp
 
 HEADERS += \
-        gdaxlib.h
+    gdaxlib.h \
+    utils.h
 
 DISTFILES += \
     GDaxLib.pri
