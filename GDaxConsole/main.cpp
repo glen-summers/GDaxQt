@@ -8,10 +8,7 @@ int main(int argc, char *argv[])
 
     QCoreApplication a(argc, argv);
 
-    GDaxLib g("");
+    GDaxLib g;
 
-    // event loop
-    // return a.exec();
-
-    return 0;
+    return a.exec();
 }

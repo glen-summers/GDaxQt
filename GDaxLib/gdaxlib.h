@@ -7,16 +7,35 @@
 
 class GDaxLib : public QObject
 {
+    static constexpr const char * url = "wss://ws-feed.gdax.com";
+
+    static constexpr const char * subscribeMessage = R"(
+    {
+    "type": "subscribe",
+    "product_ids": [
+        "BTC-EUR"
+    ],
+    "channels": [
+        "level2"
+    ]
+})";
+
     Q_OBJECT
 
     QWebSocket webSocket;
 
 public:
-    explicit GDaxLib(const QString & url, QObject * parent = nullptr);
+    explicit GDaxLib(QObject * parent = nullptr);
 
 private Q_SLOTS:
     void onConnected();
+
     void onTextMessageReceived(QString message);
+    void onTextFrameReceived(QString message, bool isLastFrame);
+    void onBinaryMessageReceived(const QByteArray &message);
+    void onBinaryFrameReceived(const QByteArray &message, bool isLastFrame);
+
+    void onError(QAbstractSocket::SocketError error);
     void onSslErrors(const QList<QSslError> &errors);
 };
 
