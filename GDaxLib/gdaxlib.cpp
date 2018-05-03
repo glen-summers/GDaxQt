@@ -3,6 +3,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QThread>
 
 namespace
 {
@@ -28,9 +29,6 @@ GDaxLib::GDaxLib(QObject * parent) // parent?
     typedef void (QWebSocket:: *sslErrorsSignal)(const QList<QSslError> &);
 
     connect(&webSocket, &QWebSocket::textMessageReceived, this, &GDaxLib::onTextMessageReceived);
-    connect(&webSocket, &QWebSocket::textFrameReceived, this, &GDaxLib::onTextFrameReceived);
-    connect(&webSocket, &QWebSocket::binaryFrameReceived, this, &GDaxLib::onBinaryFrameReceived);
-    connect(&webSocket, &QWebSocket::binaryMessageReceived, this, &GDaxLib::onBinaryMessageReceived);
     connect(&webSocket, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error), this, &GDaxLib::onError);
     connect(&webSocket, static_cast<sslErrorsSignal>(&QWebSocket::sslErrors), this, &GDaxLib::onSslErrors);
 
@@ -49,15 +47,15 @@ void GDaxLib::onConnected()
 
 void GDaxLib::onTextMessageReceived(QString message)
 {
-//    qInfo((std::string("textMsg:") + message.toUtf8().constData()).c_str());
+//    qInfo((std::string("textMsg:") +
+//           std::to_string((long long)QThread::currentThreadId()) +
+//           message.toUtf8().constData()).c_str());
 
     try
     {
         QJsonDocument document = QJsonDocument::fromJson(message.toUtf8());
         QJsonObject object = document.object();
         QString type = object["type"].toString();
-
-        qInfo(type.toUtf8());
 
         if (type == "snapshot")
         {
@@ -72,21 +70,6 @@ void GDaxLib::onTextMessageReceived(QString message)
     {
         qWarning(e.what());
     }
-}
-
-void GDaxLib::onTextFrameReceived(QString message, bool isLastFrame)
-{
-    //qInfo((std::string("textFrame:") + message.toUtf8().constData()).c_str());
-}
-
-void GDaxLib::onBinaryMessageReceived(const QByteArray &message)
-{
-    qInfo("binMsg");
-}
-
-void GDaxLib::onBinaryFrameReceived(const QByteArray &message, bool isLastFrame)
-{
-    //qInfo("binFrame");
 }
 
 void GDaxLib::onError(QAbstractSocket::SocketError error)
@@ -151,6 +134,8 @@ void GDaxLib::ProcessSnapshot(const QJsonObject & object)
     priceMin = bidIt->first;
     priceMax = askIt->first;
     amountMax = tot;
+
+    emit update();
 }
 
 void GDaxLib::ProcessUpdate(const QJsonObject & object)
@@ -202,7 +187,7 @@ void GDaxLib::ProcessUpdate(const QJsonObject & object)
         }
     }
     // adjust scales here?
-//	Invalidate(false);
 
+    emit update();
 }
 

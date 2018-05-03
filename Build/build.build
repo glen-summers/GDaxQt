@@ -10,6 +10,7 @@
 	<PropertyGroup>
 		<Project>GDaxQt</Project>
 		<TestProject>GDaxTests</TestProject>
+		<GuiProject>GDaxGui</GuiProject>
 		<Config>Release</Config>
 	</PropertyGroup>
 
@@ -51,6 +52,10 @@
 	
 	<Target Name="Test">
 		<Exec command="$(TestExecutable)"/>
+	</Target>
+  
+	<Target Name="Gui">
+		<Exec command="$(BuildTarget)\$(GuiProject)\$(Config)\$(GuiProject).exe"/>
 	</Target>
 
 	<Target Name="Build" DependsOnTargets="Compile;Test"/>

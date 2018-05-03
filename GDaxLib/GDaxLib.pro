@@ -1,3 +1,7 @@
+!include("..\GDaxLib\GDaxLib.pri") {
+    warning("GDaxLib.pri not found")
+}
+
 QT -= gui
 QT += websockets
 
@@ -9,11 +13,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
     gdaxlib.cpp \
-    utils.cpp
+    utils.cpp \
 
 HEADERS += \
     gdaxlib.h \
-    utils.h
+    utils.h \
 
 DISTFILES += \
-    GDaxLib.pri
+    GDaxLib.pri \
+

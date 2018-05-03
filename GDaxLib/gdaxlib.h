@@ -3,7 +3,7 @@
 
 // discover/relative path/ or use unofficial QDecimal
 #define DEC_NAMESPACE DecNs
-#include <C:\Users\Glen\source\github\decimal_for_cpp\include\decimal.h>
+#include "decimal.h"
 
 #include <QObject>
 #include <QWebSocket>
@@ -24,16 +24,41 @@ class GDaxLib : public QObject
     Decimal priceMax;
     Decimal amountMax;
 
+signals:
+    void update();
+
 public:
     explicit GDaxLib(QObject * parent = nullptr);
 
-private Q_SLOTS:
+    const std::map<Decimal, Decimal> & Bids() const
+    {
+        return bids;
+    }
+
+    const std::map<Decimal, Decimal> & Asks() const
+    {
+        return asks;
+    }
+
+    const Decimal & PriceMin() const
+    {
+        return priceMin;
+    }
+
+    const Decimal & PriceMax() const
+    {
+        return priceMax;
+    }
+
+    const Decimal & AmountMax() const
+    {
+        return amountMax;
+    }
+
+private slots:
     void onConnected();
 
     void onTextMessageReceived(QString message);
-    void onTextFrameReceived(QString message, bool isLastFrame);
-    void onBinaryMessageReceived(const QByteArray &message);
-    void onBinaryFrameReceived(const QByteArray &message, bool isLastFrame);
 
     void onError(QAbstractSocket::SocketError error);
     void onSslErrors(const QList<QSslError> &errors);
