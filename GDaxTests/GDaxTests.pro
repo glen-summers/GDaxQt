@@ -1,3 +1,7 @@
+!include("..\GDaxLib\GDaxLib.pri") {
+    warning("GDaxLib.pri not found")
+}
+
 QT       += testlib
 QT       -= gui
 

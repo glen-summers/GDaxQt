@@ -16,7 +16,8 @@ namespace
     "BTC-EUR"
 ],
 "channels": [
-    "level2"
+    "level2",
+    "heartbeat"
 ]
 })";
 }
@@ -47,10 +48,6 @@ void GDaxLib::onConnected()
 
 void GDaxLib::onTextMessageReceived(QString message)
 {
-//    qInfo((std::string("textMsg:") +
-//           std::to_string((long long)QThread::currentThreadId()) +
-//           message.toUtf8().constData()).c_str());
-
     try
     {
         QJsonDocument document = QJsonDocument::fromJson(message.toUtf8());
@@ -64,6 +61,17 @@ void GDaxLib::onTextMessageReceived(QString message)
         else if (type=="l2update")
         {
             ProcessUpdate(object);
+        }
+        else if(type == "heartbeat")
+        {
+            ProcessHeartbeat(object);
+        }
+        // match...
+        else
+        {
+            qInfo((std::string("textMsg : ") +
+                   std::to_string((long long)QThread::currentThreadId()) + " : " +
+                   message.toUtf8().constData()).c_str());
         }
     }
     catch (const std::exception & e)
@@ -140,19 +148,6 @@ void GDaxLib::ProcessSnapshot(const QJsonObject & object)
 
 void GDaxLib::ProcessUpdate(const QJsonObject & object)
 {
-    /*
-     * Subsequent updates will have the type l2update.
-     * The changes property of l2updates is an array with [side, price, size] tuples.
-     * Please note that size is the updated size at that price level, not a delta. A size of "0" indicates the price level can be removed.
-     *
-    *{
-    *"type":"l2update",
-    *"product_id":"BTC-EUR",
-    *"time":"2018-04-23T01:26:56.035Z",
-    *"changes":[["sell","7202.91000000","5.62802151"]]
-    *}
-    */
-
     for(QJsonValueRef changes : object["changes"].toArray())
     {
         QJsonArray array = changes.toArray();
@@ -191,3 +186,11 @@ void GDaxLib::ProcessUpdate(const QJsonObject & object)
     emit update();
 }
 
+void GDaxLib::ProcessHeartbeat(const QJsonObject & object)
+{
+    auto s = object["sequence"];
+    auto seq = static_cast<unsigned long long>(s.toVariant().toDouble());
+    auto tradeId = static_cast<unsigned long long>(object["last_trade_id"].toDouble());
+    QString time = object["time"].toString();
+    qInfo(QString("HB: %1 %2 %3").arg(seq).arg(tradeId).arg(time).toUtf8().constData());
+}

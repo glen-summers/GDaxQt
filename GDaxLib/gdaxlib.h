@@ -65,6 +65,7 @@ private slots:
 
     void ProcessSnapshot(const QJsonObject & object);
     void ProcessUpdate(const QJsonObject & object);
+    void ProcessHeartbeat(const QJsonObject & object);
 };
 
 #endif // GDAXLIB_H

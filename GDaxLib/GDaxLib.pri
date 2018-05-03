@@ -1,6 +1,8 @@
 QT += websockets
 
-INCLUDEPATH += "..\..\..\github\decimal_for_cpp\include"
+INCLUDEPATH += \
+    "..\..\..\github\decimal_for_cpp\include" \
+    "..\..\..\github\rapidjson\include" \
 
 debug
 {
