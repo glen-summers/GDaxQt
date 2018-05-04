@@ -1,6 +1,6 @@
 #include <iostream>
 
-#include "../GDaxLib/gdaxlib.h"
+#include "gdaxlib.h"
 
 int main()
 {

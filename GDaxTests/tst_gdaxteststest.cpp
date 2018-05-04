@@ -149,7 +149,7 @@ private Q_SLOTS:
     "time": "2017-09-02T17:05:49.250000Z",
     "product_id": "BTC-USD",
     "price": "4388.01000000",
-    "side": "buy", // Taker side
+    "side": "buy",
     "last_size": "0.03000000",
     "best_bid": "4388",
     "best_ask": "4388.01"

@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 
 #define DEC_NAMESPACE DecNs
-#include <C:\Users\Glen\source\github\decimal_for_cpp\include\decimal.h>
+#include "decimal.h"
 
 typedef DecNs::decimal<10> Decimal;
 

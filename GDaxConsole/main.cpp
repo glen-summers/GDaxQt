@@ -1,7 +1,9 @@
+
+#include "gdaxlib.h"
+#include "utils.h"
+
 #include <QCoreApplication>
 #include <iostream>
-#include "../GDaxLib/gdaxlib.h"
-#include "../GDaxLib/utils.h"
 
 int main(int argc, char *argv[])
 {
