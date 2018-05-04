@@ -1,8 +1,11 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+
+#include "gdaxlib.h"
+#include "restprovider.h"
+
 #include <QtGui>
-#include "../GDaxLib/gdaxlib.h"
 #include <memory>
 
 class MainWindow : public QWindow
@@ -15,6 +18,7 @@ class MainWindow : public QWindow
     Q_OBJECT
 
     GDaxLib g;
+    RestProvider prov;
     std::unique_ptr<QBackingStore> backingStore;
     std::unique_ptr<QTimer> timer;
 

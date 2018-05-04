@@ -78,9 +78,10 @@ void GDaxLib::onTextMessageReceived(QString message)
     }
     catch (const std::exception & e)
     {
-        qWarning((std::string("Error : ") +
+        qWarning((std::string("Error: ") +
                std::to_string((long long)QThread::currentThreadId()) + " : " +
                e.what()).c_str());
+        qWarning(message.toUtf8().constData());
     }
 }
 
@@ -202,12 +203,20 @@ void GDaxLib::ProcessHeartbeat(const QJsonObject & object)
     auto seq = static_cast<unsigned long long>(s.toVariant().toDouble());
     auto tradeId = static_cast<unsigned long long>(object["last_trade_id"].toDouble());
     QString time = object["time"].toString();
-    qInfo(QString("HB: %1 %2 %3").arg(seq).arg(tradeId).arg(time).toUtf8().constData());
+    //qInfo(QString("HB: %1 %2 %3").arg(seq).arg(tradeId).arg(time).toUtf8().constData());
 }
 
 void GDaxLib::ProcessTicker(const QJsonObject & object)
 {
     Tick tick(Tick::fromJson(object));
+    if (tick.side == Tick::None)
+    {
+        /* {"type":"ticker","sequence":3641322438,"product_id":"BTC-EUR","price":"8112.29000000",
+         * "open_24h":"8035.56000000","volume_24h":"2096.42425104","low_24h":"7858.70000000","high_24h":"8166.00000000",
+         * "volume_30d":"63169.83438105","best_bid":"8112.3","best_ask":"8112.31"}*/
+        return;
+    }
+
     ticks.push_back(tick);
     if (ticks.size()>100) // parm
     {

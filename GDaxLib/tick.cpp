@@ -11,11 +11,14 @@ Tick Tick::fromJson(const QJsonObject & object)
     QDateTime time = QDateTime::fromString(object["time"].toString(), Qt::ISODateWithMs);
 
     Decimal price(object["price"].toString().toUtf8().constData());
-    Tick::Side side = object["side"].toString() == "buy"
-            ? Buy
-            : object["side"].toString() == "sell"
-                ? Sell
-                : throw std::runtime_error("Unexpected side");
+    QString sideValue = object["side"].toString();
+    Tick::Side side = sideValue.isEmpty()
+            ? None
+            : sideValue == "buy"
+                ? Buy
+                : sideValue == "sell"
+                    ? Sell
+                    : throw std::runtime_error("Unexpected side");
 
     Decimal lastSize(object["last_size"].toString().toUtf8().constData());
     Decimal bestBid(object["best_bid"].toString().toUtf8().constData());

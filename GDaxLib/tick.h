@@ -11,7 +11,7 @@ struct Tick
 {
     static Tick fromJson(const QJsonObject &);
 
-    enum Side { Buy, Sell };
+    enum Side { None, Buy, Sell };
     typedef unsigned long long TradeId;
     typedef unsigned long long SequenceNumber;
 //    typedef std::chrono::system_clock Clock;
@@ -30,6 +30,7 @@ struct Tick
 //     "time": "2017-09-02T17:05:49.250000Z",
 //     "price": "4388.01000000",
 //     "side": "buy", // Taker side
+//      [open_24h, volume_24h, low_24h, high_24h, volume_30d#
 //     "last_size": "0.03000000",
 //     "best_bid": "4388",
 //     "best_ask": "4388.01"

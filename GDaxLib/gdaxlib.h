@@ -6,6 +6,7 @@
 
 #include <QObject>
 #include <QWebSocket>
+
 QT_FORWARD_DECLARE_CLASS(QJsonObject)
 
 #include <map>
@@ -19,7 +20,6 @@ class GDaxLib : public QObject
     typedef std::deque<Tick> TicksType;
     typedef std::unordered_map<std::string, void(GDaxLib::*)(const QJsonObject & object)> FunctionMap;
     static FunctionMap functionMap;
-
 
     QWebSocket webSocket;
 
@@ -67,12 +67,11 @@ public:
 
 private slots:
     void onConnected();
-
     void onTextMessageReceived(QString message);
-
     void onError(QAbstractSocket::SocketError error);
     void onSslErrors(const QList<QSslError> &errors);
 
+private:
     void ProcessError(const QJsonObject & object);
     void ProcessSnapshot(const QJsonObject & object);
     void ProcessUpdate(const QJsonObject & object);
