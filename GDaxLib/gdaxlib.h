@@ -1,7 +1,6 @@
 #ifndef GDAXLIB_H
 #define GDAXLIB_H
 
-// discover/relative path/ or use unofficial QDecimal
 #define DEC_NAMESPACE DecNs
 #include "decimal.h"
 
@@ -10,12 +9,15 @@
 QT_FORWARD_DECLARE_CLASS(QJsonObject)
 
 #include <map>
+#include <unordered_map>
 
 class GDaxLib : public QObject
 {
     typedef DecNs::decimal<10> Decimal;
-
+    typedef std::unordered_map<std::string, void(GDaxLib::*)(const QJsonObject & object)> FunctionMap;
     Q_OBJECT
+
+    static FunctionMap functionMap;
 
     QWebSocket webSocket;
 
@@ -63,9 +65,11 @@ private slots:
     void onError(QAbstractSocket::SocketError error);
     void onSslErrors(const QList<QSslError> &errors);
 
+    void ProcessError(const QJsonObject & object);
     void ProcessSnapshot(const QJsonObject & object);
     void ProcessUpdate(const QJsonObject & object);
     void ProcessHeartbeat(const QJsonObject & object);
+    void ProcessTicker(const QJsonObject & object);
 };
 
 #endif // GDAXLIB_H

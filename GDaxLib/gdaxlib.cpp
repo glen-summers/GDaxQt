@@ -17,10 +17,20 @@ namespace
 ],
 "channels": [
     "level2",
-    "heartbeat"
+    "heartbeat",
+    "ticker"
 ]
 })";
 }
+
+GDaxLib::FunctionMap GDaxLib::functionMap =
+{
+    { "snapshot", &GDaxLib::ProcessSnapshot },
+    { "l2update", &GDaxLib::ProcessUpdate },
+    { "heartbeat", &GDaxLib::ProcessHeartbeat },
+    { "ticker", &GDaxLib::ProcessTicker},
+    { "error", &GDaxLib::ProcessError }
+};
 
 GDaxLib::GDaxLib(QObject * parent) // parent?
     : QObject(parent)
@@ -54,29 +64,23 @@ void GDaxLib::onTextMessageReceived(QString message)
         QJsonObject object = document.object();
         QString type = object["type"].toString();
 
-        if (type == "snapshot")
+        auto it = functionMap.find(type.toUtf8().constData());
+        if (it!=functionMap.end())
         {
-            ProcessSnapshot(object);
+            std::invoke(it->second, *this, object);
         }
-        else if (type=="l2update")
-        {
-            ProcessUpdate(object);
-        }
-        else if(type == "heartbeat")
-        {
-            ProcessHeartbeat(object);
-        }
-        // match...
         else
         {
-            qInfo((std::string("textMsg : ") +
+            qWarning((std::string("Unprocessed message : ") +
                    std::to_string((long long)QThread::currentThreadId()) + " : " +
                    message.toUtf8().constData()).c_str());
         }
     }
     catch (const std::exception & e)
     {
-        qWarning(e.what());
+        qWarning((std::string("Error : ") +
+               std::to_string((long long)QThread::currentThreadId()) + " : " +
+               e.what()).c_str());
     }
 }
 
@@ -91,6 +95,12 @@ void GDaxLib::onSslErrors(const QList<QSslError> &errors)
     {
         qWarning(e.errorString().toUtf8());
     }
+}
+
+void GDaxLib::ProcessError(const QJsonObject &object)
+{
+    QString errorMessage = object["message"].toString();
+    throw std::runtime_error(errorMessage.toUtf8().constData());
 }
 
 void GDaxLib::ProcessSnapshot(const QJsonObject & object)
@@ -192,5 +202,18 @@ void GDaxLib::ProcessHeartbeat(const QJsonObject & object)
     auto seq = static_cast<unsigned long long>(s.toVariant().toDouble());
     auto tradeId = static_cast<unsigned long long>(object["last_trade_id"].toDouble());
     QString time = object["time"].toString();
-    qInfo(QString("HB: %1 %2 %3").arg(seq).arg(tradeId).arg(time).toUtf8().constData());
+    //qInfo(QString("HB: %1 %2 %3").arg(seq).arg(tradeId).arg(time).toUtf8().constData());
+}
+
+void GDaxLib::ProcessTicker(const QJsonObject & object)
+{
+    auto s = object["sequence"];
+    auto seq = static_cast<unsigned long long>(s.toVariant().toDouble());
+    auto tradeId = static_cast<unsigned long long>(object["last_trade_id"].toDouble());
+    QString time = object["time"].toString();
+    QString side = object["side"].toString();
+    QString price = object["price"].toString();
+    QString size = object["last_size"].toString();
+
+    qInfo(QString("Ticker: %1 %2 %3 %4 %5 %6").arg(seq).arg(tradeId).arg(time, side, price, size).toUtf8().constData());
 }

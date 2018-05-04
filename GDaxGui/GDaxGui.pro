@@ -17,3 +17,12 @@ SOURCES += \
 
 HEADERS += \
         mainwindow.h
+
+
+win32 {
+CONFIG(debug, debug|release) {
+PRE_TARGETDEPS += ../GDaxLib/debug/GDaxLib.lib
+} else {
+PRE_TARGETDEPS += ../GDaxLib/release/GDaxLib.lib
+}
+}
