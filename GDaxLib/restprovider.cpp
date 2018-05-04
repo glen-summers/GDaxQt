@@ -1,4 +1,4 @@
-#include "defs.h"
+
 #include "restprovider.h"
 
 #include <QNetworkReply>
@@ -12,7 +12,7 @@ RestProvider::RestProvider()
 {
     connect(&manager, SIGNAL(finished(QNetworkReply*)), SLOT(downloadFinished(QNetworkReply*)));
 
-    QUrl url("https://api-public.sandbox.gdax.com/products/BTC-EUR/candles?granularity=3600");
+    QUrl url("https://api.gdax.com/products/BTC-EUR/candles?granularity=3600");
     QNetworkRequest request(url);
     QNetworkReply * reply = manager.get(request);
 
@@ -20,18 +20,9 @@ RestProvider::RestProvider()
     connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), SLOT(error(QNetworkReply::NetworkError)));
 }
 
-struct Candle
-{
-    time_t startTime;
-    Decimal lowestPrice;
-    Decimal highestPrice;
-    Decimal openingPrice;
-    Decimal closingPrice;
-    Decimal volume;
-};
-
 void RestProvider::error(QNetworkReply::NetworkError error)
 {
+    // ContentNotFoundError 203
     qWarning(("RestProvider::error" + std::to_string(error)).c_str());
 }
 
@@ -47,10 +38,11 @@ void RestProvider::downloadFinished(QNetworkReply *reply)
 {
     if (reply->error())
     {
-        throw std::runtime_error("Request failed");
+        emit error();
+        return;
     }
 
-    std::deque<Candle> candles;
+    std::vector<Candle> candles;
     QJsonDocument document = QJsonDocument::fromJson(reply->readAll());
     for (const auto & a1: document.array())
     {
@@ -64,6 +56,7 @@ void RestProvider::downloadFinished(QNetworkReply *reply)
 
       candles.push_back({startTime,  lowestPrice, highestPrice, openingPrice, closingPrice, volume});
     }
-
     reply->deleteLater();
+
+    emit data(std::move(candles));
 }

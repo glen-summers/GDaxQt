@@ -30,6 +30,9 @@ public slots:
     void renderNow();
     void onUpdate();
 
+    void error();
+    void data(std::vector<Candle> c);
+
 protected:
     bool event(QEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;

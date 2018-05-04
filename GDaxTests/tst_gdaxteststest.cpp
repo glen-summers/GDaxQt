@@ -233,7 +233,9 @@ private Q_SLOTS:
 */
 
 /*
-candles https://api-public.sandbox.gdax.com/products/BTC-EUR/candles
+candles
+https://api-public.sandbox.gdax.com/products/BTC-EUR/candles
+https://api.gdax.com//products/BTC-EUR/candles
 
 start	Start time in ISO 8601
 end	End time in ISO 8601

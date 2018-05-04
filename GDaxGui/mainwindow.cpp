@@ -12,6 +12,10 @@ MainWindow::MainWindow(QWindow *parent)
 {
     //connect(&g, SIGNAL(update()), this, SLOT(onUpdate()), Qt::DirectConnection);
     connect(timer.get(), SIGNAL(timeout()), this, SLOT(onUpdate()));
+
+    connect(&prov, SIGNAL(error()), this, SLOT(error()));
+    connect(&prov, SIGNAL(data(std::vector<Candle>)), this, SLOT(data(std::vector<Candle>)));
+
     timer->start(1000);
 }
 
@@ -205,4 +209,14 @@ void MainWindow::render(QPainter & painter)
 void MainWindow::onUpdate()
 {
     requestUpdate();
+}
+
+void MainWindow::error()
+{
+    qWarning("rest error");
+}
+
+void MainWindow::data(std::vector<Candle> c)
+{
+    qWarning("rest data");
 }
