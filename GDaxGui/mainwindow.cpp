@@ -97,7 +97,7 @@ void MainWindow::render(QPainter & painter)
     float width = sz.width() / 2.f;
     float height = static_cast<float>(sz.height());
 
-    QPen edgePen(BidEdgeColour, 2);
+    QPen edgePen(QColor(BidEdgeColour), 2);
     painter.setPen(edgePen);
     for (auto bit = bids.rbegin(); bit!=bids.rend(); ++bit)
     {
@@ -130,9 +130,9 @@ void MainWindow::render(QPainter & painter)
     }
 
     size_t lines = static_cast<size_t>(floor(height / 2 / fontHeight));
-    size_t count = lines;
+    size_t count = lines - 1;
     float gap = 60;//calc, dpi aware, use font width av
-    y = height / 2;
+    y = height / 2 + fontHeight;
     // setFont
     for (auto it = bids.rbegin(); count != 0 && it != bids.rend(); ++it, --count)
     {
@@ -144,7 +144,7 @@ void MainWindow::render(QPainter & painter)
     amount = 0;
     first = true;
     x = y = 0;
-    edgePen = {AskEdgeColour, 2};
+    edgePen = QPen(QColor(AskEdgeColour), 2);
     painter.setPen(edgePen);
     for (auto a : asks)
     {
@@ -176,14 +176,29 @@ void MainWindow::render(QPainter & painter)
         }
     }
 
-    y = height / 2;
-    count = lines;
-
+    y = height / 2 - fontHeight;
+    count = lines - 1;
+    float pos = width;
     for (auto it = asks.begin(); count != 0 && it != asks.end(); ++it, --count)
     {
         y -= fontHeight;
-        painter.drawText(QRectF{ QPointF{width, y}, QPointF{width * 2, y + fontHeight} }, QString::number(it->first.getAsDouble(), 'f', 2));
-        painter.drawText(QRectF{ QPointF{width+gap, y}, QPointF{width * 2, y + fontHeight} }, QString::number(it->second.getAsDouble(), 'f', 8));
+        painter.drawText(QRectF{ QPointF{pos, y}, QPointF{pos * 2, y + fontHeight} }, QString::number(it->first.getAsDouble(), 'f', 2));
+        painter.drawText(QRectF{ QPointF{pos+gap, y}, QPointF{pos * 2, y + fontHeight} }, QString::number(it->second.getAsDouble(), 'f', 8));
+    }
+
+    y = 0;
+    count = static_cast<size_t>(floor(height / fontHeight));
+    pos = width*1.3;
+    gap = 70;
+    for (auto it = g.Ticks().rbegin(); count != 0 && it != g.Ticks().rend(); ++it, --count)
+    {
+        painter.setPen(Qt::white);
+        painter.drawText(QRectF{ QPointF{pos, y}, QPointF{pos * 2, y + fontHeight} }, QString::number(it->lastSize.getAsDouble(), 'f', 8));
+        painter.setPen(it->side==Tick::Buy ? BidEdgeColour : AskEdgeColour);
+        painter.drawText(QRectF{ QPointF{pos+gap, y}, QPointF{pos * 2, y + fontHeight} }, QString::number(it->price.getAsDouble(), 'f', 2));
+        painter.setPen(Qt::white);
+        painter.drawText(QRectF{ QPointF{pos+2*gap, y}, QPointF{pos * 2, y + fontHeight} }, it->time.toLocalTime().time().toString());
+        y += fontHeight;
     }
 }
 

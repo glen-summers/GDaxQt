@@ -202,18 +202,15 @@ void GDaxLib::ProcessHeartbeat(const QJsonObject & object)
     auto seq = static_cast<unsigned long long>(s.toVariant().toDouble());
     auto tradeId = static_cast<unsigned long long>(object["last_trade_id"].toDouble());
     QString time = object["time"].toString();
-    //qInfo(QString("HB: %1 %2 %3").arg(seq).arg(tradeId).arg(time).toUtf8().constData());
+    qInfo(QString("HB: %1 %2 %3").arg(seq).arg(tradeId).arg(time).toUtf8().constData());
 }
 
 void GDaxLib::ProcessTicker(const QJsonObject & object)
 {
-    auto s = object["sequence"];
-    auto seq = static_cast<unsigned long long>(s.toVariant().toDouble());
-    auto tradeId = static_cast<unsigned long long>(object["last_trade_id"].toDouble());
-    QString time = object["time"].toString();
-    QString side = object["side"].toString();
-    QString price = object["price"].toString();
-    QString size = object["last_size"].toString();
-
-    qInfo(QString("Ticker: %1 %2 %3 %4 %5 %6").arg(seq).arg(tradeId).arg(time, side, price, size).toUtf8().constData());
+    Tick tick(Tick::fromJson(object));
+    ticks.push_back(tick);
+    if (ticks.size()>100) // parm
+    {
+        ticks.pop_front();
+    }
 }

@@ -7,10 +7,10 @@
 
 class MainWindow : public QWindow
 {
-    static constexpr Qt::GlobalColor BidFillColour = Qt::GlobalColor::darkGreen;
-    static constexpr Qt::GlobalColor BidEdgeColour = Qt::GlobalColor::green;
-    static constexpr Qt::GlobalColor AskFillColour = Qt::GlobalColor::darkRed;
-    static constexpr Qt::GlobalColor AskEdgeColour = Qt::GlobalColor::red;
+    static constexpr QRgb BidFillColour = qRgb(0,100,0);
+    static constexpr QRgb BidEdgeColour = qRgb(0,255,0);
+    static constexpr QRgb AskFillColour = qRgb(139,0,0);
+    static constexpr QRgb AskEdgeColour = qRgb(255,0,0);
 
     Q_OBJECT
 

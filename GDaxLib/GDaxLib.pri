@@ -1,3 +1,4 @@
+CONFIG += c++17
 QT += websockets
 
 INCLUDEPATH += \

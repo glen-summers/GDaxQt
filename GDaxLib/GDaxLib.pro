@@ -14,10 +14,14 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     gdaxlib.cpp \
     utils.cpp \
+    tick.cpp
 
 HEADERS += \
     gdaxlib.h \
     utils.h \
+    tick.h \
+    defs.h \
+    tick.h
 
 DISTFILES += \
     GDaxLib.pri \

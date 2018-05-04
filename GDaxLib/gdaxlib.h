@@ -1,23 +1,25 @@
 #ifndef GDAXLIB_H
 #define GDAXLIB_H
 
-#define DEC_NAMESPACE DecNs
-#include "decimal.h"
+#include "defs.h"
+#include "tick.h"
 
 #include <QObject>
 #include <QWebSocket>
 QT_FORWARD_DECLARE_CLASS(QJsonObject)
 
 #include <map>
+#include <deque>
 #include <unordered_map>
 
 class GDaxLib : public QObject
 {
-    typedef DecNs::decimal<10> Decimal;
-    typedef std::unordered_map<std::string, void(GDaxLib::*)(const QJsonObject & object)> FunctionMap;
     Q_OBJECT
 
+    typedef std::deque<Tick> TicksType;
+    typedef std::unordered_map<std::string, void(GDaxLib::*)(const QJsonObject & object)> FunctionMap;
     static FunctionMap functionMap;
+
 
     QWebSocket webSocket;
 
@@ -25,6 +27,7 @@ class GDaxLib : public QObject
     Decimal priceMin;
     Decimal priceMax;
     Decimal amountMax;
+    TicksType ticks;
 
 signals:
     void update();
@@ -55,6 +58,11 @@ public:
     const Decimal & AmountMax() const
     {
         return amountMax;
+    }
+
+    const TicksType & Ticks() const
+    {
+        return ticks;
     }
 
 private slots:
