@@ -1,12 +1,21 @@
-#include <QString>
-#include <QtTest>
 
 #include "rapidjson/document.h"
 using namespace rapidjson;
 
+#include "utils.h"
+
+#include <QtTest>
+#include <QBitArray>
+
 #define AssertTrue(statement, message) QVERIFY2(statement, message)
 #define AssertFalse(statement, message) QVERIFY2(!(statement), message)
-#define AssertEquals(expected, actual) QCOMPARE(actual, expected)
+
+#define AssertEquals(expected, actual) \
+do {\
+    if (!QTest::qCompare(actual, expected, #actual, #expected, __FILE__, __LINE__))\
+        return;\
+} while (false)
+
 
 class GDaxTestsTest : public QObject
 {
@@ -208,6 +217,20 @@ private Q_SLOTS:
             AssertTrue(ar2[1].isDouble(), "isDouble");
             AssertTrue(ar3[1].isDouble(), "isDouble");
         }
+    }
+
+    void testDeltas()
+    {
+        AssertEquals("", diffText("", ""));
+        AssertEquals("", diffText("abc", ""));
+        AssertEquals("abc", diffText("abc", "abc"));
+        AssertEquals(R"(<font color="red">abc</font>)", diffText("", "abc"));
+        AssertEquals(R"(<font color="red">def</font>)", diffText("abc", "def"));
+        AssertEquals(R"(a<font color="red">x</font>c)", diffText("abc", "axc"));
+        AssertEquals(R"(<font color="red">x</font>bc)", diffText("abc", "xbc"));
+        AssertEquals(R"(ab<font color="red">x</font>)", diffText("abc", "abx"));
+        AssertEquals(R"(abc<font color="red">d</font>)", diffText("abc", "abcd"));
+        AssertEquals(R"(a<font color="red">B</font>c<font color="red">D</font>e)", diffText("abcde", "aBcDe"));
     }
 };
 
