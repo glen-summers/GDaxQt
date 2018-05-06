@@ -3,8 +3,6 @@
 #define DEC_NAMESPACE DecNs
 #include "decimal.h"
 
-typedef DecNs::decimal<10> Decimal;
-
 MainWindow::MainWindow(QWindow *parent)
     : QWindow(parent)
     , backingStore(std::make_unique<QBackingStore>(this))

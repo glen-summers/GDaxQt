@@ -58,9 +58,11 @@ void GDaxLib::onConnected()
 
 void GDaxLib::onTextMessageReceived(QString message)
 {
+    const auto & messageText = message.toUtf8();
+
     try
     {
-        QJsonDocument document = QJsonDocument::fromJson(message.toUtf8());
+        QJsonDocument document = QJsonDocument::fromJson(messageText);
         QJsonObject object = document.object();
         QString type = object["type"].toString();
 
@@ -71,17 +73,19 @@ void GDaxLib::onTextMessageReceived(QString message)
         }
         else
         {
+            // tmp, cld generate lots of log data
             qWarning((std::string("Unprocessed message : ") +
                    std::to_string((long long)QThread::currentThreadId()) + " : " +
-                   message.toUtf8().constData()).c_str());
+                   messageText.constData()).c_str());
         }
     }
     catch (const std::exception & e)
     {
+        // tmp, cld generate lots of log data
         qWarning((std::string("Error: ") +
                std::to_string((long long)QThread::currentThreadId()) + " : " +
                e.what()).c_str());
-        qWarning(message.toUtf8().constData());
+        qWarning(messageText.constData());
     }
 }
 

@@ -1,11 +1,10 @@
-
+#include "defs.h"
 #include "rapidjson/document.h"
 using namespace rapidjson;
 
 #include "utils.h"
 
 #include <QtTest>
-#include <QBitArray>
 
 #define AssertTrue(statement, message) QVERIFY2(statement, message)
 #define AssertFalse(statement, message) QVERIFY2(!(statement), message)
@@ -15,7 +14,6 @@ do {\
     if (!QTest::qCompare(actual, expected, #actual, #expected, __FILE__, __LINE__))\
         return;\
 } while (false)
-
 
 class GDaxTestsTest : public QObject
 {
@@ -231,6 +229,18 @@ private Q_SLOTS:
         AssertEquals(R"(ab<font color="red">x</font>)", diffText("abc", "abx"));
         AssertEquals(R"(abc<font color="red">d</font>)", diffText("abc", "abcd"));
         AssertEquals(R"(a<font color="red">B</font>c<font color="red">D</font>e)", diffText("abcde", "aBcDe"));
+    }
+
+    void testBaadPrice()
+    {
+        DecNs::decimal<8> dp8("99999999");
+        AssertEquals(99999999, dp8.getAsXDouble());
+
+        DecNs::decimal<8> dp9("999999999");
+        AssertEquals(999999999, dp9.getAsXDouble());
+
+        DecNs::decimal<8> dp10("9999999999");
+        AssertTrue(9999999999 != dp9.getAsXDouble(), "10 digits blows decimal");
     }
 };
 

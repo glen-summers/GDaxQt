@@ -4,6 +4,7 @@
 #define DEC_NAMESPACE DecNs
 #include <decimal.h>
 
-typedef DecNs::decimal<10> Decimal;
+// 64 bit impl == 18 digits
+typedef DecNs::decimal<8> Decimal;
 
 #endif // DEFS_H
