@@ -11,8 +11,6 @@
 
 #include <memory>
 
-class GraphicsWidget;
-
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -21,8 +19,6 @@ class MainWindow : public QMainWindow
     std::unique_ptr<QTimer> timer;
 
     GDaxLib g;
-    GraphicsWidget & graphicsWidget;
-    QTextEdit orderBook;
 
 public:
     explicit MainWindow(QWidget *parent = 0);

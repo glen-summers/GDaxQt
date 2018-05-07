@@ -1,8 +1,6 @@
 #ifndef GRAPHICSWIDGET_H
 #define GRAPHICSWIDGET_H
 
-#include "gdaxlib.h"
-
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
 #include <QPainter>
@@ -10,18 +8,24 @@
 
 #include <memory>
 
+class GDaxLib;
+
 class GraphicsWidget : public QOpenGLWidget
 {
     Q_OBJECT
 
-    const GDaxLib & g;
-
     QBrush background;
     QFont font;
     QPen pen;
+    const GDaxLib * g;
 
 public:
-    GraphicsWidget(const GDaxLib & g, QWidget *parent = 0);
+    GraphicsWidget(QWidget *parent = 0);
+
+    void setGDaxLib(const GDaxLib * value)
+    {
+        g = value;
+    }
 
     void update()
     {

@@ -1,13 +1,15 @@
 #include "graphicswidget.h"
 
+#include "gdaxlib.h"
+
 static constexpr QRgb BidFillColour = qRgb(0,100,0);
 static constexpr QRgb BidEdgeColour = qRgb(0,255,0);
 static constexpr QRgb AskFillColour = qRgb(139,0,0);
 static constexpr QRgb AskEdgeColour = qRgb(255,0,0);
 
-GraphicsWidget::GraphicsWidget(const GDaxLib & g, QWidget *parent)
+GraphicsWidget::GraphicsWidget(QWidget *parent)
     : QOpenGLWidget(parent)
-    , g(g)
+    , g()
 {
     //setFixedSize(200, 200);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -20,9 +22,14 @@ GraphicsWidget::GraphicsWidget(const GDaxLib & g, QWidget *parent)
 
 void GraphicsWidget::paint(QPainter & painter) const
 {
+    if (!g)
+    {
+        return;
+    }
+
     QRect rc  = painter.window();
-    const auto & bids = g.Bids();
-    const auto & asks = g.Asks();
+    const auto & bids = g->Bids();
+    const auto & asks = g->Asks();
 
     if (bids.empty() || asks.empty())
     {
@@ -35,8 +42,8 @@ void GraphicsWidget::paint(QPainter & painter) const
     // calc xy ranges
     // use %age of values around mid price, binary find?
 
-    double xrange = g.AmountMax().getAsDouble();
-    double yrange = (g.PriceMax()-g.PriceMin()).getAsDouble();
+    double xrange = g->AmountMax().getAsDouble();
+    double yrange = (g->PriceMax()-g->PriceMin()).getAsDouble();
     //double yOrg = ((priceMax + priceMin)/2).getAsDouble();
     double yOrg = ((bids.rbegin()->first + asks.begin()->first) / 2).getAsDouble();
 
@@ -78,18 +85,6 @@ void GraphicsWidget::paint(QPainter & painter) const
         }
     }
 
-    size_t lines = static_cast<size_t>(floor(height / 2 / fontHeight));
-    size_t count = lines - 1;
-    float gap = 60;//calc, dpi aware, use font width av
-    y = height / 2 + fontHeight;
-    // setFont
-    for (auto it = bids.rbegin(); count != 0 && it != bids.rend(); ++it, --count)
-    {
-        painter.drawText(QRectF{ QPointF{width, y}, QPointF{width * 2, y + fontHeight} }, QString::number(it->first.getAsDouble(), 'f', 2));
-        painter.drawText(QRectF{ QPointF{width + gap, y}, QPointF{width * 2, y + fontHeight} }, QString::number(it->second.getAsDouble(), 'f', 8));
-        y += fontHeight;
-    }
-
     amount = 0;
     first = true;
     x = y = 0;
@@ -125,21 +120,11 @@ void GraphicsWidget::paint(QPainter & painter) const
         }
     }
 
-    y = height / 2 - fontHeight;
-    count = lines - 1;
-    float pos = width;
-    for (auto it = asks.begin(); count != 0 && it != asks.end(); ++it, --count)
-    {
-        y -= fontHeight;
-        painter.drawText(QRectF{ QPointF{pos, y}, QPointF{pos * 2, y + fontHeight} }, QString::number(it->first.getAsDouble(), 'f', 2));
-        painter.drawText(QRectF{ QPointF{pos+gap, y}, QPointF{pos * 2, y + fontHeight} }, QString::number(it->second.getAsDouble(), 'f', 8));
-    }
-
     y = 0;
-    count = static_cast<size_t>(floor(height / fontHeight));
-    pos = width*1.3;
-    gap = 70;
-    for (auto it = g.Ticks().rbegin(); count != 0 && it != g.Ticks().rend(); ++it, --count)
+    int count = static_cast<size_t>(floor(height / fontHeight));
+    float pos = width;
+    float gap = 70;
+    for (auto it = g->Ticks().rbegin(); count != 0 && it != g->Ticks().rend(); ++it, --count)
     {
         painter.setPen(Qt::white);
         painter.drawText(QRectF{ QPointF{pos, y}, QPointF{pos * 2, y + fontHeight} }, QString::number(it->lastSize.getAsDouble(), 'f', 8));
