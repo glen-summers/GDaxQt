@@ -38,7 +38,7 @@ void MainWindow::generateOrderBook()
     // calc number of lines from height
     //const auto & bids = g.Bids();
     const auto & asks = g.Asks();
-    int lines = 10;
+    int lines = 30;
     int priceDecs = 2;
     int amountDecs = 4;
     Decimal tot;
@@ -53,11 +53,12 @@ void MainWindow::generateOrderBook()
     QString html;
     QTextStream stream(&html); // perf test?
     stream << R"(<style>
-td, th { padding: 2px; }
-td { color:darkred; }
-span { color:red; }
+td.price { color:darkred; }
+td.price span { color:red; }
+td.amount { color:grey; }
+td.amount span { color:white; }
 </style>
-<table>
+<table width="100%">
 )";
 
     // reverse!
@@ -72,8 +73,8 @@ span { color:red; }
         QString totAmount = QString::number(tot.getAsDouble(), 'f', amountDecs);
 
         stream << "<tr>"
-               << "<td>" << diffText(prevPrice, price) << "</td>"
-               << "<td>" << diffText(prevAmount, amount) << "</td>"
+               << "<td class=\"price\">" << diffText(prevPrice, price) << "</td>"
+               << "<td class=\"amount\">" << diffText(prevAmount, amount) << "</td>"
                << "<td>" << diffText(prevTotAmount, totAmount) << "</td>"
                << "<\tr>";
         prevPrice = price;
