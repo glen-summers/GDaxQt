@@ -7,6 +7,7 @@
 
 #include <QMainWindow>
 #include <QTimer>
+#include <QTextEdit>
 
 #include <memory>
 
@@ -21,6 +22,7 @@ class MainWindow : public QMainWindow
 
     GDaxLib g;
     GraphicsWidget & graphicsWidget;
+    QTextEdit orderBook;
 
 public:
     explicit MainWindow(QWidget *parent = 0);
@@ -32,6 +34,7 @@ private slots:
     void on_actionE_xit_triggered();
 
 private:
+    void generateOrderBook();
 };
 
 #endif // MAINWINDOW_H

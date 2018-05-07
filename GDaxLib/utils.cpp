@@ -32,9 +32,7 @@ QString diffText(const QString & s1, const QString & s2)
         return QString();
     }
 
-    QString const pattern = R"(<font color="%1">%2</font>)";
-    QString const matchColour = "darkred";
-    QString const mismatchColour = "red";
+    QString const pattern = R"(<span>%1</span>)";
 
     QBitArray bits(s2.length());
     for(auto it1 = s1.begin(), it2 = s2.begin(); it2!=s2.end(); ++it1, ++it2)
@@ -42,11 +40,6 @@ QString diffText(const QString & s1, const QString & s2)
         bool value = it1==s1.end() || *it1!=*it2;
         bits.setBit(it2-s2.begin(), value);
     }
-
-//    for (int i = 0; i< bits.size(); ++i)
-//    {
-//        qWarning() << bits[i];
-//    }
 
     QString result;
     bool comp = bits[0];
@@ -59,12 +52,12 @@ QString diffText(const QString & s1, const QString & s2)
         }
         else
         {
-            if (len!=0) // redunent
+            if (len!=0) // redundent?
             {
                 QStringRef sub = s2.midRef(i-len, len);
                 if (comp)
                 {
-                    result.append(pattern.arg(mismatchColour).arg(sub));
+                    result.append(pattern.arg(sub));
                 }
                 else
                 {
@@ -80,7 +73,7 @@ QString diffText(const QString & s1, const QString & s2)
         QStringRef sub = s2.midRef(s2.length()-len);
         if (comp)
         {
-            result.append(pattern.arg(mismatchColour).arg(sub));
+            result.append(pattern.arg(sub));
         }
         else
         {
