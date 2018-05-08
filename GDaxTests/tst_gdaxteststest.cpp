@@ -5,6 +5,7 @@ using namespace rapidjson;
 #include "utils.h"
 
 #include <QtTest>
+#include <QAbstractSocket>
 
 #define AssertTrue(statement, message) QVERIFY2(statement, message)
 #define AssertFalse(statement, message) QVERIFY2(!(statement), message)
@@ -241,6 +242,11 @@ private Q_SLOTS:
 
         DecNs::decimal<8> dp10("9999999999");
         AssertTrue(9999999999 != dp9.getAsXDouble(), "10 digits blows decimal");
+    }
+
+    void enumToSting()
+    {
+        AssertEquals("SocketTimeoutError", QMetaEnum::fromType<QAbstractSocket::SocketError>().valueToKey(QAbstractSocket::SocketError::SocketTimeoutError));
     }
 };
 

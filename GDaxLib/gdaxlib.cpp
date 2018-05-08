@@ -4,6 +4,7 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QThread>
+#include <QMetaEnum>
 
 namespace
 {
@@ -91,13 +92,14 @@ void GDaxLib::onTextMessageReceived(QString message)
 
 void GDaxLib::onError(QAbstractSocket::SocketError error)
 {
-    qWarning(std::to_string((int)error).c_str());
+    qWarning() << QMetaEnum::fromType<QAbstractSocket::SocketError>().valueToKey(error);
 }
 
 void GDaxLib::onSslErrors(const QList<QSslError> &errors)
 {
     for(auto & e : errors)
     {
+        //e.error();
         qWarning(e.errorString().toUtf8());
     }
 }
