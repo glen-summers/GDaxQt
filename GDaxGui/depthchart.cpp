@@ -40,10 +40,12 @@ void DepthChart::paint(QPainter & painter) const
     //double yOrg = ((priceMax + priceMin)/2).getAsDouble();
     double yOrg = ((bids.rbegin()->first + asks.begin()->first) / 2).getAsDouble();
 
+    // need to recalc maxAmount periodically and also use the values at top\bottom of the view box
+    float const fillFactor = 1.0f;
     Decimal amount;
     bool first = true;
     float x = 0, y = 0;
-    float width = sz.width() / 2.f;
+    float width = sz.width() * fillFactor;
     float height = static_cast<float>(sz.height());
 
     QPen edgePen(QColor(BidEdgeColour), 2);
