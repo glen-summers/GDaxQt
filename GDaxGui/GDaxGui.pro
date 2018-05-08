@@ -14,13 +14,13 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
-    graphicswidget.cpp \
-    candlechart.cpp
+    candlechart.cpp \
+    depthchart.cpp
 
 HEADERS += \
     mainwindow.h \
-    graphicswidget.h \
-    candlechart.h
+    candlechart.h \
+    depthchart.h
 
 FORMS += \
         mainwindow.ui

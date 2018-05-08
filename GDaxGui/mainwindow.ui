@@ -37,7 +37,7 @@
      </widget>
     </item>
     <item>
-     <widget class="GraphicsWidget" name="depthChart">
+     <widget class="DepthChart" name="depthChart">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
         <horstretch>0</horstretch>
@@ -173,14 +173,14 @@
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
-   <class>GraphicsWidget</class>
-   <extends>QOpenGLWidget</extends>
-   <header>graphicswidget.h</header>
-  </customwidget>
-  <customwidget>
    <class>CandleChart</class>
    <extends>QOpenGLWidget</extends>
    <header>candlechart.h</header>
+  </customwidget>
+  <customwidget>
+   <class>DepthChart</class>
+   <extends>QOpenGLWidget</extends>
+   <header location="global">depthchart.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

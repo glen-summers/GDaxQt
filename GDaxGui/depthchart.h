@@ -10,7 +10,7 @@
 
 class GDaxLib;
 
-class GraphicsWidget : public QOpenGLWidget
+class DepthChart : public QOpenGLWidget
 {
     Q_OBJECT
 
@@ -18,7 +18,7 @@ class GraphicsWidget : public QOpenGLWidget
     const GDaxLib * g;
 
 public:
-    GraphicsWidget(QWidget *parent = 0);
+    DepthChart(QWidget *parent = 0);
 
     void setGDaxLib(const GDaxLib * value)
     {

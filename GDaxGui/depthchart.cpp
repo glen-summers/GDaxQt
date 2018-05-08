@@ -1,4 +1,4 @@
-#include "graphicswidget.h"
+#include "depthchart.h"
 
 #include "gdaxlib.h"
 
@@ -7,7 +7,7 @@ static constexpr QRgb BidEdgeColour = qRgb(0,255,0);
 static constexpr QRgb AskFillColour = qRgb(139,0,0);
 static constexpr QRgb AskEdgeColour = qRgb(255,0,0);
 
-GraphicsWidget::GraphicsWidget(QWidget *parent)
+DepthChart::DepthChart(QWidget *parent)
     : QOpenGLWidget(parent)
     , background(Qt::black)
     , g()
@@ -15,7 +15,7 @@ GraphicsWidget::GraphicsWidget(QWidget *parent)
     setAutoFillBackground(false);
 }
 
-void GraphicsWidget::paint(QPainter & painter) const
+void DepthChart::paint(QPainter & painter) const
 {
     if (!g)
     {

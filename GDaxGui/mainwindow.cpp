@@ -1,6 +1,6 @@
 #include "mainwindow.h"
 
-#include "graphicswidget.h"
+#include "depthchart.h"
 #include "utils.h"
 
 #include <QTextEdit>
