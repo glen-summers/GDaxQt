@@ -223,9 +223,17 @@ void GDaxLib::ProcessTicker(const QJsonObject & object)
         return;
     }
 
-    ticks.push_back(tick);
+    if (!ticks.empty())
+    {
+        if (ticks.front().sequence != tick.sequence -1)
+        {
+            qWarning() << tr("Missed ticks") << ticks.front().sequence << tr(":") << tick.sequence;
+        }
+    }
+
+    ticks.push_front(tick);
     if (ticks.size()>100) // parm
     {
-        ticks.pop_front();
+        ticks.pop_back();
     }
 }
