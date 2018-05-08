@@ -31,6 +31,7 @@ private slots:
 
 private:
     void generateOrderBook();
+    void generateTradeList();
 };
 
 #endif // MAINWINDOW_H

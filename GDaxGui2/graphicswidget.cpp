@@ -14,10 +14,7 @@ GraphicsWidget::GraphicsWidget(QWidget *parent)
     //setFixedSize(200, 200);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setAutoFillBackground(false);
-
     background = QBrush(QColor(64, 32, 64));
-    font.setPixelSize(50);
-    pen = QPen(Qt::white);
 }
 
 void GraphicsWidget::paint(QPainter & painter) const
@@ -37,7 +34,6 @@ void GraphicsWidget::paint(QPainter & painter) const
     }
 
     QSize sz = size();
-    int fontHeight = painter.fontMetrics().height();
 
     // calc xy ranges
     // use %age of values around mid price, binary find?
@@ -118,20 +114,5 @@ void GraphicsWidget::paint(QPainter & painter) const
                 break;
             }
         }
-    }
-
-    y = 0;
-    int count = static_cast<size_t>(floor(height / fontHeight));
-    float pos = width;
-    float gap = 70;
-    for (auto it = g->Ticks().rbegin(); count != 0 && it != g->Ticks().rend(); ++it, --count)
-    {
-        painter.setPen(Qt::white);
-        painter.drawText(QRectF{ QPointF{pos, y}, QPointF{pos * 2, y + fontHeight} }, QString::number(it->lastSize.getAsDouble(), 'f', 8));
-        painter.setPen(it->side==Tick::Buy ? BidEdgeColour : AskEdgeColour);
-        painter.drawText(QRectF{ QPointF{pos+gap, y}, QPointF{pos * 2, y + fontHeight} }, QString::number(it->price.getAsDouble(), 'f', 2));
-        painter.setPen(Qt::white);
-        painter.drawText(QRectF{ QPointF{pos+2*gap, y}, QPointF{pos * 2, y + fontHeight} }, it->time.toLocalTime().time().toString());
-        y += fontHeight;
     }
 }

@@ -15,8 +15,6 @@ class GraphicsWidget : public QOpenGLWidget
     Q_OBJECT
 
     QBrush background;
-    QFont font;
-    QPen pen;
     const GDaxLib * g;
 
 public:

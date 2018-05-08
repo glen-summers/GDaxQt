@@ -23,6 +23,7 @@ void MainWindow::onUpdate()
 {
     ui->openGLWidget->update();
     generateOrderBook();
+    generateTradeList();
 }
 
 void MainWindow::on_actionE_xit_triggered()
@@ -45,8 +46,6 @@ void MainWindow::generateOrderBook()
     Decimal tot;
 
     int count = lines;
-
-    // hilites should be left\right split
 
     // just use std::ostringstream?
     QString prevPrice, prevAmount, prevTotAmount;
@@ -94,9 +93,9 @@ td.amount span { color:grey; }
     }
     stream << "</table>";
 
-    // add mid\last trade
+    // add mid\last trade\spread?
     stream << R"(<table width="100%" cellspacing="0" cellpadding="0">
-<tr><td class="mid">Mid1234</td></tr>
+<tr><td class="mid"></td></tr>
 </table>)";
 
     stream << R"(<table width="100%" cellspacing="0" cellpadding="0">)";
@@ -119,7 +118,7 @@ td.amount span { color:grey; }
         stream << "<tr>"
                << "<td class=\"bid\">" << diffText(prevPrice, price) << "</td>"
                << "<td class=\"amount\">" << diffText(prevAmount, amount) << "</td>"
-               << "<td>" << diffText(prevTotAmount, totAmount) << "</td>"
+               << "<td class=\"amount\">" << diffText(prevTotAmount, totAmount) << "</td>"
                << "<\tr>";
         prevPrice = price;
         prevAmount = amount;
@@ -128,4 +127,67 @@ td.amount span { color:grey; }
 
    stream << "</table>";
    orderBook.document()->setHtml(*stream.string());
+}
+
+void MainWindow::generateTradeList()
+{
+    auto & trades = *ui->trades;
+    QFont font = trades.document()->defaultFont();
+    QFontMetrics fm(font);
+    int fontHeight = fm.height();
+    int count = trades.height()/fontHeight;
+
+    const auto & ticks= g.Ticks();
+    int priceDecs = 2;
+    int amountDecs = 4;
+
+    // just use std::ostringstream?
+    QString prevPrice, prevAmount, prevTime;
+    QString html;
+    QTextStream stream(&html); // perf test?
+
+    // subset of html - http://doc.qt.io/qt-5/richtext-html-subset.html
+    stream << R"(<style>
+td { text-align:right; }
+td.ask { color:red; }
+td.ask span { color:darkred; }
+td.bid { color:limegreen; }
+td.bid span { color:darkgreen; }
+td.mid { color:white; padding: 10px; }
+td.amount { color:white; }
+td.amount span { color:grey; }
+</style>
+<table width="100%" cellspacing="0" cellpadding="0">)";
+
+    for (auto it = ticks.begin(); count != 0 && it != ticks.end(); ++it, --count)
+    {
+        // use toString and truncate to avoid tmp double?
+        QString price = QString::number(it->price.getAsDouble(), 'f', priceDecs);
+        QString amount = QString::number(it->lastSize.getAsDouble(), 'f', amountDecs);
+        QString time = it->time.toLocalTime().time().toString();
+
+        switch (it->side)
+        {
+        case Tick::Side::Buy:
+            stream << "<tr><td class=\"bid\">";
+            break;
+        case Tick::Side::Sell:
+            stream << "<tr><td class=\"ask\">";
+            break;
+        case Tick::Side::None:
+            continue;
+        }
+
+        stream << diffText(prevPrice, price) << "</td>"
+               << "<td class=\"amount\">" << diffText(prevAmount, amount) << "</td>"
+               << "<td class=\"amount\">" << diffText(prevTime, time) << "</td>"
+               << "<\tr>";
+
+        prevPrice = price;
+        prevAmount = amount;
+        prevTime = time;
+    }
+
+   stream << "</table>";
+   trades.document()->setHtml(*stream.string());
 }
