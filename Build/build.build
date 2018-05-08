@@ -54,7 +54,7 @@
 		<Exec command="$(TestExecutable)"/>
 	</Target>
   
-	<Target Name="Gui">
+	<Target Name="Gui" DependsOnTargets="Compile">
 		<Exec command="$(BuildTarget)\$(GuiProject)\$(Config)\$(GuiProject).exe"/>
 	</Target>
 
