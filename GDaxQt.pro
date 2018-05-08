@@ -4,7 +4,6 @@ SUBDIRS += \
     GDaxLib \
     GDaxConsole \
     GDaxConsole2 \
-    GDaxGui \
     GDaxTests \
     GDaxGui2
 
