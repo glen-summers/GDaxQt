@@ -6,12 +6,12 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>852</width>
-    <height>566</height>
+    <width>971</width>
+    <height>603</height>
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
@@ -27,7 +27,36 @@
   <widget class="QWidget" name="centralWidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
-     <widget class="GraphicsWidget" name="openGLWidget"/>
+     <widget class="CandleChart" name="candleChart">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="GraphicsWidget" name="depthChart">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>200</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>200</width>
+        <height>16777215</height>
+       </size>
+      </property>
+     </widget>
     </item>
     <item>
      <widget class="QTextEdit" name="orderBook">
@@ -36,6 +65,18 @@
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>200</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>200</width>
+        <height>16777215</height>
+       </size>
       </property>
       <property name="acceptDrops">
        <bool>false</bool>
@@ -59,14 +100,26 @@
        <set>Qt::NoTextInteraction</set>
       </property>
      </widget>
-     </item>
-     <item>
+    </item>
+    <item>
      <widget class="QTextEdit" name="trades">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Fixed" vsizetype="Expanding">
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
+      </property>
+      <property name="minimumSize">
+       <size>
+        <width>200</width>
+        <height>0</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>200</width>
+        <height>16777215</height>
+       </size>
       </property>
       <property name="acceptDrops">
        <bool>false</bool>
@@ -98,7 +151,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>852</width>
+     <width>971</width>
      <height>21</height>
     </rect>
    </property>
@@ -123,6 +176,11 @@
    <class>GraphicsWidget</class>
    <extends>QOpenGLWidget</extends>
    <header>graphicswidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>CandleChart</class>
+   <extends>QOpenGLWidget</extends>
+   <header>candlechart.h</header>
   </customwidget>
  </customwidgets>
  <resources/>

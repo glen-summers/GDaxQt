@@ -13,15 +13,19 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    ui->openGLWidget->setGDaxLib(&g);
+    ui->depthChart->setGDaxLib(&g);
 
     connect(timer.get(), SIGNAL(timeout()), this, SLOT(onUpdate()));
     timer->start(1000);
+
+    connect(&restProvider, SIGNAL(data(std::vector<Candle>)),
+            this, SLOT(setCandles(std::vector<Candle>)));
 }
 
 void MainWindow::onUpdate()
 {
-    ui->openGLWidget->update();
+    ui->depthChart->update();
+    ui->candleChart->update();
     generateOrderBook();
     generateTradeList();
 }
@@ -190,4 +194,9 @@ td.amount span { color:grey; }
 
    stream << "</table>";
    trades.document()->setHtml(*stream.string());
+}
+
+void MainWindow::setCandles(std::vector<Candle> candles)
+{
+    this->ui->candleChart->setCandles(std::move(candles));
 }

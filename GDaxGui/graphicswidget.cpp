@@ -9,12 +9,10 @@ static constexpr QRgb AskEdgeColour = qRgb(255,0,0);
 
 GraphicsWidget::GraphicsWidget(QWidget *parent)
     : QOpenGLWidget(parent)
+    , background(Qt::black)
     , g()
 {
-    //setFixedSize(200, 200);
-    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     setAutoFillBackground(false);
-    background = QBrush(QColor(64, 32, 64));
 }
 
 void GraphicsWidget::paint(QPainter & painter) const
@@ -24,7 +22,6 @@ void GraphicsWidget::paint(QPainter & painter) const
         return;
     }
 
-    QRect rc  = painter.window();
     const auto & bids = g->Bids();
     const auto & asks = g->Asks();
 

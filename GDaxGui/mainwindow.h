@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include "gdaxlib.h"
+#include "restprovider.h"
 
 #include "ui_mainwindow.h"
 
@@ -19,6 +20,8 @@ class MainWindow : public QMainWindow
     std::unique_ptr<QTimer> timer;
 
     GDaxLib g;
+    RestProvider restProvider;
+    std::vector<Candle> candles;
 
 public:
     explicit MainWindow(QWidget *parent = 0);
@@ -28,10 +31,12 @@ public slots:
 
 private slots:
     void on_actionE_xit_triggered();
+    void setCandles(std::vector<Candle> candles);
 
 private:
     void generateOrderBook();
     void generateTradeList();
+
 };
 
 #endif // MAINWINDOW_H

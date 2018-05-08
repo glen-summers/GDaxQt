@@ -40,9 +40,9 @@ GDaxLib::GDaxLib(QObject * parent) // parent?
 
     typedef void (QWebSocket:: *sslErrorsSignal)(const QList<QSslError> &);
 
-    connect(&webSocket, &QWebSocket::textMessageReceived, this, &GDaxLib::onTextMessageReceived);
+    connect(&webSocket, &QWebSocket::textMessageReceived, this, &GDaxLib::onTextMessageReceived);//sig?
     connect(&webSocket, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error), this, &GDaxLib::onError);
-    connect(&webSocket, static_cast<sslErrorsSignal>(&QWebSocket::sslErrors), this, &GDaxLib::onSslErrors);
+    connect(&webSocket, static_cast<sslErrorsSignal>(&QWebSocket::sslErrors), this, &GDaxLib::onSslErrors);//sig?
 
     webSocket.open(QUrl(url));
 }
