@@ -29,85 +29,30 @@ QString diffText(const QString & s1, const QString & s2)
 {
     if (s2.isEmpty())
     {
-        return QString();
+        return s2;
     }
 
-    QString const pattern = R"(<span>%1</span>)";
+    static const QString pattern = R"(<span>%1</span>)";
 
-    QBitArray bits(s2.length());
+    int matchLength = 0;
     for(auto it1 = s1.begin(), it2 = s2.begin(); it2!=s2.end(); ++it1, ++it2)
     {
-        bool value = it1==s1.end() || *it1!=*it2;
-        bits.setBit(it2-s2.begin(), value);
+        if (it1==s1.end() || *it1!=*it2) break;
+        ++matchLength;
+    }
+
+    if (matchLength==s2.length())
+    {
+        return pattern.arg(s2);
+    }
+    if (matchLength==0)
+    {
+        return s2;
     }
 
     QString result;
-    bool comp = bits[0];
-    int len = 1;
-    for (int i = 1; i< bits.size(); ++i)
-    {
-        if (bits[i]==comp)
-        {
-            ++len;
-        }
-        else
-        {
-            if (len!=0) // redundent?
-            {
-                QStringRef sub = s2.midRef(i-len, len);
-                if (comp)
-                {
-                    result.append(pattern.arg(sub));
-                }
-                else
-                {
-                    result.append(sub);
-                }
-                len = 1;
-            }
-            comp = bits[i];
-        }
-    }
-    if (len!=0)
-    {
-        QStringRef sub = s2.midRef(s2.length()-len);
-        if (comp)
-        {
-            result.append(pattern.arg(sub));
-        }
-        else
-        {
-            result.append(sub);
-        }
-    }
-
+    result.append(pattern.arg(s2.leftRef(matchLength)));
+    result.append(s2.midRef(matchLength));
     return result;
-
-//    if (s1.empty())
-//    {
-//        if (s2.empty)
-//        {
-//            return QString();
-//        }
-//        return QString(pattern).arg(mismatchColour, s2);
-//    }
-    // s1 empty, return s2 as diff
-
-//    auto it1 = s1.begin();
-//    auto it2 = s2.begin();
-//    int matchCount = 0, mismatchCount = 0;
-//    int current = 0;
-//    for(;it1!=s1.end() && it2!=s2.end();++it1, ++it2)
-//    {
-//        int compare = *it1==*it2 ? 1:-1;;
-//        if (compare!=current)
-//        {
-//            ++match;
-//        }
-//        else
-//        {
-//            ++mismatch;
-//        }
-//    }
 }
 

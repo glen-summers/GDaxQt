@@ -221,14 +221,14 @@ private Q_SLOTS:
     {
         AssertEquals("", diffText("", ""));
         AssertEquals("", diffText("abc", ""));
-        AssertEquals("abc", diffText("abc", "abc"));
-        AssertEquals(R"(<span>abc</span>)", diffText("", "abc"));
-        AssertEquals(R"(<span>def</span>)", diffText("abc", "def"));
-        AssertEquals(R"(a<span>x</span>c)", diffText("abc", "axc"));
-        AssertEquals(R"(<span>x</span>bc)", diffText("abc", "xbc"));
-        AssertEquals(R"(ab<span>x</span>)", diffText("abc", "abx"));
-        AssertEquals(R"(abc<span>d</span>)", diffText("abc", "abcd"));
-        AssertEquals(R"(a<span>B</span>c<span>D</span>e)", diffText("abcde", "aBcDe"));
+        AssertEquals(R"(<span>abc</span>)", diffText("abc", "abc"));
+        AssertEquals(R"(abc)", diffText("", "abc"));
+        AssertEquals(R"(def)", diffText("abc", "def"));
+        AssertEquals(R"(<span>a</span>xc)", diffText("abc", "axc"));
+        AssertEquals(R"(xbc)", diffText("abc", "xbc"));
+        AssertEquals(R"(<span>ab</span>x)", diffText("abc", "abx"));
+        AssertEquals(R"(<span>abc</span>d)", diffText("abc", "abcd"));
+        AssertEquals(R"(<span>a</span>BcDe)", diffText("abcde", "aBcDe"));
     }
 
     void testBaadPrice()

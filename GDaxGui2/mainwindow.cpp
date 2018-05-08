@@ -56,13 +56,13 @@ void MainWindow::generateOrderBook()
     // subset of html - http://doc.qt.io/qt-5/richtext-html-subset.html
     stream << R"(<style>
 td { text-align:right; }
-td.ask { color:darkred; }
-td.ask span { color:red; }
-td.bid { color:darkgreen; }
-td.bid span { color:limegreen; }
+td.ask { color:red; }
+td.ask span { color:darkred; }
+td.bid { color:limegreen; }
+td.bid span { color:darkgreen; }
 td.mid { color:white; padding: 10px; }
-td.amount { color:grey; }
-td.amount span { color:white; }
+td.amount { color:white; }
+td.amount span { color:grey; }
 </style>
 <table width="100%" cellspacing="0" cellpadding="0">)";
 
