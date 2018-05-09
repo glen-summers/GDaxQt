@@ -1,4 +1,4 @@
-!include("..\GDaxLib\GDaxLib.pri") {
+!include("../GDaxLib/GDaxLib.pri") {
     warning("GDaxLib.pri not found")
 }
 

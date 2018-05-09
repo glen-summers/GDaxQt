@@ -1,17 +1,24 @@
 CONFIG += c++17
+QMAKE_CXXFLAGS += -std=c++17
 QT += websockets
 
 INCLUDEPATH += \
-    "../GDaxLib" \
-    "../../../github/decimal_for_cpp/include" \
-    "../../../github/rapidjson/include" \
+    $$PWD/../GDaxLib \
+    $$PWD/../../../github/decimal_for_cpp/include \
+    $$PWD/../../../github/rapidjson/include \
 
-debug {
-    LIBS += -L../GDaxLib/debug -lGDaxLib
+win32 {
+    debug {
+        LIBS += -L$$OUT_PWD/../GDaxLib/debug -lGDaxLib
+    }
+
+    release {
+        LIBS += -L$$OUT_PWD/../GDaxLib/release -lGDaxLib
+    }
 }
 
-release {
-    LIBS += -L../GDaxLib/release -lGDaxLib
+unix {
+    LIBS += -L$$OUT_PWD/../GDaxLib -lGDaxLib
 }
 
 win32 {
@@ -20,4 +27,8 @@ win32 {
     } else {
         PRE_TARGETDEPS += ../GDaxLib/release/GDaxLib.lib
     }
+}
+
+unix {
+    PRE_TARGETDEPS += $$OUT_PWD/../GDaxLib/libGDaxLib.a
 }
