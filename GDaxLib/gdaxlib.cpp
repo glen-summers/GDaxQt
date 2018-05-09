@@ -70,7 +70,8 @@ void GDaxLib::onTextMessageReceived(QString message)
         auto it = functionMap.find(type.toUtf8().constData());
         if (it!=functionMap.end())
         {
-            std::invoke(it->second, *this, object);
+            //std::invoke(it->second, *this, object);
+            (this->*(it->second))(object);
         }
         else
         {
