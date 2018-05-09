@@ -76,18 +76,18 @@ void GDaxLib::onTextMessageReceived(QString message)
         else
         {
             // tmp, cld generate lots of log data
-            qWarning((std::string("Unprocessed message : ") +
-                   std::to_string((long long)QThread::currentThreadId()) + " : " +
-                   messageText.constData()).c_str());
+            qWarning() << QString("Unprocessed message : [ %1 ] : %2")
+                .arg((long long)QThread::currentThreadId())
+                .arg(message);
         }
     }
     catch (const std::exception & e)
     {
         // tmp, cld generate lots of log data
-        qWarning((std::string("Error: ") +
-               std::to_string((long long)QThread::currentThreadId()) + " : " +
-               e.what()).c_str());
-        qWarning(messageText.constData());
+        qWarning() << QString("Error : [ %1 ] : %2 : %3")
+            .arg((long long)QThread::currentThreadId())
+            .arg(e.what())
+            .arg(message);
     }
 }
 
@@ -101,7 +101,7 @@ void GDaxLib::onSslErrors(const QList<QSslError> &errors)
     for(auto & e : errors)
     {
         //e.error();
-        qWarning(e.errorString().toUtf8());
+        qWarning() << e.errorString();
     }
 }
 
@@ -210,7 +210,7 @@ void GDaxLib::ProcessHeartbeat(const QJsonObject & object)
     auto seq = static_cast<unsigned long long>(s.toVariant().toDouble());
     auto tradeId = static_cast<unsigned long long>(object["last_trade_id"].toDouble());
     QString time = object["time"].toString();
-    //qInfo(QString("HB: %1 %2 %3").arg(seq).arg(tradeId).arg(time).toUtf8().constData());
+    qDebug() << QString("HB: %1 %2 %3").arg(seq).arg(tradeId).arg(time);
 }
 
 void GDaxLib::ProcessTicker(const QJsonObject & object)

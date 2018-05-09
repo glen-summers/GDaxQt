@@ -51,12 +51,12 @@ private Q_SLOTS:
         QJsonValueRef changes = object["changes"];
         AssertTrue(changes.isArray(), "isArray");
         QJsonArray changesArray = changes.toArray();
-        AssertEquals(1u, changesArray.size());
+        AssertEquals(1, changesArray.size());
         QJsonValueRef change = changesArray[0];
         AssertTrue(change.isArray(), "change is array");
 
         QJsonArray subArray = change.toArray();
-        AssertEquals(3u, subArray.size());
+        AssertEquals(3, subArray.size());
 
         AssertTrue(subArray[0].isString(), "sub0 isString");
         AssertEquals("sell", subArray[0].toString());

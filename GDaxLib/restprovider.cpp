@@ -23,14 +23,14 @@ RestProvider::RestProvider()
 void RestProvider::error(QNetworkReply::NetworkError error)
 {
     // ContentNotFoundError 203
-    qWarning(("RestProvider::error" + std::to_string(error)).c_str());
+    qWarning() << QString("RestProvider::error %1)").arg(error);
 }
 
 void RestProvider::sslErrors(QList<QSslError> errors)
 {
     for(auto & e : errors)
     {
-        qWarning(e.errorString().toUtf8());
+        qWarning() << e.errorString();
     }
 }
 
