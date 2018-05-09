@@ -1,0 +1,6 @@
+[submodule "Dependencies/decimal_for_cpp"]
+	path = Dependencies/decimal_for_cpp
+	url = https://github.com/vpiotr/decimal_for_cpp.git
+[submodule "Dependencies/rapidjson"]
+	path = Dependencies/rapidjson
+	url = https://github.com/Tencent/rapidjson

@@ -1,11 +1,6 @@
-CONFIG += c++17
-QMAKE_CXXFLAGS += -std=c++17
-QT += websockets
-
-INCLUDEPATH += \
-    $$PWD/../GDaxLib \
-    $$PWD/../../../github/decimal_for_cpp/include \
-    $$PWD/../../../github/rapidjson/include \
+!include("misc.pri") {
+    warning("misc.pri not found")
+}
 
 win32 {
     debug {
@@ -23,9 +18,9 @@ unix {
 
 win32 {
     CONFIG(debug, debug|release) {
-        PRE_TARGETDEPS += ../GDaxLib/debug/GDaxLib.lib
+        PRE_TARGETDEPS += $$OUT_PWD/../GDaxLib/debug/GDaxLib.lib
     } else {
-        PRE_TARGETDEPS += ../GDaxLib/release/GDaxLib.lib
+        PRE_TARGETDEPS += $$OUT_PWD/../GDaxLib/release/GDaxLib.lib
     }
 }
 
