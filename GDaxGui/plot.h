@@ -8,18 +8,25 @@ QT_FORWARD_DECLARE_CLASS(QPainter)
 class Plot
 {
     double const edge;
+    bool const xAxisLabels;
     double const fontHeight;
     QRectF inner;
     QRectF view;
 
 public:
-    Plot(double edge);
+    Plot(double edge, bool xAxisLabels);
 
     void setRect(const QRect & rect)
     {
         inner = rect;
-        inner.adjust(edge, edge, -edge, -fontHeight-edge);
+        inner.adjust(edge, edge, -edge, -edge);
+        if (xAxisLabels)
+        {
+            inner.adjust(0, 0, 0, -fontHeight);
+        }
     }
+
+    const QRectF getInner() const { return inner; }
 
     void setView(const QRectF & value);
     void startInner(QPainter & painter) const;

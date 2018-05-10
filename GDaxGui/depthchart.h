@@ -1,6 +1,8 @@
 #ifndef GRAPHICSWIDGET_H
 #define GRAPHICSWIDGET_H
 
+#include "plot.h"
+
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
 #include <QPainter>
@@ -15,6 +17,7 @@ class DepthChart : public QOpenGLWidget
     Q_OBJECT
 
     QBrush background;
+    Plot mutable depthPlot;
     const GDaxLib * g;
 
 public:

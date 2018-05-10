@@ -5,7 +5,7 @@
 CandleChart::CandleChart(QWidget *parent)
     : QOpenGLWidget(parent)
     , background(QApplication::palette().color(QPalette::Base))
-    , candlePlot(10)
+    , candlePlot(10, true)
 {
 }
 

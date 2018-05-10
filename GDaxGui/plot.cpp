@@ -19,8 +19,9 @@ namespace Detail
     }
 }
 
-Plot::Plot(double edge)
+Plot::Plot(double edge, bool xAxisLabels)
     : edge(edge)
+    , xAxisLabels(xAxisLabels)
     , fontHeight(Detail::getFontHeight())
 {
 }
@@ -57,18 +58,23 @@ void Plot::drawTimeAxis(QPainter &painter) const
     painter.setPen(qRgb(180,180,180)); // window\custom styles?
     for (double x = step * floor(view.left() / step); x <= view.right(); x += step)
     {
-        double j = xScale * x - offset;
-        if (j >= 0 && j <= width)
-        {
-            j += inner.left();
+        // draw ticks
 
-            QRectF rc = {QPointF{ j-box2, inner.bottom() + fontHeight / 4}, QPointF{j+box2, inner.bottom() + fontHeight *5/ 4}};
-            time_t tt = static_cast<time_t>(x);
-            tm tmLabel{};
-            gmtime_s(&tmLabel, &tt); // should be localtime??
-            std::ostringstream stm;
-            stm << std::put_time(&tmLabel, "%b %d %H:%M"); // put date out on midnights
-            painter.drawText(rc, Qt::AlignHCenter, QString(stm.str().c_str()));
+        if (xAxisLabels)
+        {
+            double j = xScale * x - offset;
+            if (j >= 0 && j <= width)
+            {
+                j += inner.left();
+
+                QRectF rc = {QPointF{ j-box2, inner.bottom() + fontHeight / 4}, QPointF{j+box2, inner.bottom() + fontHeight *5/ 4}};
+                time_t tt = static_cast<time_t>(x);
+                tm tmLabel{};
+                gmtime_s(&tmLabel, &tt); // should be localtime??
+                std::ostringstream stm;
+                stm << std::put_time(&tmLabel, "%b %d %H:%M"); // put date out on midnights
+                painter.drawText(rc, Qt::AlignHCenter, QString(stm.str().c_str()));
+            }
         }
     }
 }
