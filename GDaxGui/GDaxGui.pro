@@ -15,12 +15,14 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     candlechart.cpp \
-    depthchart.cpp
+    depthchart.cpp \
+    plot.cpp
 
 HEADERS += \
     mainwindow.h \
     candlechart.h \
-    depthchart.h
+    depthchart.h \
+    plot.h
 
 FORMS += \
         mainwindow.ui

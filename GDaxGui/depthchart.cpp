@@ -7,9 +7,11 @@ static constexpr QRgb BidEdgeColour = qRgb(0,255,0);
 static constexpr QRgb AskFillColour = qRgb(139,0,0);
 static constexpr QRgb AskEdgeColour = qRgb(255,0,0);
 
+#include <QApplication>
+
 DepthChart::DepthChart(QWidget *parent)
     : QOpenGLWidget(parent)
-    , background(Qt::black)
+    , background(QApplication::palette().color(QPalette::Base))
     , g()
 {
     setAutoFillBackground(false);
@@ -41,12 +43,12 @@ void DepthChart::paint(QPainter & painter) const
     double yOrg = ((bids.rbegin()->first + asks.begin()->first) / 2).getAsDouble();
 
     // need to recalc maxAmount periodically and also use the values at top\bottom of the view box
-    float const fillFactor = 1.0f;
+    double const fillFactor = 1.0;
     Decimal amount;
     bool first = true;
-    float x = 0, y = 0;
-    float width = sz.width() * fillFactor;
-    float height = static_cast<float>(sz.height());
+    double x = 0, y = 0;
+    double width = sz.width() * fillFactor;
+    double height = sz.height();
 
     QPen edgePen(QColor(BidEdgeColour), 2);
     painter.setPen(edgePen);
@@ -54,9 +56,9 @@ void DepthChart::paint(QPainter & painter) const
     {
         auto & bb = *bit;
         amount += bb.second;
-        auto px = static_cast<float>((amount.getAsDouble()) / xrange * width);
+        double px = (amount.getAsDouble() / xrange * width);
         double price = bb.first.getAsDouble();
-        auto py = static_cast<float>(((yOrg - price) / yrange + 0.5) * height);
+        double py = ((yOrg - price) / yrange + 0.5) * height;
         if (first)
         {
             painter.fillRect(QRectF{ QPointF{x, py}, QPointF{px, height} }, BidFillColour);
@@ -89,8 +91,8 @@ void DepthChart::paint(QPainter & painter) const
     {
         amount += a.second;
 
-        auto px = static_cast<float>((amount.getAsDouble()) / xrange * width);
-        auto py = static_cast<float>(((yOrg - a.first.getAsDouble()) / yrange + 0.5) * height);
+        double px = (amount.getAsDouble()) / xrange * width;
+        double py = ((yOrg - a.first.getAsDouble()) / yrange + 0.5) * height;
 
         if (first)
         {

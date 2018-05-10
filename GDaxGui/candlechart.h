@@ -3,6 +3,8 @@
 
 #include "restprovider.h"
 
+#include "plot.h"
+
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
 #include <QPainter>
@@ -10,13 +12,17 @@
 
 class CandleChart : public QOpenGLWidget
 {
-    QBrush background;
+    static constexpr time_t timeDelta = 60*60; //1d init, max = endTime - startTime;
+    static constexpr time_t initDisplay = 100*60*60;
+
+    QColor background;
+    Plot mutable candlePlot;
     std::vector<Candle> candles;
 
 public:
     CandleChart(QWidget *parent = 0);
 
-    void setCandles(std::vector<Candle> candles);
+    void setCandles(std::vector<Candle> newCandles);
 
 private:
     void paintEvent(QPaintEvent *event) override
