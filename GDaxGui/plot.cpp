@@ -2,6 +2,7 @@
 
 #include <QApplication>
 #include <QPainter>
+#include <QDateTime>
 
 #include <iomanip>
 #include <sstream>
@@ -44,7 +45,11 @@ void Plot::drawTimeAxis(QPainter &painter) const
     double step = pair.first;
     int subDiv = pair.second;
 
-    double offset = floor(xScale * view.left());
+    auto utcOffset = QDateTime::currentDateTimeUtc().toLocalTime().offsetFromUtc();
+    auto minLocal = view.left() + utcOffset;
+    auto maxLocal = view.right() + utcOffset;
+
+    double offset = floor(xScale * minLocal);
     double halfBox = step * xScale/2;
     int fh = metrics.height();
     double spacer = fh/4;
@@ -57,9 +62,9 @@ void Plot::drawTimeAxis(QPainter &painter) const
         minor = false;
     }
 
-    for (double x = step * floor(view.left() / step); x <= view.right(); x += step)
+    for (double localTime_t = step * floor(minLocal / step); localTime_t <= maxLocal; localTime_t += step)
     {
-        double j = xScale * x - offset;
+        double j = xScale * localTime_t - offset;
         if (j >= 0 && j <= width)
         {
             j += inner.left();
@@ -69,28 +74,22 @@ void Plot::drawTimeAxis(QPainter &painter) const
             {
                 if (j >= 0 && j <= width)
                 {
-
                     QRectF rc(QPointF{ j-halfBox, inner.bottom() + spacer}, QPointF{j+halfBox, outer.bottom()});
-                    time_t tt = static_cast<time_t>(x);
-                    tm tmLabel{};
-                    gmtime_s(&tmLabel, &tt);
-                    std::ostringstream stm;
-                    if (tmLabel.tm_hour==0)
-                    {
-                        stm << std::put_time(&tmLabel, "%b %d");
-                    }
-                    else
-                    {
-                        stm << std::put_time(&tmLabel, "%H:%M");
-                    }
-                    painter.drawText(rc, Qt::AlignHCenter, QString(stm.str().c_str()));
+
+                    QDateTime qdt;
+                    qdt.setTime_t(localTime_t-utcOffset);
+                    QString time = (qdt.time().hour()==0)
+                            ? qdt.toString("dd MMM")
+                            : qdt.toString("hh:mm");
+
+                    painter.drawText(rc, Qt::AlignHCenter, time);
                 }
             }
         }
 
         if (minor)
         {
-            double w = x;
+            double w = localTime_t;
             for (int i = 1; i < subDiv; ++i)
             {
                 w += step / subDiv;
