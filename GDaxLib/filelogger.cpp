@@ -7,6 +7,7 @@
 
 #include <iomanip>
 #include <sstream>
+#include <thread>
 
 namespace fs = std::experimental::filesystem;
 
