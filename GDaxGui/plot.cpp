@@ -35,6 +35,8 @@ void Plot::endInner(QPainter & painter) const
 
 void Plot::drawTimeAxis(QPainter &painter) const
 {
+    painter.setPen(qRgb(180,180,180)); // window\custom styles? move
+
     // pixels = xScale * time;
     auto width = inner.width();
     double xScale = inner.width()/view.width();
@@ -47,7 +49,6 @@ void Plot::drawTimeAxis(QPainter &painter) const
     int fh = metrics.height();
     double spacer = fh/4;
     double tickLen = fh/2;
-    painter.setPen(qRgb(180,180,180)); // window\custom styles?
     bool minor = true;
 
     const int minorThreshold = 5;
@@ -106,6 +107,8 @@ void Plot::drawTimeAxis(QPainter &painter) const
 
 void Plot::drawYAxis(QPainter & painter, double position, bool drawLabels) const
 {
+    painter.setPen(qRgb(180,180,180)); // window\custom styles? move
+
     bool minor = true;
 
     std::pair<double, int> pair = GetScaleAndDivisions(view.height() / 10);

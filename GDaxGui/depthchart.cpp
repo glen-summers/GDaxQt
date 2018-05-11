@@ -12,7 +12,7 @@ static constexpr QRgb AskEdgeColour = qRgb(255,0,0);
 DepthChart::DepthChart(QWidget *parent)
     : QOpenGLWidget(parent)
     , background(QApplication::palette().color(QPalette::Base))
-    , depthPlot(10, false, false)
+    , depthPlot(10, false, true)
     , g()
 {
     setAutoFillBackground(false);
@@ -33,16 +33,19 @@ void DepthChart::paint(QPainter & painter) const
         return;
     }
 
+    double xrange = g->AmountMax().getAsDouble();
+    double yrange = (g->PriceMax()-g->PriceMin()).getAsDouble();
+    //double yOrg = ((priceMax + priceMin)/2).getAsDouble();
+    double yOrg = ((bids.rbegin()->first + asks.begin()->first) / 2).getAsDouble();
+
+    depthPlot.setView(QRectF{QPointF{0, g->PriceMin().getAsDouble()},
+                             QPointF{xrange, g->PriceMax().getAsDouble()}});
+
     depthPlot.setRect(rect()); // or on event?
     depthPlot.startInner(painter);
 
      // calc xy ranges
     // use %age of values around mid price, binary find?
-
-    double xrange = g->AmountMax().getAsDouble();
-    double yrange = (g->PriceMax()-g->PriceMin()).getAsDouble();
-    //double yOrg = ((priceMax + priceMin)/2).getAsDouble();
-    double yOrg = ((bids.rbegin()->first + asks.begin()->first) / 2).getAsDouble();
 
     // need to recalc maxAmount periodically and also use the values at top\bottom of the view box
     double const fillFactor = 1.0;
@@ -50,10 +53,10 @@ void DepthChart::paint(QPainter & painter) const
     bool first = true;
 
     QRectF rect = depthPlot.getInner();
-    double ox = rect.x(), oy = rect.y();
-    double x = ox, y = oy;
     double width = rect.width() * fillFactor;
     double height = rect.height();
+    double ox = rect.right(), oy = rect.y();
+    double x = ox, y = oy;
 
     QPen edgePen(QColor(BidEdgeColour), 2);
     painter.setPen(edgePen);
@@ -61,22 +64,22 @@ void DepthChart::paint(QPainter & painter) const
     {
         auto & bb = *bit;
         amount += bb.second;
-        double px = ox + (amount.getAsDouble() / xrange * width);
+        double px = ox - (amount.getAsDouble() / xrange * width);
         double price = bb.first.getAsDouble();
         double py = oy +((yOrg - price) / yrange + 0.5) * height;
         if (first)
         {
-            painter.fillRect(QRectF{ QPointF{x, py}, QPointF{px, oy + height} }, BidFillColour);
-            painter.drawLine(x, py, px, py);
+            painter.fillRect(QRectF{ QPointF{px, py}, QPointF{x, oy + height} }, BidFillColour);
+            painter.drawLine(px, py, x, py);
             x = px;
             y = py;
             first = false;
         }
         else
         {
-            painter.fillRect(QRectF{ QPointF{x, py}, QPointF{px, oy + height} }, BidFillColour);
+            painter.fillRect(QRectF{ QPointF{px, py}, QPointF{x, oy + height} }, BidFillColour);
             painter.drawLine(x, y, x, py);
-            painter.drawLine(x, py, px, py);
+            painter.drawLine(px, py, x, py);
             x = px;
             y = py;
 
@@ -89,29 +92,28 @@ void DepthChart::paint(QPainter & painter) const
 
     amount = 0;
     first = true;
-    x = ox;
-    y = oy;
+    x = ox, y = oy;
     edgePen = QPen(QColor(AskEdgeColour), 2);
     painter.setPen(edgePen);
     for (auto a : asks)
     {
         amount += a.second;
 
-        double px = ox + (amount.getAsDouble()) / xrange * width;
+        double px = ox - (amount.getAsDouble()) / xrange * width;
         double py = oy + ((yOrg - a.first.getAsDouble()) / yrange + 0.5) * height;
 
         if (first)
         {
-            painter.fillRect(QRectF{ QPointF{x, py}, QPointF{px, oy} }, AskFillColour);
-            painter.drawLine(x, py, px, py);
+            painter.fillRect(QRectF{ QPointF{px, py}, QPointF{x, oy} }, AskFillColour);
+            painter.drawLine(px, py, x, py);
             x = px;
             y = py;
             first = false;
         }
         else
         {
-            painter.fillRect(QRectF{ QPointF{x, oy}, QPointF{px, y} }, AskFillColour);
-            painter.drawLine(x, y, px, y);
+            painter.fillRect(QRectF{ QPointF{px, oy}, QPointF{x, y} }, AskFillColour);
+            painter.drawLine(px, y, x, y);
             painter.drawLine(px, y, px, py);
             x = px;
             y = py;
@@ -124,4 +126,7 @@ void DepthChart::paint(QPainter & painter) const
     }
 
     depthPlot.endInner(painter);
+
+    depthPlot.drawYAxis(painter, 0, false);
+    depthPlot.drawYAxis(painter, 1, true);
 }
