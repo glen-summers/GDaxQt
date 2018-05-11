@@ -5,7 +5,7 @@
 CandleChart::CandleChart(QWidget *parent)
     : QOpenGLWidget(parent)
     , background(QApplication::palette().color(QPalette::Base))
-    , candlePlot(10, true)
+    , candlePlot(10, true, true)
 {
 }
 
@@ -99,4 +99,6 @@ void CandleChart::paint(QPainter & painter) const
 
     candlePlot.endInner(painter);
     candlePlot.drawTimeAxis(painter);
+    candlePlot.drawYAxis(painter, 0, false);
+    candlePlot.drawYAxis(painter, 1, true);
 }

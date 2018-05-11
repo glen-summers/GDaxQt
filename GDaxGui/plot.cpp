@@ -1,28 +1,18 @@
 #include "plot.h"
 
 #include <QApplication>
-#include <QFont>
-#include <QFontMetrics>
 #include <QPainter>
 
 #include <iomanip>
 #include <sstream>
 #include <algorithm>
 
-namespace Detail
-{
-    int getFontHeight()
-    {
-        QFont font = QApplication::font();
-        QFontMetrics fm(font);
-        return fm.height();
-    }
-}
-
-Plot::Plot(double edge, bool xAxisLabels)
-    : edge(edge)
+Plot::Plot(double edge, bool xAxisLabels, bool yAxisLabels)
+    : font(QApplication::font())
+    , metrics(font)
+    , edge(edge)
     , xAxisLabels(xAxisLabels)
-    , fontHeight(Detail::getFontHeight())
+    , yAxisLabels(yAxisLabels)
 {
 }
 
@@ -50,33 +40,139 @@ void Plot::drawTimeAxis(QPainter &painter) const
     double xScale = inner.width()/view.width();
     std::pair<double, int> pair = GetTimeScale(view.left(), view.right(), 10);
     double step = pair.first;
-    //int subDiv = pair.second;
+    int subDiv = pair.second;
 
     double offset = floor(xScale * view.left());
-    double box2 = step * xScale/2;
-
+    double halfBox = step * xScale/2;
+    int fh = metrics.height();
+    double spacer = fh/4;
+    double tickLen = fh/2;
     painter.setPen(qRgb(180,180,180)); // window\custom styles?
+    bool minor = true;
+
+    const int minorThreshold = 5;
+    if (xScale * step / subDiv < minorThreshold)
+    {
+        minor = false;
+    }
+
     for (double x = step * floor(view.left() / step); x <= view.right(); x += step)
     {
-        // draw ticks
-
-        if (xAxisLabels)
+        double j = xScale * x - offset;
+        if (j >= 0 && j <= width)
         {
-            double j = xScale * x - offset;
-            if (j >= 0 && j <= width)
-            {
-                j += inner.left();
+            j += inner.left();
+            painter.drawLine(j, inner.bottom(), j, inner.bottom()-tickLen);
 
-                QRectF rc = {QPointF{ j-box2, inner.bottom() + fontHeight / 4}, QPointF{j+box2, inner.bottom() + fontHeight *5/ 4}};
-                time_t tt = static_cast<time_t>(x);
-                tm tmLabel{};
-                gmtime_s(&tmLabel, &tt); // should be localtime??
-                std::ostringstream stm;
-                stm << std::put_time(&tmLabel, "%b %d %H:%M"); // put date out on midnights
-                painter.drawText(rc, Qt::AlignHCenter, QString(stm.str().c_str()));
+            if (xAxisLabels)
+            {
+                if (j >= 0 && j <= width)
+                {
+
+                    QRectF rc(QPointF{ j-halfBox, inner.bottom() + spacer}, QPointF{j+halfBox, outer.bottom()});
+                    time_t tt = static_cast<time_t>(x);
+                    tm tmLabel{};
+                    gmtime_s(&tmLabel, &tt);
+                    std::ostringstream stm;
+                    if (tmLabel.tm_hour==0)
+                    {
+                        stm << std::put_time(&tmLabel, "%b %d");
+                    }
+                    else
+                    {
+                        stm << std::put_time(&tmLabel, "%H:%M");
+                    }
+                    painter.drawText(rc, Qt::AlignHCenter, QString(stm.str().c_str()));
+                }
+            }
+        }
+
+        if (minor)
+        {
+            double w = x;
+            for (int i = 1; i < subDiv; ++i)
+            {
+                w += step / subDiv;
+                double k = xScale * w - offset;
+                if (k >= 0 && k <= width)
+                {
+                    k += inner.left();
+                    painter.drawLine(k, inner.bottom(), k, inner.bottom() - tickLen / 2);
+                }
             }
         }
     }
+}
+
+void Plot::drawYAxis(QPainter & painter, double position, bool drawLabels) const
+{
+    bool minor = true;
+
+    std::pair<double, int> pair = GetScaleAndDivisions(view.height() / 10);
+    double step = pair.first;
+    int subDiv = pair.second;
+    int decs = std::max(0, static_cast<int>(1 - log10(step)));
+
+    double xPos = inner.left() + position * inner.width();
+    int tickLen = metrics.averageCharWidth();
+    int fh = metrics.height();
+    int dir = position > 0.5 ? -1 : 1;
+
+    double scale = inner.height() / view.height();
+    double offset = floor(scale * view.top());
+
+    const int minorThreshold = 5;
+    if (scale*step / subDiv < minorThreshold)
+    {
+        minor = false;
+    }
+
+    auto align = Qt::TextSingleLine | Qt::AlignVCenter;
+
+    for (double v = step * floor(view.top() / step); v <= view.bottom(); v += step)
+    {
+        double j = scale*v - offset;
+        if (j >= 0 && j <= inner.height())
+        {
+            j = inner.bottom() - j;
+            painter.drawLine(xPos, j, xPos + dir*tickLen, j);
+
+            if (drawLabels)
+            {
+                auto qs = QString::number(v, 'f', decs);
+                if (dir < 0)
+                {
+                    QRectF rc(QPointF{xPos + tickLen, j-fh}, QPointF{outer.right(), j+fh});
+                    painter.drawText(rc, align | Qt::AlignLeft, qs);
+                }
+                else
+                {
+                    QRectF rc(0, j-fh, xPos - tickLen, fh);
+                    painter.drawText(rc, align | Qt::AlignRight, qs);
+                }
+            }
+        }
+        if (minor)
+        {
+            double w = v;
+            for (int i = 1; i< subDiv; ++i)
+            {
+                w += step / subDiv;
+                double k = scale*w - offset;
+                if (k >= 0 && k <= inner.height())
+                {
+                    k = inner.bottom() - k;
+                    painter.drawLine(xPos, k, xPos + dir*tickLen/2, k);
+                }
+            }
+        }
+    }
+    /*if (Min<0 && Max>0 && ShowZero)
+    {
+    MoveTo(dc,xPos,yPos-Height*Min/(Max-Min));
+    LineTo(dc,xPos+Width,yPos-Height*Min/(Max-Min));
+    }*/
+
 }
 
 void Plot::drawCandle(QPainter & painter, double start, double end, double min, double max, double open, double close) const
@@ -92,6 +188,24 @@ void Plot::drawCandle(QPainter & painter, double start, double end, double min, 
 
     double wedgie = std::min(1., (end-start) * inner.width() / view.width() /2 - 1);
     painter.drawRect(QRectF(QPointF(x0 - wedgie, yy0), QPointF(x0 + wedgie, yy1)));
+}
+
+double Plot::calcYAxisLabelWidth(double min, double max, double scale) const
+{
+    double step = GetScale((max-min)/scale/10, 1); // 10 steps, use param\constant
+    int decs = std::max(0, static_cast<int>(1 - log10(step))); // floor?
+    double value = step * floor(max / scale / step); // max od abs(max), abs(min)?
+
+    QFontMetrics metrics(font); // cache
+    return metrics.boundingRect(QString::number(value, 'g', decs)).width();
+}
+
+double Plot::GetScale(double range, double scale)
+{
+    static constexpr int lookup1[] = { 1,1,2,5,5,5,10,10,10,10,10 };
+    double powx = pow(10.0, floor(log10(range / scale)))*scale;
+    int ix = 1 + static_cast<int>(floor(range / powx - 1e-10));
+    return powx == 0 ? range : lookup1[ix] * powx;
 }
 
 std::pair<double, int> Plot::GetScaleAndDivisions(double range)

@@ -12,7 +12,7 @@ static constexpr QRgb AskEdgeColour = qRgb(255,0,0);
 DepthChart::DepthChart(QWidget *parent)
     : QOpenGLWidget(parent)
     , background(QApplication::palette().color(QPalette::Base))
-    , depthPlot(10, false)
+    , depthPlot(10, false, false)
     , g()
 {
     setAutoFillBackground(false);
