@@ -6,8 +6,10 @@
 #include <QThread>
 #include <QMetaEnum>
 
+
 namespace
 {
+// cfg. allow using sandbox
     static constexpr const char * url = "wss://ws-feed.gdax.com";
 
     static constexpr const char * subscribeMessage = R"(
@@ -44,6 +46,7 @@ GDaxLib::GDaxLib(QObject * parent) // parent?
     connect(&webSocket, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error), this, &GDaxLib::onError);
     connect(&webSocket, static_cast<sslErrorsSignal>(&QWebSocket::sslErrors), this, &GDaxLib::onSslErrors);//sig?
 
+    log.Info(QString("Connecting to %1").arg(url));
     webSocket.open(QUrl(url));
 }
 
@@ -52,67 +55,62 @@ void GDaxLib::onConnected()
     // need qInstallMessageHandler(SyslogMessageHandler);? and handle ourselves?
     // https://stackoverflow.com/questions/28540571/how-to-enable-and-disable-qdebug-messages
     // https://gist.github.com/polovik/10714049
-    qInfo("onConnected");
+    log.Info("onConnected, subscribing...");
 
     webSocket.sendTextMessage(subscribeMessage);
 }
 
 void GDaxLib::onTextMessageReceived(QString message)
 {
-    const auto & messageText = message.toUtf8();
-
     try
     {
-        QJsonDocument document = QJsonDocument::fromJson(messageText);
+        QJsonDocument document = QJsonDocument::fromJson(message.toUtf8());
         QJsonObject object = document.object();
         QString type = object["type"].toString();
 
-        auto it = functionMap.find(type.toUtf8().constData());
+        auto it = functionMap.find(type.toStdString());
         if (it!=functionMap.end())
         {
-            //std::invoke(it->second, *this, object);
+            //std::invoke(it->second, *this, object); // try again with correct flags?
             (this->*(it->second))(object);
         }
         else
         {
-            // tmp, cld generate lots of log data
-            qWarning() << QString("Unprocessed message : [ %1 ] : %2")
-                .arg((long long)QThread::currentThreadId())
-                .arg(message);
+            log.Warning(QString("Unprocessed message: %1").arg(type));
         }
     }
     catch (const std::exception & e)
     {
-        // tmp, cld generate lots of log data
-        qWarning() << QString("Error : [ %1 ] : %2 : %3")
-            .arg((long long)QThread::currentThreadId())
-            .arg(e.what())
-            .arg(message);
+        log.Error(QString("Error: %1 , %2").arg(e.what()).arg(message));
     }
 }
 
 void GDaxLib::onError(QAbstractSocket::SocketError error)
 {
-    qWarning() << QMetaEnum::fromType<QAbstractSocket::SocketError>().valueToKey(error);
+    log.Error(QString("SocketError: %1").arg(error));
+    // qWarning() << QMetaEnum::fromType<QAbstractSocket::SocketError>().valueToKey(error);
 }
 
 void GDaxLib::onSslErrors(const QList<QSslError> &errors)
 {
     for(auto & e : errors)
     {
-        //e.error();
-        qWarning() << e.errorString();
+        log.Error(QString("SslError: %1, %2").arg(e.error()).arg(e.errorString()));
     }
 }
 
 void GDaxLib::ProcessError(const QJsonObject &object)
 {
+    // will be in the message pump, so cannot throw? need to notify ui
     QString errorMessage = object["message"].toString();
-    throw std::runtime_error(errorMessage.toUtf8().constData());
+    log.Error(QString("Error message: %1").arg(errorMessage));
+    throw std::runtime_error(errorMessage.toStdString());
 }
 
 void GDaxLib::ProcessSnapshot(const QJsonObject & object)
 {
+    log.Info("Snapshot");
+
     Decimal totBid;
     for (QJsonValueRef bid : object["bids"].toArray())
     {
@@ -120,8 +118,8 @@ void GDaxLib::ProcessSnapshot(const QJsonObject & object)
         QString price = bidArray[0].toString();
         QString amount = bidArray[1].toString();
 
-        Decimal dp(price.toUtf8().constData());
-        Decimal da(amount.toUtf8().constData());
+        Decimal dp(price.toStdString());
+        Decimal da(amount.toStdString());
         bids[dp] += da;
         totBid += da;
     }
@@ -133,8 +131,8 @@ void GDaxLib::ProcessSnapshot(const QJsonObject & object)
         QString price = askArray[0].toString();
         QString amount = askArray[1].toString();
 
-        Decimal dp(price.toUtf8().constData());
-        Decimal da(amount.toUtf8().constData());
+        Decimal dp(price.toStdString());
+        Decimal da(amount.toStdString());
         asks[dp] += da;
         //amountMax = std::max(amountMax, da);
         totAsk += da;
@@ -166,14 +164,15 @@ void GDaxLib::ProcessSnapshot(const QJsonObject & object)
 
 void GDaxLib::ProcessUpdate(const QJsonObject & object)
 {
+    log.Info("Update");
     for(QJsonValueRef changes : object["changes"].toArray())
     {
         QJsonArray array = changes.toArray();
         QString  changeType = array[0].toString();
         bool bid = changeType == "buy";
 
-        Decimal pd(array[1].toString().toUtf8().constData());
-        Decimal ad(array[2].toString().toUtf8().constData());
+        Decimal pd(array[1].toString().toStdString());
+        Decimal ad(array[2].toString().toStdString());
         bool zeroSize = ad == Decimal();
 
         if (bid)
@@ -210,11 +209,13 @@ void GDaxLib::ProcessHeartbeat(const QJsonObject & object)
     auto seq = static_cast<unsigned long long>(s.toVariant().toDouble());
     auto tradeId = static_cast<unsigned long long>(object["last_trade_id"].toDouble());
     QString time = object["time"].toString();
-    qDebug() << QString("HB: %1 %2 %3").arg(seq).arg(tradeId).arg(time);
+    log.Info(QString("HB: %1 %2 %3").arg(seq).arg(tradeId).arg(time));
 }
 
 void GDaxLib::ProcessTicker(const QJsonObject & object)
 {
+    log.Info("Tick");
+
     Tick tick(Tick::fromJson(object));
     if (tick.side == Tick::None)
     {
@@ -228,7 +229,7 @@ void GDaxLib::ProcessTicker(const QJsonObject & object)
     {
         if (ticks.front().sequence != tick.sequence -1)
         {
-            qWarning() << tr("Missed ticks") << ticks.front().sequence << tr(":") << tick.sequence;
+            log.Info(QString("Missed ticks %1 : %2").arg(ticks.front().sequence, tick.sequence));
         }
     }
 

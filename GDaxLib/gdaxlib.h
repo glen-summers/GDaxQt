@@ -4,9 +4,10 @@
 #include "defs.h"
 #include "tick.h"
 
+#include "flogging.h"
+
 #include <QObject>
 #include <QWebSocket>
-
 QT_FORWARD_DECLARE_CLASS(QJsonObject)
 
 #include <map>
@@ -15,6 +16,8 @@ QT_FORWARD_DECLARE_CLASS(QJsonObject)
 
 class GDaxLib : public QObject
 {
+    inline static const Flog::Log log = Flog::LogManager::GetLog<GDaxLib>();
+
     Q_OBJECT
 
     typedef std::deque<Tick> TicksType;

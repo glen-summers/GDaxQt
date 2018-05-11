@@ -3,6 +3,8 @@
 
 #include "defs.h"
 
+#include "flogging.h"
+
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 
@@ -18,6 +20,8 @@ struct Candle
 
 class RestProvider : public QObject
 {
+    inline static const Flog::Log log = Flog::LogManager::GetLog<RestProvider>();
+
     Q_OBJECT
 
     QNetworkAccessManager manager;

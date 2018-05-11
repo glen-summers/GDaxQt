@@ -15,7 +15,8 @@ SOURCES += \
     gdaxlib.cpp \
     utils.cpp \
     tick.cpp \
-    restprovider.cpp
+    restprovider.cpp \
+    filelogger.cpp
 
 HEADERS += \
     gdaxlib.h \
@@ -23,7 +24,9 @@ HEADERS += \
     tick.h \
     defs.h \
     tick.h \
-    restprovider.h
+    restprovider.h \
+    filelogger.h \
+    flogging.h
 
 DISTFILES += \
     misc.pri \

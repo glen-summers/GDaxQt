@@ -10,7 +10,7 @@ Tick Tick::fromJson(const QJsonObject & object)
     // truncates us? try chrono
     QDateTime time = QDateTime::fromString(object["time"].toString(), Qt::ISODateWithMs);
 
-    Decimal price(object["price"].toString().toUtf8().constData());
+    Decimal price(object["price"].toString().toStdString());
     QString sideValue = object["side"].toString();
     Tick::Side side = sideValue.isEmpty()
             ? None
@@ -20,11 +20,11 @@ Tick Tick::fromJson(const QJsonObject & object)
                     ? Sell
                     : throw std::runtime_error("Unexpected side");
 
-    Decimal lastSize(object["last_size"].toString().toUtf8().constData());
-    Decimal bestBid(object["best_bid"].toString().toUtf8().constData());
-    Decimal bestAsk(object["best_ask"].toString().toUtf8().constData());
+    Decimal lastSize(object["last_size"].toString().toStdString());
+    Decimal bestBid(object["best_bid"].toString().toStdString());
+    Decimal bestAsk(object["best_ask"].toString().toStdString());
 
-    //qInfo(QString("Ticker: %1 %2 %3 %4 %5 %6").arg(seq).arg(tradeId).arg(time, side, price, size).toUtf8().constData());
+    //qInfo(QString("Ticker: %1 %2 %3 %4 %5 %6").arg(seq).arg(tradeId).arg(time, side, price, size).toStdString());
 
     return { tradeId, sequence, time, price, side, lastSize, bestBid, bestAsk };
 }
