@@ -47,11 +47,33 @@ namespace
         }
     }
 
+    void LocalTime(tm & tm, const time_t & t)
+    {
+        #ifdef __linux__
+        localtime_r(&t, &tm);
+        #elif _WIN32
+        localtime_s(&tm, &t);
+        #else
+        //?
+        #endif
+    }
+
+    void GmTime(tm & tm, const time_t & t)
+    {
+        #ifdef __linux__
+        gmtime_r(&t, &tm);
+        #elif _WIN32
+        gmtime_s(&tm, &t);
+        #else
+        //?
+        #endif
+    }
+
     unsigned int GetDate()
     {
         std::time_t t = std::time(nullptr);
         std::tm tm;
-        localtime_s(&tm, &t);
+        LocalTime(tm, t);
         return ((1900 + tm.tm_year) * 100 + tm.tm_mon + 1) * 100 + tm.tm_mday;
     }
 
@@ -219,7 +241,7 @@ StreamInfo FileLogger::GetStream() const
     {
         time_t t = std::time(nullptr);
         tm tm;
-        localtime_s(&tm, &t);
+        LocalTime(tm, t);
         s << "_" << std::put_time(&tm, "%Y-%m-%d");
     }
     fs::path logFileName = path / (s.str() + ".log"); // combine, check trailing etc.
@@ -300,7 +322,7 @@ void FileLogger::InternalWrite(Flog::Level level, const char *message)
             auto now = std::chrono::system_clock::now();
             std::time_t t = std::chrono::system_clock::to_time_t(now);
             std::tm tm;
-            localtime_s(&tm, &t);
+            LocalTime(tm, t);
 
             int ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count() % 1000;
 
@@ -369,9 +391,9 @@ void FileLogger::WriteHeader(std::ostream &writer) const
 
     std::time_t t = std::time(nullptr);
     std::tm tm;
-    localtime_s(&tm, &t);
+    LocalTime(tm, t);
     std::tm gtm;
-    gmtime_s(&gtm, &t);
+    GmTime(gtm, t);
 
     static constexpr bool is64BitProcess = sizeof(void*) == 8;
     static constexpr int bits = is64BitProcess ? 64 : 32; // more?
@@ -393,7 +415,7 @@ void FileLogger::WriteFooter(std::ostream &writer) const
 {
     std::time_t t = std::time(nullptr);
     std::tm tm;
-    localtime_s(&tm, &t);
+    LocalTime(tm, t);
 
     writer
             << HeaderFooterSeparator << std::endl
