@@ -8,6 +8,8 @@
 #include <sstream>
 #include <algorithm>
 
+#include <math.h>
+
 Plot::Plot(double edge, bool xAxisLabels, bool yAxisLabels)
     : font(QApplication::font())
     , metrics(font)
