@@ -228,7 +228,7 @@ void GDaxLib::ProcessTicker(const QJsonObject & object)
     {
         if (ticks.front().sequence != tick.sequence -1)
         {
-            log.Info(QString("Missed ticks %1 : %2").arg(ticks.front().sequence, tick.sequence));
+            log.Info(QString("Missed ticks %1 : %2").arg(ticks.front().sequence).arg(tick.sequence));
         }
     }
 

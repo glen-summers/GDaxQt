@@ -200,9 +200,9 @@ namespace Flog
 //        ss.rdbuf().Reset(); // AV here
 //    }
 
-    void Log::Write(Level level, const char * message)
+    void Log::Write(Level level, const char * message) const
     {
-        FileLogger::Write(level, message);
+        FileLogger::Write(level, name.c_str(), message);
     }
 }
 
@@ -219,7 +219,7 @@ FileLogger::~FileLogger()
     CloseStream(); //
 }
 
-void FileLogger::Write(Flog::Level level, const char *message)
+void FileLogger::Write(Flog::Level level, const char * prefix, const char *message)
 {
     static FileLogger ftl;
     ftl.InternalWrite(level, message);
@@ -297,7 +297,7 @@ StreamInfo FileLogger::GetStream() const
     throw std::runtime_error("Exhausted possible stream names " + logFileName.u8string());
 }
 
-void FileLogger::InternalWrite(Flog::Level level, const char *message)
+void FileLogger::InternalWrite(Flog::Level level, const char * prefix, const char *message)
 {
     // ShouldTrace ...
     if (level < logLevel)
@@ -331,6 +331,7 @@ void FileLogger::InternalWrite(Flog::Level level, const char *message)
                 << std::put_time(&tm, "%d %b %Y, %H:%M:%S") << "." << std::setw(3) << std::setfill('0') << ms << std::setfill(' ')
                 << " : [ " << std::setw(THREAD_ID_WIDTH) << GetThreadId() << " ] : "
                 << std::setw(8) << Manip<Flog::Level>(TranslateLevel, level) << " : "
+                << prefix << " : "
                 << message << std::endl << std::flush;
         }
         catch (...)

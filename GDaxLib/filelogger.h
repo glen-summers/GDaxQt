@@ -46,13 +46,13 @@ class FileLogger
 public:
     FileLogger();
 
-    static void Write(Flog::Level level, const char * message);
+    static void Write(Flog::Level level, const char * prefix, const char * message);
 
 private:
     ~FileLogger();
 
     StreamInfo GetStream() const;
-    void InternalWrite(Flog::Level level, const char * message);
+    void InternalWrite(Flog::Level level, const char * prefix, const char * message);
     void EnsureStreamIsOpen();
     void HandleFileRollover(size_t newEntrySize);
     void CloseStream();

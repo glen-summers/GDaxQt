@@ -36,7 +36,7 @@ namespace Flog
     private:
         Log(const std::string & name) : name(name) {}
 
-        static void Write(Level level, const char * message);
+        void Write(Level level, const char * message) const;
     };
 
     class LogManager
