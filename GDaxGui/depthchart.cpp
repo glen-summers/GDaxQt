@@ -58,7 +58,7 @@ void DepthChart::paint(QPainter & painter) const
     double ox = rect.right(), oy = rect.y();
     double x = ox, y = oy;
 
-    QPen edgePen(QColor(BidEdgeColour), 2);
+    QPen edgePen(QColor(BidEdgeColour), 1.5);
     painter.setPen(edgePen);
     for (auto bit = bids.rbegin(); bit!=bids.rend(); ++bit)
     {
@@ -93,7 +93,7 @@ void DepthChart::paint(QPainter & painter) const
     amount = 0;
     first = true;
     x = ox, y = oy;
-    edgePen = QPen(QColor(AskEdgeColour), 2);
+    edgePen = QPen(QColor(AskEdgeColour), 1.5);
     painter.setPen(edgePen);
     for (auto a : asks)
     {
