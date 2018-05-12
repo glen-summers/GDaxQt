@@ -87,8 +87,7 @@ void GDaxLib::onTextMessageReceived(QString message)
 
 void GDaxLib::onError(QAbstractSocket::SocketError error)
 {
-    log.Error(QString("SocketError: %1").arg(error));
-    // qWarning() << QMetaEnum::fromType<QAbstractSocket::SocketError>().valueToKey(error);
+    log.Error(QString("SocketError: %1").arg(QMetaEnum::fromType<QAbstractSocket::SocketError>().valueToKey(error)));
 }
 
 void GDaxLib::onSslErrors(const QList<QSslError> &errors)

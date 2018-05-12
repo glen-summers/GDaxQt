@@ -160,7 +160,7 @@ namespace
         BufferType m_buf;
 
     public:
-        GenericOutStream(std::ios_base::fmtflags f = 0) : base(&m_buf)
+        GenericOutStream(std::ios_base::fmtflags f = std::ios_base::fmtflags()) : base(&m_buf)
         {
             base::setf(f);
         }

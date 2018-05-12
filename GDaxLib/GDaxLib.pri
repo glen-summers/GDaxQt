@@ -14,6 +14,7 @@ win32 {
 
 unix {
     LIBS += -L$$OUT_PWD/../GDaxLib -lGDaxLib
+    LIBS += -lstdc++fs
 }
 
 win32 {

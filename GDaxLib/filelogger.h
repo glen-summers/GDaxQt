@@ -2,8 +2,15 @@
 #define FILELOGGER_H
 
 #include <fstream>
-#include <filesystem>
 #include <mutex>
+
+#ifdef __linux__
+#include <experimental/filesystem>
+#elif _WIN32
+#include <filesystem>
+#else
+//?
+#endif
 
 namespace Flog { enum class Level : unsigned; }
 
