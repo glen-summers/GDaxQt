@@ -222,7 +222,7 @@ FileLogger::~FileLogger()
 void FileLogger::Write(Flog::Level level, const char * prefix, const char *message)
 {
     static FileLogger ftl;
-    ftl.InternalWrite(level, message);
+    ftl.InternalWrite(level, prefix, message);
 }
 
 StreamInfo FileLogger::GetStream() const
