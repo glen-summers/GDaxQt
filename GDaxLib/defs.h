@@ -23,6 +23,9 @@ inline MakerSide TakerToMaker(TakerSide side)
 
         case TakerSide::Sell:
             return  MakerSide::Buy;
+
+        case TakerSide::None:
+            break;
     }
     return MakerSide::None;
 }
