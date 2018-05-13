@@ -6,7 +6,6 @@
 #include <QThread>
 #include <QMetaEnum>
 
-
 namespace
 {
 // cfg. allow using sandbox
@@ -24,6 +23,7 @@ namespace
     "ticker"
 ]
 })";
+
 }
 
 GDaxLib::FunctionMap GDaxLib::functionMap =
@@ -38,13 +38,16 @@ GDaxLib::FunctionMap GDaxLib::functionMap =
 GDaxLib::GDaxLib(QObject * parent) // parent?
     : QObject(parent)
 {
+    // proxy?
+    // QList<QNetworkProxy> QNetworkProxyFactory::systemProxyForQuery(const QNetworkProxyQuery &query = QNetworkProxyQuery())
+
     connect(&webSocket, &QWebSocket::connected, this, &GDaxLib::onConnected);
 
     typedef void (QWebSocket:: *sslErrorsSignal)(const QList<QSslError> &);
 
-    connect(&webSocket, &QWebSocket::textMessageReceived, this, &GDaxLib::onTextMessageReceived);//sig?
+    connect(&webSocket, &QWebSocket::textMessageReceived, this, &GDaxLib::onTextMessageReceived);
     connect(&webSocket, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error), this, &GDaxLib::onError);
-    connect(&webSocket, static_cast<sslErrorsSignal>(&QWebSocket::sslErrors), this, &GDaxLib::onSslErrors);//sig?
+    connect(&webSocket, static_cast<sslErrorsSignal>(&QWebSocket::sslErrors), this, &GDaxLib::onSslErrors);
 
     log.Info(QString("Connecting to %1").arg(url));
     webSocket.open(QUrl(url));
@@ -215,26 +218,11 @@ void GDaxLib::ProcessTicker(const QJsonObject & object)
 {
     log.Info("Tick");
 
-    Tick tick(Tick::fromJson(object));
-    if (tick.side == Tick::None)
+    Tick t(Tick::fromJson(object));
+    if (t.side == TakerSide::None)
     {
-        /* {"type":"ticker","sequence":3641322438,"product_id":"BTC-EUR","price":"8112.29000000",
-         * "open_24h":"8035.56000000","volume_24h":"2096.42425104","low_24h":"7858.70000000","high_24h":"8166.00000000",
-         * "volume_30d":"63169.83438105","best_bid":"8112.3","best_ask":"8112.31"}*/
         return;
     }
 
-    if (!ticks.empty())
-    {
-        if (ticks.front().sequence != tick.sequence -1)
-        {
-            log.Info(QString("Missed ticks %1 : %2").arg(ticks.front().sequence).arg(tick.sequence));
-        }
-    }
-
-    ticks.push_front(tick);
-    if (ticks.size()>100) // parm
-    {
-        ticks.pop_back();
-    }
+    emit tick(t);
 }

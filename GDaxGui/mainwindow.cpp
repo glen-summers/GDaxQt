@@ -16,10 +16,14 @@ MainWindow::MainWindow(QWidget *parent)
     ui->depthChart->setGDaxLib(&g);
 
     connect(timer.get(), SIGNAL(timeout()), this, SLOT(onUpdate()));
+    connect(&restProvider, SIGNAL(candles(std::vector<Candle>)), this, SLOT(setCandles(std::vector<Candle>)));
+    connect(&restProvider, SIGNAL(trades(std::vector<Trade>)), this, SLOT(setTrades(std::vector<Trade>)));
+    connect(&g, &GDaxLib::tick, this, &MainWindow::onTick);
+
     timer->start(1000);
 
-    connect(&restProvider, SIGNAL(data(std::vector<Candle>)),
-            this, SLOT(setCandles(std::vector<Candle>)));
+    restProvider.fetchTrades();
+    restProvider.fetchCandles();
 }
 
 void MainWindow::onUpdate()
@@ -141,7 +145,6 @@ void MainWindow::generateTradeList()
     int fontHeight = fm.height();
     int count = trades.height()/fontHeight;
 
-    const auto & ticks= g.Ticks();
     int priceDecs = 2;
     int amountDecs = 4;
 
@@ -170,15 +173,19 @@ td.amount span { color:grey; }
         QString amount = QString::number(it->lastSize.getAsDouble(), 'f', amountDecs);
         QString time = it->time.toLocalTime().time().toString();
 
+        // MakerBuy == TakerSell = downtick
+        // MakerSell == TakerBuy = uptick
+        // bid|ask css just use up\down?
         switch (it->side)
         {
-        case Tick::Side::Buy:
-            stream << "<tr><td class=\"bid\">";
+        case TakerSide::Buy:
+            stream << "<tr><td class=\"bid\">"; // -> up
             break;
-        case Tick::Side::Sell:
-            stream << "<tr><td class=\"ask\">";
+        case TakerSide::Sell:
+            stream << "<tr><td class=\"ask\">"; // -> down
             break;
-        case Tick::Side::None:
+        case TakerSide::None:
+            stream << "<tr><td>";
             continue;
         }
 
@@ -199,4 +206,37 @@ td.amount span { color:grey; }
 void MainWindow::setCandles(std::vector<Candle> candles)
 {
     this->ui->candleChart->setCandles(std::move(candles));
+}
+
+void MainWindow::setTrades(std::vector<Trade> trades)
+{
+    // need to merge into existing ticks
+    for (auto t : trades)
+    {
+        Tick tick{};
+        tick.tradeId = t.tradeId;
+        tick.time = t.time;
+        tick.price = t.price;
+        tick.side= ToTaker(t.side);
+        tick.lastSize = t.size;
+        ticks.push_back(tick);
+    }
+}
+
+void MainWindow::onTick(Tick tick)
+{
+    if (!ticks.empty())
+    {
+        if (ticks.front().sequence != tick.sequence -1)
+        {
+            log.Info(QString("Missed ticks %1 : %2").arg(ticks.front().sequence).arg(tick.sequence));
+        }
+    }
+
+    ticks.push_front(tick);
+    if (ticks.size()>100) // parm
+    {
+        ticks.pop_back();
+    }
+
 }

@@ -3,6 +3,7 @@
 
 #include "defs.h"
 #include "tick.h"
+#include "trade.h"
 
 #include "flogging.h"
 
@@ -20,20 +21,20 @@ class GDaxLib : public QObject
 
     Q_OBJECT
 
-    typedef std::deque<Tick> TicksType;
     typedef std::unordered_map<std::string, void(GDaxLib::*)(const QJsonObject & object)> FunctionMap;
     static FunctionMap functionMap;
 
     QWebSocket webSocket;
 
+    // mov eto client code
     std::map<Decimal, Decimal> bids, asks;
     Decimal priceMin;
     Decimal priceMax;
     Decimal amountMax;
-    TicksType ticks;
 
 signals:
     void update();
+    void tick(Tick tick);
 
 public:
     explicit GDaxLib(QObject * parent = nullptr);
@@ -61,11 +62,6 @@ public:
     const Decimal & AmountMax() const
     {
         return amountMax;
-    }
-
-    const TicksType & Ticks() const
-    {
-        return ticks;
     }
 
 private slots:

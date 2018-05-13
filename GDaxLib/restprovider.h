@@ -2,21 +2,13 @@
 #define RESTPROVIDER_H
 
 #include "defs.h"
+#include "trade.h"
+#include "candle.h"
 
 #include "flogging.h"
 
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
-
-struct Candle
-{
-    time_t startTime;
-    Decimal lowestPrice;
-    Decimal highestPrice;
-    Decimal openingPrice;
-    Decimal closingPrice;
-    Decimal volume;
-};
 
 class RestProvider : public QObject
 {
@@ -27,16 +19,19 @@ class RestProvider : public QObject
     QNetworkAccessManager manager;
 
 public:
-    RestProvider();
+    void fetchTrades();
+    void fetchCandles();
 
 signals:
     void error();
-    void data(std::vector<Candle> candles);
+    void candles(std::vector<Candle> values);
+    void trades(std::vector<Trade> values);
 
 private slots:
     void error(QNetworkReply::NetworkError error);
     void sslErrors(QList<QSslError> errors);
-    void downloadFinished(QNetworkReply * reply);
+    void candlesFinished(QNetworkReply * reply);
+    void tradesFinished(QNetworkReply * reply);
 };
 
 #endif // RESTPROVIDER_H

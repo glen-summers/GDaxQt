@@ -4,20 +4,20 @@
 
 Tick Tick::fromJson(const QJsonObject & object)
 {
-    auto tradeId = static_cast<Tick::TradeId>(object["last_trade_id"].toDouble());
-    auto sequence = static_cast<Tick::SequenceNumber>(object["sequence"].toDouble());
+    auto tradeId = static_cast<TradeId>(object["last_trade_id"].toDouble());
+    auto sequence = static_cast<SequenceNumber>(object["sequence"].toDouble());
 
     // truncates us? try chrono
     QDateTime time = QDateTime::fromString(object["time"].toString(), Qt::ISODateWithMs);
 
     Decimal price(object["price"].toString().toStdString());
     QString sideValue = object["side"].toString();
-    Tick::Side side = sideValue.isEmpty()
-            ? None
+    TakerSide side = sideValue.isEmpty()
+            ? TakerSide::None
             : sideValue == "buy"
-                ? Buy
+                ? TakerSide::Buy
                 : sideValue == "sell"
-                    ? Sell
+                    ? TakerSide::Sell
                     : throw std::runtime_error("Unexpected side");
 
     Decimal lastSize(object["last_size"].toString().toStdString());

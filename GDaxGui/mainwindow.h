@@ -14,7 +14,10 @@
 
 class MainWindow : public QMainWindow
 {
+    inline static const Flog::Log log = Flog::LogManager::GetLog<MainWindow>();
+
     Q_OBJECT
+    typedef std::deque<Tick> TicksType;
 
     std::unique_ptr<Ui::MainWindow> ui;
     std::unique_ptr<QTimer> timer;
@@ -22,6 +25,7 @@ class MainWindow : public QMainWindow
     GDaxLib g;
     RestProvider restProvider;
     std::vector<Candle> candles;
+    TicksType ticks;
 
 public:
     explicit MainWindow(QWidget *parent = 0);
@@ -32,11 +36,12 @@ public slots:
 private slots:
     void on_actionE_xit_triggered();
     void setCandles(std::vector<Candle> candles);
+    void setTrades(std::vector<Trade> trades);
+    void onTick(Tick tick);
 
 private:
     void generateOrderBook();
     void generateTradeList();
-
 };
 
 #endif // MAINWINDOW_H

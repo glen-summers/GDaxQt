@@ -16,7 +16,8 @@ SOURCES += \
     utils.cpp \
     tick.cpp \
     restprovider.cpp \
-    filelogger.cpp
+    filelogger.cpp \
+    trade.cpp
 
 HEADERS += \
     gdaxlib.h \
@@ -26,7 +27,9 @@ HEADERS += \
     tick.h \
     restprovider.h \
     filelogger.h \
-    flogging.h
+    flogging.h \
+    trade.h \
+    candle.h
 
 DISTFILES += \
     misc.pri \
