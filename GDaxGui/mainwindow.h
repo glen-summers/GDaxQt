@@ -34,8 +34,8 @@ public slots:
 
 private slots:
     void on_actionE_xit_triggered();
-    void Candles(std::deque<Candle> candles);
-    void Trades(std::deque<Trade> trades);
+    void Candles(std::deque<Candle> values);
+    void Trades(std::deque<Trade> values);
     void Ticker(Tick tick);
 
 private:

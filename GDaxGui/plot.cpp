@@ -200,7 +200,6 @@ double Plot::calcYAxisLabelWidth(double min, double max, double scale) const
     int decs = std::max(0, static_cast<int>(1 - log10(step))); // floor?
     double value = step * floor(max / scale / step); // max od abs(max), abs(min)?
 
-    QFontMetrics metrics(font); // cache
     return metrics.boundingRect(QString::number(value, 'g', decs)).width();
 }
 

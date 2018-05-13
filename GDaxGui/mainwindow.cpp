@@ -202,14 +202,14 @@ td.amount span { color:grey; }
    tradesWidget.document()->setHtml(*stream.string());
 }
 
-void MainWindow::Candles(std::deque<Candle> candles)
+void MainWindow::Candles(std::deque<Candle> values)
 {
-    this->ui->candleChart->setCandles(std::move(candles)); // prevents elision?
+    this->ui->candleChart->setCandles(std::move(values)); // prevents elision?
 }
 
-void MainWindow::Trades(std::deque<Trade> trades)
+void MainWindow::Trades(std::deque<Trade> values)
 {
-    this->trades = std::move(trades); // prevent elision?
+    this->trades = std::move(values); // prevents elision?
 }
 
 void MainWindow::Ticker(Tick tick)

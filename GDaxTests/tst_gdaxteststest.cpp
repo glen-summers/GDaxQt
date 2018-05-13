@@ -1,11 +1,22 @@
+
 #include "defs.h"
+
 #include "rapidjson/document.h"
 using namespace rapidjson;
 
 #include "utils.h"
 
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(push,3)
+#endif
+
 #include <QtTest>
 #include <QAbstractSocket>
+
+#ifdef _MSC_VER
+#pragma warning(pop)
+#endif
 
 #define AssertTrue(statement, message) QVERIFY2(statement, message)
 #define AssertFalse(statement, message) QVERIFY2(!(statement), message)

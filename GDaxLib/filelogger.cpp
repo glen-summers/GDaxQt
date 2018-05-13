@@ -52,7 +52,7 @@ namespace
     {
         #ifdef __linux__
         localtime_r(&t, &tm);
-        #elif _WIN32
+        #elif _MSC_VER
         localtime_s(&tm, &t);
         #else
         //?
@@ -63,7 +63,7 @@ namespace
     {
         #ifdef __linux__
         gmtime_r(&t, &tm);
-        #elif _WIN32
+        #elif _MSC_VER
         gmtime_s(&tm, &t);
         #else
         //?

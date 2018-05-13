@@ -3,13 +3,13 @@
 
 #include <qglobal.h>
 
-#ifdef Q_OS_WIN32
+#ifdef _MSC_VER
 #include <windows.h>
 #endif
 
 void EnableAnsiConsole()
 {
-#ifdef Q_OS_WIN32
+#ifdef _MSC_VER
     HANDLE hOut = ::GetStdHandle(STD_OUTPUT_HANDLE);
     DWORD dwMode = 0;
     if (!GetConsoleMode(hOut, &dwMode))
