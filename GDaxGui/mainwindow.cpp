@@ -63,10 +63,10 @@ void MainWindow::GenerateOrderBook()
     // subset of html - http://doc.qt.io/qt-5/richtext-html-subset.html
     stream << R"(<style>
 td { text-align:right; }
-td.ask { color:red; }
-td.ask span { color:darkred; }
-td.bid { color:limegreen; }
-td.bid span { color:darkgreen; }
+td.down { color:red; }
+td.down span { color:darkred; }
+td.up { color:limegreen; }
+td.up span { color:darkgreen; }
 td.mid { color:white; padding: 10px; }
 td.amount { color:white; }
 td.amount span { color:grey; }
@@ -85,7 +85,7 @@ td.amount span { color:grey; }
         QString amount = QString::number(a.getAsDouble(), 'f', amountDecs);
         QString totAmount = QString::number(tot.getAsDouble(), 'f', amountDecs);
 
-        reverso << QString(R"(<tr><td class="ask">%1</td><td class="amount">%2</td><td class="amount">%3</td><\tr>)")
+        reverso << QString(R"(<tr><td class="down">%1</td><td class="amount">%2</td><td class="amount">%3</td><\tr>)")
                    .arg(DiffText(prevPrice, price))
                    .arg(DiffText(prevAmount, amount))
                    .arg(DiffText(prevTotAmount, totAmount));
@@ -124,7 +124,7 @@ td.amount span { color:grey; }
         QString totAmount = QString::number(tot.getAsDouble(), 'f', amountDecs);
 
         stream << "<tr>"
-               << "<td class=\"bid\">" << DiffText(prevPrice, price) << "</td>"
+               << "<td class=\"up\">" << DiffText(prevPrice, price) << "</td>"
                << "<td class=\"amount\">" << DiffText(prevAmount, amount) << "</td>"
                << "<td class=\"amount\">" << DiffText(prevTotAmount, totAmount) << "</td>"
                << "<\tr>";
@@ -156,10 +156,10 @@ void MainWindow::GenerateTradeList()
     // subset of html - http://doc.qt.io/qt-5/richtext-html-subset.html
     stream << R"(<style>
 td { text-align:right; }
-td.ask { color:red; }
-td.ask span { color:darkred; }
-td.bid { color:limegreen; }
-td.bid span { color:darkgreen; }
+td.down { color:red; }
+td.down span { color:darkred; }
+td.up { color:limegreen; }
+td.up span { color:darkgreen; }
 td.mid { color:white; padding: 10px; }
 td.amount { color:white; }
 td.amount span { color:grey; }
@@ -175,16 +175,15 @@ td.amount span { color:grey; }
 
         // MakerBuy == TakerSell = downtick
         // MakerSell == TakerBuy = uptick
-        // bid|ask css just use up\down?
         switch (it->side)
         {
-        case TakerSide::Buy:
-            stream << "<tr><td class=\"bid\">"; // -> up
+        case MakerSide::Buy:
+            stream << "<tr><td class=\"down\">";
             break;
-        case TakerSide::Sell:
-            stream << "<tr><td class=\"ask\">"; // -> down
+        case MakerSide::Sell:
+            stream << "<tr><td class=\"up\">"; // -> down
             break;
-        case TakerSide::None:
+        case MakerSide::None:
             stream << "<tr><td>";
             continue;
         }
@@ -242,13 +241,13 @@ void MainWindow::Ticker(Tick tick)
 //        log.Info("1st tick, no trades yet");
 //    }
 
-    // masquare aggrgated tick as trade, todo fetch missing tradeId range, here or from HB?
+    // masquerade aggregated tick as trade, todo fetch missing tradeId range, here or from HB?
     Trade trade;
     trade.time = tick.time;
     trade.tradeId = tick.tradeId;
     trade.price = tick.price;
     trade.size = tick.lastSize;
-    trade.side = ToMaker(tick.side);
+    trade.side = TakerToMaker(tick.side);
 
     trades.push_front(trade);
     if (trades.size()>100) // parm

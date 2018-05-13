@@ -14,7 +14,7 @@ typedef unsigned long long SequenceNumber;
 enum class MakerSide { None, Buy, Sell }; // down\up
 enum class TakerSide { None, Buy, Sell }; // up\down
 
-inline MakerSide ToMaker(TakerSide side)
+inline MakerSide TakerToMaker(TakerSide side)
 {
     switch (side)
     {

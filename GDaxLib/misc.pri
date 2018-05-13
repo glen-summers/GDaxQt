@@ -1,5 +1,5 @@
 CONFIG += c++17
-win32:QMAKE_CXXFLAGS += /std:c++17
+win32:QMAKE_CXXFLAGS += /std:c++17 /permissive-
 unix:QMAKE_CXXFLAGS += -std=c++17
 
 #avoid here...
