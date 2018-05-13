@@ -9,34 +9,36 @@
 // rework as a basic request response handler
 // "One QNetworkAccessManager should be enough for the whole Qt application."
 
-void RestProvider::fetchCandles()
+void RestProvider::FetchCandles()
 {
     QUrl url("https://api.gdax.com/products/BTC-EUR/candles?granularity=3600");
     QNetworkRequest request(url);
     QNetworkReply * reply = manager.get(request);
-    connect(reply, SIGNAL(sslErrors(QList<QSslError>)), SLOT(sslErrors(QList<QSslError>)));
-    connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), SLOT(error(QNetworkReply::NetworkError)));
-    connect(reply, &QNetworkReply::finished, [this, reply]() { RestProvider::candlesFinished(reply); });
+
+    connect(reply, &QNetworkReply::sslErrors, this, &RestProvider::SslErrors);
+    connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), this, &RestProvider::Error);
+    connect(reply, &QNetworkReply::finished, [this, reply]() { RestProvider::CandlesFinished(reply); });
 }
 
-void RestProvider::fetchTrades()
+void RestProvider::FetchTrades()
 {
     // parameterise fetch? want to be >= trade history window rows
     QUrl url("https://api.gdax.com/products/BTC-EUR/trades?limit=100");
     QNetworkRequest request(url);
     QNetworkReply * reply = manager.get(request);
-    connect(reply, SIGNAL(sslErrors(QList<QSslError>)), SLOT(sslErrors(QList<QSslError>)));
-    connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), SLOT(error(QNetworkReply::NetworkError)));
-    connect(reply, &QNetworkReply::finished, [this, reply]() { RestProvider::tradesFinished(reply); });
+
+    connect(reply, &QNetworkReply::sslErrors, this, &RestProvider::SslErrors);
+    connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), this, &RestProvider::Error);
+    connect(reply, &QNetworkReply::finished, [this, reply]() { RestProvider::TradesFinished(reply); });
 }
 
-void RestProvider::error(QNetworkReply::NetworkError error)
+void RestProvider::Error(QNetworkReply::NetworkError error)
 {
     // ContentNotFoundError 203
     qWarning() << QString("RestProvider::error %1)").arg(error);
 }
 
-void RestProvider::sslErrors(QList<QSslError> errors)
+void RestProvider::SslErrors(QList<QSslError> errors)
 {
     for(auto & e : errors)
     {
@@ -44,16 +46,16 @@ void RestProvider::sslErrors(QList<QSslError> errors)
     }
 }
 
-void RestProvider::candlesFinished(QNetworkReply *reply)
+void RestProvider::CandlesFinished(QNetworkReply *reply)
 {
     if (reply->error())
     {
         qWarning() << reply->error();
-        emit error();
+        emit OnError();
         return;
     }
 
-    std::vector<Candle> vec;
+    std::deque<Candle> candles;
     QJsonDocument document = QJsonDocument::fromJson(reply->readAll());
     for (const auto & a1: document.array())
     {
@@ -65,32 +67,30 @@ void RestProvider::candlesFinished(QNetworkReply *reply)
         Decimal closingPrice(ar[4].toDouble());
         Decimal volume(ar[5].toDouble());
 
-      vec.push_back({startTime, lowestPrice, highestPrice, openingPrice, closingPrice, volume});
+      candles.push_back({startTime, lowestPrice, highestPrice, openingPrice, closingPrice, volume});
     }
     reply->deleteLater();
 
-    emit candles(std::move(vec));
+    emit OnCandles(std::move(candles));
 }
 
-void RestProvider::tradesFinished(QNetworkReply *reply)
+void RestProvider::TradesFinished(QNetworkReply *reply)
 {
     if (reply->error())
     {
         qWarning() << reply->error();
-        emit error();
+        emit OnError();
         return;
     }
 
     QJsonDocument document = QJsonDocument::fromJson(reply->readAll());
-    std::vector<Trade> vec;
+    std::deque<Trade> trades;
     const auto & array  = document.array();
-    vec.reserve(array.size());
     for (const QJsonValue & t : array)
     {
-        vec.push_back(Trade::fromJson(t.toObject()));
+        trades.push_back(Trade::FromJson(t.toObject()));
     }
     reply->deleteLater();
 
-    emit trades(std::move(vec));
+    emit OnTrades(std::move(trades));
 }
-

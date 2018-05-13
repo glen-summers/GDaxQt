@@ -2,7 +2,7 @@
 
 #include <QJsonObject>
 
-Tick Tick::fromJson(const QJsonObject & object)
+Tick Tick::FromJson(const QJsonObject & object)
 {
     auto tradeId = static_cast<TradeId>(object["last_trade_id"].toDouble());
     auto sequence = static_cast<SequenceNumber>(object["sequence"].toDouble());

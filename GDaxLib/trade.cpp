@@ -2,7 +2,7 @@
 
 #include <QDateTime>
 
-Trade Trade::fromJson(const QJsonObject & object)
+Trade Trade::FromJson(const QJsonObject & object)
 {
     // truncates us? try chrono
     QDateTime time = QDateTime::fromString(object["time"].toString(), Qt::ISODateWithMs);

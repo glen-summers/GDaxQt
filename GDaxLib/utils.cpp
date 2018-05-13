@@ -25,7 +25,7 @@ void EnableAnsiConsole()
 #endif
 }
 
-QString diffText(const QString & s1, const QString & s2)
+QString DiffText(const QString & s1, const QString & s2)
 {
     if (s2.isEmpty())
     {
@@ -55,4 +55,3 @@ QString diffText(const QString & s1, const QString & s2)
     result.append(s2.midRef(matchLength));
     return result;
 }
-

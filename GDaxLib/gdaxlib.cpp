@@ -37,23 +37,21 @@ GDaxLib::FunctionMap GDaxLib::functionMap =
 
 GDaxLib::GDaxLib(QObject * parent) // parent?
     : QObject(parent)
+    , lastTradeId()
 {
     // proxy?
     // QList<QNetworkProxy> QNetworkProxyFactory::systemProxyForQuery(const QNetworkProxyQuery &query = QNetworkProxyQuery())
 
-    connect(&webSocket, &QWebSocket::connected, this, &GDaxLib::onConnected);
-
-    typedef void (QWebSocket:: *sslErrorsSignal)(const QList<QSslError> &);
-
-    connect(&webSocket, &QWebSocket::textMessageReceived, this, &GDaxLib::onTextMessageReceived);
-    connect(&webSocket, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error), this, &GDaxLib::onError);
-    connect(&webSocket, static_cast<sslErrorsSignal>(&QWebSocket::sslErrors), this, &GDaxLib::onSslErrors);
+    connect(&webSocket, &QWebSocket::connected, this, &GDaxLib::Connected);
+    connect(&webSocket, &QWebSocket::textMessageReceived, this, &GDaxLib::TextMessageReceived);
+    connect(&webSocket, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error), this, &GDaxLib::Error);
+    connect(&webSocket, QOverload<const QList<QSslError> &>::of(&QWebSocket::sslErrors), this, &GDaxLib::SslErrors);
 
     log.Info(QString("Connecting to %1").arg(url));
     webSocket.open(QUrl(url));
 }
 
-void GDaxLib::onConnected()
+void GDaxLib::Connected()
 {
     // need qInstallMessageHandler(SyslogMessageHandler);? and handle ourselves?
     // https://stackoverflow.com/questions/28540571/how-to-enable-and-disable-qdebug-messages
@@ -63,7 +61,7 @@ void GDaxLib::onConnected()
     webSocket.sendTextMessage(subscribeMessage);
 }
 
-void GDaxLib::onTextMessageReceived(QString message)
+void GDaxLib::TextMessageReceived(QString message)
 {
     try
     {
@@ -88,12 +86,12 @@ void GDaxLib::onTextMessageReceived(QString message)
     }
 }
 
-void GDaxLib::onError(QAbstractSocket::SocketError error)
+void GDaxLib::Error(QAbstractSocket::SocketError error)
 {
     log.Error(QString("SocketError: %1").arg(QMetaEnum::fromType<QAbstractSocket::SocketError>().valueToKey(error)));
 }
 
-void GDaxLib::onSslErrors(const QList<QSslError> &errors)
+void GDaxLib::SslErrors(const QList<QSslError> &errors)
 {
     for(auto & e : errors)
     {
@@ -140,7 +138,7 @@ void GDaxLib::ProcessSnapshot(const QJsonObject & object)
         totAsk += da;
     }
 
-    Decimal target = (totBid + totAsk) / 1000; // .1%
+    Decimal target = (totBid + totAsk) / 1000; // .1% -- move to depths chart
     Decimal tot;
 
     auto bidIt = bids.rbegin();
@@ -161,7 +159,7 @@ void GDaxLib::ProcessSnapshot(const QJsonObject & object)
     priceMax = askIt->first;
     amountMax = tot;
 
-    emit update();
+    emit OnUpdate();
 }
 
 void GDaxLib::ProcessUpdate(const QJsonObject & object)
@@ -202,27 +200,35 @@ void GDaxLib::ProcessUpdate(const QJsonObject & object)
     }
     // adjust scales here?
 
-    emit update();
+    emit OnUpdate();
 }
 
 void GDaxLib::ProcessHeartbeat(const QJsonObject & object)
 {
-    auto s = object["sequence"];
-    auto seq = static_cast<unsigned long long>(s.toVariant().toDouble());
-    auto tradeId = static_cast<unsigned long long>(object["last_trade_id"].toDouble());
-    QString time = object["time"].toString();
-    log.Info(QString("HB: %1 %2 %3").arg(seq).arg(tradeId).arg(time));
+    auto seq = static_cast<SequenceNumber>(object["sequence"].toDouble());
+    auto tradeId = static_cast<TradeId>(object["last_trade_id"].toDouble());
+    QString serverTime = object["time"].toString();
+
+    if (lastTradeId!=0 && lastTradeId+1 != tradeId)
+    {
+        log.Info(QString("[%1] [%2] MissedTrade(s): %3 - %4")
+                 .arg(serverTime)
+                 .arg(seq)
+                 .arg(lastTradeId+1)
+                 .arg(tradeId-1)
+                 .arg(serverTime));
+    }
 }
 
 void GDaxLib::ProcessTicker(const QJsonObject & object)
 {
     log.Info("Tick");
 
-    Tick t(Tick::fromJson(object));
-    if (t.side == TakerSide::None)
+    auto tick(Tick::FromJson(object));
+    if (tick.side == TakerSide::None)
     {
         return;
     }
 
-    emit tick(t);
+    emit OnTick(tick);
 }

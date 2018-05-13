@@ -9,7 +9,7 @@ class QJsonObject;
 
 struct Tick
 {
-    static Tick fromJson(const QJsonObject &);
+    static Tick FromJson(const QJsonObject &);
 
     TradeId tradeId;
     SequenceNumber sequence;

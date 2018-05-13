@@ -10,6 +10,8 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 
+#include <deque>
+
 class RestProvider : public QObject
 {
     inline static const Flog::Log log = Flog::LogManager::GetLog<RestProvider>();
@@ -19,19 +21,19 @@ class RestProvider : public QObject
     QNetworkAccessManager manager;
 
 public:
-    void fetchTrades();
-    void fetchCandles();
+    void FetchTrades();
+    void FetchCandles();
 
 signals:
-    void error();
-    void candles(std::vector<Candle> values);
-    void trades(std::vector<Trade> values);
+    void OnError();
+    void OnCandles(std::deque<Candle> values);
+    void OnTrades(std::deque<Trade> values);
 
 private slots:
-    void error(QNetworkReply::NetworkError error);
-    void sslErrors(QList<QSslError> errors);
-    void candlesFinished(QNetworkReply * reply);
-    void tradesFinished(QNetworkReply * reply);
+    void Error(QNetworkReply::NetworkError error);
+    void SslErrors(QList<QSslError> errors);
+    void CandlesFinished(QNetworkReply * reply);
+    void TradesFinished(QNetworkReply * reply);
 };
 
 #endif // RESTPROVIDER_H

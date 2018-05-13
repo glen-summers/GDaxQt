@@ -9,7 +9,7 @@ CandleChart::CandleChart(QWidget *parent)
 {
 }
 
-void CandleChart::setCandles(std::vector<Candle> forkHandles)
+void CandleChart::setCandles(std::deque<Candle> forkHandles)
 {
     double min = std::numeric_limits<double>::max();
     double max = std::numeric_limits<double>::lowest();

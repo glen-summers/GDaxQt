@@ -4,6 +4,6 @@
 #include <QString>
 
 void EnableAnsiConsole();
-QString diffText(const QString & s1, const QString & s2);
+QString DiffText(const QString & s1, const QString & s2);
 
 #endif // UTILS_H

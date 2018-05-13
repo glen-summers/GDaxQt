@@ -23,11 +23,11 @@ class GDaxTestsTest : public QObject
 public:
     GDaxTestsTest(){}
 
-private Q_SLOTS:
-    void initTestCase(){}
-    void cleanupTestCase(){}
+private slots:
+    void InitTestCase(){}
+    void CleanupTestCase(){}
 
-    void testParsingL2Update()
+    void ParsingL2Update()
     {
         QString data(R"({
     "type":"l2update",
@@ -66,7 +66,7 @@ private Q_SLOTS:
         AssertEquals("5.62802151", subArray[2].toString());
     }
 
-    void testParsingHeartbeat()
+    void ParsingHeartbeat()
     {
         QString data(R"({
     "type":"heartbeat",
@@ -88,7 +88,7 @@ private Q_SLOTS:
         AssertEquals(object["last_trade_id"].type(), QJsonValue::Type::Double);
     }
 
-    void testUsingRapidJsonL2Update()
+    void UsingRapidJsonL2Update()
     {
         Document document;
         document.Parse(R"({
@@ -119,7 +119,7 @@ private Q_SLOTS:
         AssertEquals("5.62802151", array[2].GetString());
     }
 
-    void testRapidJsonHeartbeat()
+    void RapidJsonHeartbeat()
     {
         std::string data(R"({
     "type":"heartbeat",
@@ -148,7 +148,7 @@ private Q_SLOTS:
         AssertEquals(object["sequence"].GetUint64(), 3637742500ull);
     }
 
-    void testRapidJsonTicker()
+    void RapidJsonTicker()
     {
         std::string data(R"({
     "type": "ticker",
@@ -201,7 +201,7 @@ private Q_SLOTS:
         AssertEquals(object["best_ask"].GetString(), "4388.01");
     }
 
-    void testParseCandles()
+    void ParseCandles()
     {
         QString data = R"([[1525450800,8035.81,8035.82,8035.82,8035.81,0.23243],
 [1525450740,8020,8046.32,8046.32,8035.82,7.87281723],
@@ -228,21 +228,21 @@ private Q_SLOTS:
         }
     }
 
-    void testDeltas()
+    void Deltas()
     {
-        AssertEquals("", diffText("", ""));
-        AssertEquals("", diffText("abc", ""));
-        AssertEquals(R"(<span>abc</span>)", diffText("abc", "abc"));
-        AssertEquals(R"(abc)", diffText("", "abc"));
-        AssertEquals(R"(def)", diffText("abc", "def"));
-        AssertEquals(R"(<span>a</span>xc)", diffText("abc", "axc"));
-        AssertEquals(R"(xbc)", diffText("abc", "xbc"));
-        AssertEquals(R"(<span>ab</span>x)", diffText("abc", "abx"));
-        AssertEquals(R"(<span>abc</span>d)", diffText("abc", "abcd"));
-        AssertEquals(R"(<span>a</span>BcDe)", diffText("abcde", "aBcDe"));
+        AssertEquals("", DiffText("", ""));
+        AssertEquals("", DiffText("abc", ""));
+        AssertEquals(R"(<span>abc</span>)", DiffText("abc", "abc"));
+        AssertEquals(R"(abc)", DiffText("", "abc"));
+        AssertEquals(R"(def)", DiffText("abc", "def"));
+        AssertEquals(R"(<span>a</span>xc)", DiffText("abc", "axc"));
+        AssertEquals(R"(xbc)", DiffText("abc", "xbc"));
+        AssertEquals(R"(<span>ab</span>x)", DiffText("abc", "abx"));
+        AssertEquals(R"(<span>abc</span>d)", DiffText("abc", "abcd"));
+        AssertEquals(R"(<span>a</span>BcDe)", DiffText("abcde", "aBcDe"));
     }
 
-    void testBaadPrice()
+    void BaadPrice()
     {
         DecNs::decimal<8> dp8("99999999");
         AssertEquals(99999999, dp8.getAsXDouble());
@@ -254,7 +254,7 @@ private Q_SLOTS:
         AssertTrue(9999999999 != dp9.getAsXDouble(), "10 digits blows decimal");
     }
 
-    void enumToSting()
+    void EnumToSting()
     {
         AssertEquals("SocketTimeoutError", QMetaEnum::fromType<QAbstractSocket::SocketError>().valueToKey(QAbstractSocket::SocketError::SocketTimeoutError));
     }
@@ -336,8 +336,6 @@ def=1minute?
 [1525417200,8052.46,8096.33,8081,8073.3,81.95595686000027],
 [1525413600,8003.61,8097.73,8015.97,8081.01,75.16895106000011],
 [1525410000,8011.21,8049.9,8035.74,8015.97,38.33417047000007],
-
-
 */
 
 QTEST_APPLESS_MAIN(GDaxTestsTest)

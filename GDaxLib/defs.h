@@ -14,17 +14,17 @@ typedef unsigned long long SequenceNumber;
 enum class MakerSide { None, Buy, Sell }; // down\up
 enum class TakerSide { None, Buy, Sell }; // up\down
 
-inline TakerSide ToTaker(MakerSide side)
+inline MakerSide ToMaker(TakerSide side)
 {
     switch (side)
     {
-        case MakerSide::Buy:
-            return TakerSide::Sell;
+        case TakerSide::Buy:
+            return MakerSide::Sell;
 
-        case MakerSide::Sell:
-            return  TakerSide::Buy;
+        case TakerSide::Sell:
+            return  MakerSide::Buy;
     }
-    return TakerSide::None;
+    return MakerSide::None;
 }
 
 #endif // DEFS_H

@@ -10,6 +10,8 @@
 #include <QPainter>
 #include <QPaintEvent>
 
+#include <deque>
+
 class CandleChart : public QOpenGLWidget
 {
     static constexpr time_t timeDelta = 60*60; //1d init, max = endTime - startTime;
@@ -17,12 +19,12 @@ class CandleChart : public QOpenGLWidget
 
     QColor background;
     Plot mutable candlePlot;
-    std::vector<Candle> candles;
+    std::deque<Candle> candles;
 
 public:
     CandleChart(QWidget *parent = 0);
 
-    void setCandles(std::vector<Candle> newCandles);
+    void setCandles(std::deque<Candle> newCandles);
 
 private:
     void paintEvent(QPaintEvent *event) override

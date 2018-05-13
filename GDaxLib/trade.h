@@ -6,12 +6,13 @@
 #include <QJsonObject>
 #include <QDateTime>
 
+// merge trade\tick - are they the same? trade missing sequence number
 class Trade
 {
 public:
     typedef unsigned long long TradeId;
 
-    static Trade fromJson(const QJsonObject & object);
+    static Trade FromJson(const QJsonObject & object);
 
     QDateTime time;
     TradeId tradeId;

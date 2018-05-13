@@ -31,10 +31,11 @@ class GDaxLib : public QObject
     Decimal priceMin;
     Decimal priceMax;
     Decimal amountMax;
+    TradeId lastTradeId;
 
 signals:
-    void update();
-    void tick(Tick tick);
+    void OnUpdate();
+    void OnTick(Tick tick);
 
 public:
     explicit GDaxLib(QObject * parent = nullptr);
@@ -65,10 +66,10 @@ public:
     }
 
 private slots:
-    void onConnected();
-    void onTextMessageReceived(QString message);
-    void onError(QAbstractSocket::SocketError error);
-    void onSslErrors(const QList<QSslError> &errors);
+    void Connected();
+    void TextMessageReceived(QString message);
+    void Error(QAbstractSocket::SocketError error);
+    void SslErrors(const QList<QSslError> &errors);
 
 private:
     void ProcessError(const QJsonObject & object);

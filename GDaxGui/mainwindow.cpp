@@ -13,25 +13,25 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    ui->depthChart->setGDaxLib(&g);
+    ui->depthChart->setGDaxLib(&gDaxLib);
 
-    connect(timer.get(), SIGNAL(timeout()), this, SLOT(onUpdate()));
-    connect(&restProvider, SIGNAL(candles(std::vector<Candle>)), this, SLOT(setCandles(std::vector<Candle>)));
-    connect(&restProvider, SIGNAL(trades(std::vector<Trade>)), this, SLOT(setTrades(std::vector<Trade>)));
-    connect(&g, &GDaxLib::tick, this, &MainWindow::onTick);
+    connect(timer.get(), &QTimer::timeout, this, &MainWindow::Update);
+    connect(&restProvider, &RestProvider::OnCandles, this, &MainWindow::Candles);
+    connect(&restProvider, &RestProvider::OnTrades, this, &MainWindow::Trades);
+    connect(&gDaxLib, &GDaxLib::OnTick, this, &MainWindow::Ticker);
 
     timer->start(1000);
 
-    restProvider.fetchTrades();
-    restProvider.fetchCandles();
+    restProvider.FetchTrades();
+    restProvider.FetchCandles();
 }
 
-void MainWindow::onUpdate()
+void MainWindow::Update()
 {
     ui->depthChart->update();
     ui->candleChart->update();
-    generateOrderBook();
-    generateTradeList();
+    GenerateOrderBook();
+    GenerateTradeList();
 }
 
 void MainWindow::on_actionE_xit_triggered()
@@ -39,7 +39,7 @@ void MainWindow::on_actionE_xit_triggered()
     QApplication::quit();
 }
 
-void MainWindow::generateOrderBook()
+void MainWindow::GenerateOrderBook()
 {
     auto & orderBook = *ui->orderBook;
     QFont font = orderBook.document()->defaultFont();
@@ -47,8 +47,8 @@ void MainWindow::generateOrderBook()
     int fontHeight = fm.height();
     int lines = orderBook.height()/2/fontHeight-1;
 
-    const auto & asks = g.Asks();
-    const auto & bids = g.Bids();
+    const auto & asks = gDaxLib.Asks();
+    const auto & bids = gDaxLib.Bids();
     int priceDecs = 2;
     int amountDecs = 4;
     Decimal tot;
@@ -86,9 +86,9 @@ td.amount span { color:grey; }
         QString totAmount = QString::number(tot.getAsDouble(), 'f', amountDecs);
 
         reverso << QString(R"(<tr><td class="ask">%1</td><td class="amount">%2</td><td class="amount">%3</td><\tr>)")
-                   .arg(diffText(prevPrice, price))
-                   .arg(diffText(prevAmount, amount))
-                   .arg(diffText(prevTotAmount, totAmount));
+                   .arg(DiffText(prevPrice, price))
+                   .arg(DiffText(prevAmount, amount))
+                   .arg(DiffText(prevTotAmount, totAmount));
 
         prevPrice = price;
         prevAmount = amount;
@@ -124,9 +124,9 @@ td.amount span { color:grey; }
         QString totAmount = QString::number(tot.getAsDouble(), 'f', amountDecs);
 
         stream << "<tr>"
-               << "<td class=\"bid\">" << diffText(prevPrice, price) << "</td>"
-               << "<td class=\"amount\">" << diffText(prevAmount, amount) << "</td>"
-               << "<td class=\"amount\">" << diffText(prevTotAmount, totAmount) << "</td>"
+               << "<td class=\"bid\">" << DiffText(prevPrice, price) << "</td>"
+               << "<td class=\"amount\">" << DiffText(prevAmount, amount) << "</td>"
+               << "<td class=\"amount\">" << DiffText(prevTotAmount, totAmount) << "</td>"
                << "<\tr>";
         prevPrice = price;
         prevAmount = amount;
@@ -137,13 +137,13 @@ td.amount span { color:grey; }
    orderBook.document()->setHtml(*stream.string());
 }
 
-void MainWindow::generateTradeList()
+void MainWindow::GenerateTradeList()
 {
-    auto & trades = *ui->trades;
-    QFont font = trades.document()->defaultFont();
+    auto & tradesWidget = *ui->trades;
+    QFont font = tradesWidget.document()->defaultFont();
     QFontMetrics fm(font);
     int fontHeight = fm.height();
-    int count = trades.height()/fontHeight;
+    int count = tradesWidget.height()/fontHeight;
 
     int priceDecs = 2;
     int amountDecs = 4;
@@ -166,11 +166,11 @@ td.amount span { color:grey; }
 </style>
 <table width="100%" cellspacing="0" cellpadding="0">)";
 
-    for (auto it = ticks.begin(); count != 0 && it != ticks.end(); ++it, --count)
+    for (auto it = trades.begin(); count != 0 && it != trades.end(); ++it, --count)
     {
         // use toString and truncate to avoid tmp double?
         QString price = QString::number(it->price.getAsDouble(), 'f', priceDecs);
-        QString amount = QString::number(it->lastSize.getAsDouble(), 'f', amountDecs);
+        QString amount = QString::number(it->size.getAsDouble(), 'f', amountDecs);
         QString time = it->time.toLocalTime().time().toString();
 
         // MakerBuy == TakerSell = downtick
@@ -189,9 +189,9 @@ td.amount span { color:grey; }
             continue;
         }
 
-        stream << diffText(prevPrice, price) << "</td>"
-               << "<td class=\"amount\">" << diffText(prevAmount, amount) << "</td>"
-               << "<td class=\"amount\">" << diffText(prevTime, time) << "</td>"
+        stream << DiffText(prevPrice, price) << "</td>"
+               << "<td class=\"amount\">" << DiffText(prevAmount, amount) << "</td>"
+               << "<td class=\"amount\">" << DiffText(prevTime, time) << "</td>"
                << "<\tr>";
 
         prevPrice = price;
@@ -200,43 +200,59 @@ td.amount span { color:grey; }
     }
 
    stream << "</table>";
-   trades.document()->setHtml(*stream.string());
+   tradesWidget.document()->setHtml(*stream.string());
 }
 
-void MainWindow::setCandles(std::vector<Candle> candles)
+void MainWindow::Candles(std::deque<Candle> candles)
 {
-    this->ui->candleChart->setCandles(std::move(candles));
+    this->ui->candleChart->setCandles(std::move(candles)); // prevents elision?
 }
 
-void MainWindow::setTrades(std::vector<Trade> trades)
+void MainWindow::Trades(std::deque<Trade> trades)
 {
-    // need to merge into existing ticks
-    for (auto t : trades)
-    {
-        Tick tick{};
-        tick.tradeId = t.tradeId;
-        tick.time = t.time;
-        tick.price = t.price;
-        tick.side= ToTaker(t.side);
-        tick.lastSize = t.size;
-        ticks.push_back(tick);
-    }
+    this->trades = std::move(trades); // prevent elision?
 }
 
-void MainWindow::onTick(Tick tick)
+void MainWindow::Ticker(Tick tick)
 {
-    if (!ticks.empty())
-    {
-        if (ticks.front().sequence != tick.sequence -1)
-        {
-            log.Info(QString("Missed ticks %1 : %2").arg(ticks.front().sequence).arg(tick.sequence));
-        }
-    }
+//    if (!trades.empty())
+//    {
+        // tick sequenceNumber is batched as are the associated trades
+        // for a complete trade list the HB channel could should fetch any missing trades, or do it here? or on a separate timer
+        // so ticks should not be stored as a trade? unless identified as unbatched?
+        //        if (ticks.front().sequence != tick.sequence -1)
+        //        {
+        //            log.Info(QString("Missed ticks %1 : %2").arg(ticks.front().sequence).arg(tick.sequence));
+        //        }
 
-    ticks.push_front(tick);
-    if (ticks.size()>100) // parm
-    {
-        ticks.pop_back();
-    }
+        // currently ticks starts as a trade snaphot + aggregated trade tick updates
+        // expect this code to onlt trigger at startup
+//        Tick lastTick = ticks.front();
+//        if (lastTick.sequence >= tick.sequence)
+//        {
+//            log.Info(QString("Tick already seen %1 : %2").arg(lastTick.sequence).arg(tick.sequence));
+//        }
+//        if (lastTick.tradeId >= tick.tradeId)
+//        {
+//            log.Info(QString("Trade already seen %1 : %2").arg(lastTick.tradeId).arg(tick.tradeId));
+//        }
+//    }
+//    else
+//    {
+//        log.Info("1st tick, no trades yet");
+//    }
 
+    // masquare aggrgated tick as trade, todo fetch missing tradeId range, here or from HB?
+    Trade trade;
+    trade.time = tick.time;
+    trade.tradeId = tick.tradeId;
+    trade.price = tick.price;
+    trade.size = tick.lastSize;
+    trade.side = ToMaker(tick.side);
+
+    trades.push_front(trade);
+    if (trades.size()>100) // parm
+    {
+        trades.pop_back();
+    }
 }
