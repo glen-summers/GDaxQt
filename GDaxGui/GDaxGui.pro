@@ -23,7 +23,8 @@ HEADERS += \
     candlechart.h \
     depthchart.h \
     plot.h \
-    sma.h
+    sma.h \
+    ema.h
 
 FORMS += \
         mainwindow.ui

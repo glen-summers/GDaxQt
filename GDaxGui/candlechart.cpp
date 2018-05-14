@@ -1,6 +1,7 @@
 #include "candlechart.h"
 
 #include "sma.h"
+#include "ema.h"
 
 #include <QApplication>
 
@@ -34,14 +35,14 @@ void CandleChart::SetCandles(std::deque<Candle> forkHandles)
         min = std::min(min, it->lowestPrice.getAsDouble());
     }
 
-    Sma sma1(smaPath1, 15);
-    Sma sma2(smaPath2, 50);
+    Sma sma(smaPath, 15);
+    Ema ema(emaPath, 15);
     for (auto it = candles.rbegin(); it!=candles.rend(); ++it)
     {
         auto endTime = static_cast<double>(it->startTime + timeDelta);
         double close = it->closingPrice.getAsDouble();
-        sma1.Add(endTime, close);
-        sma2.Add(endTime, close);
+        sma.Add(endTime, close);
+        ema.Add(endTime, close);
     }
 
     QRectF view(minTime, min, maxTime-minTime, max-min);
@@ -158,10 +159,10 @@ void CandleChart::Paint(QPainter & painter) const
     QPen smaPen(QColor(qRgb(255,255,0)), 1.5);
     smaPen.setCosmetic(true);
     painter.setPen(smaPen);
-    candlePlot.DrawPath(painter, smaPath1);
+    candlePlot.DrawPath(painter, smaPath);
     smaPen.setColor(qRgb(0,255,255));
     painter.setPen(smaPen);
-    candlePlot.DrawPath(painter, smaPath2);
+    candlePlot.DrawPath(painter, emaPath);
 
     painter.restore();
     candlePlot.EndInner(painter);
