@@ -22,6 +22,7 @@ class CandleChart : public QOpenGLWidget
     QColor background;
     Plot mutable candlePlot;
     std::deque<Candle> candles;
+    QPainterPath smaPath;
     QPoint lastDrag;
 
 public:

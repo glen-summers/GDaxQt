@@ -13,33 +13,51 @@ void CandleChart::SetCandles(std::deque<Candle> forkHandles)
 {
     double min = std::numeric_limits<double>::max();
     double max = std::numeric_limits<double>::lowest();
-    double minTime, maxTime;
+    double maxTime;
     candles = std::move(forkHandles);
     if (!candles.empty())
     {
-        minTime = candles.rbegin()->startTime - timeDelta /2;
         maxTime = candles.begin()->startTime + timeDelta /2;
     }
     else
     {
-        minTime = maxTime = time(nullptr);
+        maxTime = time(nullptr);
+    }
+    double minTime = maxTime - initDisplay;
+
+    CandleLess less{};
+    for (auto it = std::lower_bound(candles.rbegin(), candles.rend(), (time_t)minTime, less), it2=it; it!=candles.rend(); ++it)
+    {
+        max = std::max(max, it->highestPrice.getAsDouble());
+        min = std::min(min, it->lowestPrice.getAsDouble());
     }
 
-    if (minTime < maxTime - initDisplay)
+    //QPainterPath newPath;
+    double total = 0;
+    size_t count = 0, smaPoints = 15;
+    for (auto it = candles.rbegin(), it2=it; it!=candles.rend(); ++it)
     {
-        minTime = maxTime - initDisplay;
-    }
+        double close = it->closingPrice.getAsDouble();
+        total += close;
+        auto endTime = static_cast<double>(it->startTime + timeDelta);
 
-    for (const auto & c : candles)
-    {
-        max = std::max(max, c.highestPrice.getAsDouble());
-        min = std::min(min, c.lowestPrice.getAsDouble());
-        if (c.startTime<minTime)
+        if (count == smaPoints)
         {
-            break;
+            double closeOut = (it2++)->closingPrice.getAsDouble();
+            total -= closeOut;
+            smaPath.lineTo({endTime, total/smaPoints});
+        }
+        else if (count++ == 0)
+        {
+            smaPath.moveTo({endTime, close});
+        }
+        else
+        {
+            smaPath.lineTo({endTime, close});
         }
     }
 
+    //smaPath = newPath;
     QRectF view(minTime, min, maxTime-minTime, max-min);
     double margin = view.height()*0.1;
     view.adjust(0, -margin, 0, margin);
@@ -114,6 +132,9 @@ void CandleChart::Paint(QPainter & painter) const
     penUp.setCosmetic(true);
     penDown.setCosmetic(true);
 
+    painter.save();
+    candlePlot.ApplyViewTransform(painter);
+
     CandleLess less;
     QRectF v = candlePlot.View();
     auto start = (time_t)v.left() - timeDelta/2;
@@ -148,6 +169,12 @@ void CandleChart::Paint(QPainter & painter) const
                               fillBrush);
     }
 
+    QPen smaPen(QColor(qRgb(255,255,0)), 1.5);
+    smaPen.setCosmetic(true);
+    painter.setPen(smaPen);
+    candlePlot.DrawPath(painter, smaPath);
+
+    painter.restore();
     candlePlot.EndInner(painter);
     candlePlot.DrawTimeAxis(painter);
     candlePlot.DrawYAxis(painter, 0, false);

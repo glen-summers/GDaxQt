@@ -24,7 +24,15 @@ void Plot::SetView(const QRectF & value)
     view = value;
 }
 
-void Plot::StartInner(QPainter &painter) const
+void Plot::ApplyViewTransform(QPainter & painter)
+{
+    // call this in StartInner and reset in EndInner
+    painter.translate(inner.left(), inner.top());
+    painter.scale(inner.width()/view.width(), -inner.height()/view.height());
+    painter.translate(-view.left(), -view.bottom());
+}
+
+void Plot::StartInner(QPainter & painter) const
 {
     painter.setPen(QPen(QColor(qRgb(80,80,80))));
     painter.drawRect(inner);
@@ -182,16 +190,11 @@ void Plot::DrawYAxis(QPainter & painter, double position, bool drawLabels) const
 void Plot::DrawCandle(QPainter & painter, double start, double end, double min, double max,
                       double open, double close, QBrush * fillBrush) const
 {
-    painter.save();
-
-    painter.translate(inner.left(), inner.top());
-    painter.scale(inner.width()/view.width(), -inner.height()/view.height());
-    painter.translate(-view.left(), -view.bottom());
-
     auto p0 = QPointF{start, min};
     auto p1 = QPointF{start, max};
     painter.drawLine(p0, p1);
 
+    // calc once for all candles
     double pixels = painter.transform().mapRect(QRectF{0,0,end-start,0}).width()/2 - 2;
     if (pixels > 1)
     {
@@ -206,7 +209,11 @@ void Plot::DrawCandle(QPainter & painter, double start, double end, double min, 
             painter.drawRect(QRectF(QPointF(start - wedgie, open), QPointF(start + wedgie, close)));
         }
     }
-    painter.restore();
+}
+
+void Plot::DrawPath(QPainter & painter, const QPainterPath & path) const
+{
+    painter.drawPath(path);
 }
 
 double Plot::CalcYAxisLabelWidth(double min, double max, double scale) const

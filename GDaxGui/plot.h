@@ -4,6 +4,7 @@
 #include <QRectF>
 #include <QFont>
 #include <QFontMetrics>
+#include <QPainterPath>
 
 QT_FORWARD_DECLARE_CLASS(QPainter)
 
@@ -39,6 +40,7 @@ public:
     const QRectF Inner() const { return inner; }
 
     void SetView(const QRectF & value);
+    void ApplyViewTransform(QPainter &painter);
     QRectF View() const { return view; }
     QPointF MapToView(const QPointF & p) const;
 
@@ -56,6 +58,8 @@ public:
     void DrawTimeAxis(QPainter & painter) const;
     void DrawYAxis(QPainter & painter, double position, bool drawLabels) const;
     void DrawCandle(QPainter & painter, double start, double end, double min, double max, double open, double close, QBrush * filled) const;
+
+    void DrawPath(QPainter & painter, const QPainterPath & path) const;
 
     double CalcYAxisLabelWidth(double min, double max, double scale) const;
 
