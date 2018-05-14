@@ -26,7 +26,7 @@ void CandleChart::SetCandles(std::deque<Candle> forkHandles)
     double minTime = maxTime - initDisplay;
 
     CandleLess less{};
-    for (auto it = std::lower_bound(candles.rbegin(), candles.rend(), (time_t)minTime, less), it2=it; it!=candles.rend(); ++it)
+    for (auto it = std::lower_bound(candles.rbegin(), candles.rend(), (time_t)minTime, less); it!=candles.rend(); ++it)
     {
         max = std::max(max, it->highestPrice.getAsDouble());
         min = std::min(min, it->lowestPrice.getAsDouble());
@@ -74,7 +74,7 @@ void CandleChart::wheelEvent(QWheelEvent * event)
     {
         candlePlot.ZoomY(pos, delta);
     }
-    else if (delta<0 && candleWidth > MinCandleWidth || delta>0 && candleWidth < MaxCandleWidth)
+    else if ((delta<0 && candleWidth > MinCandleWidth) || (delta>0 && candleWidth < MaxCandleWidth))
     {
         candlePlot.ZoomX(pos, delta);
     }
