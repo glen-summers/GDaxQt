@@ -50,12 +50,13 @@ void CandleChart::wheelEvent(QWheelEvent * event)
 {
     QPointF pos = event->posF();
     double delta = event->angleDelta().y()/1200.; // 120|15degs per click
+    double candleWidth = candlePlot.ScaleToScreen({(double)timeDelta, 0}).x();
 
     if (pos.x() > candlePlot.Inner().right())
     {
         candlePlot.ZoomY(pos, delta);
     }
-    else
+    else if (delta<0 && candleWidth > MinCandleWidth || delta>0 && candleWidth < MaxCandleWidth)
     {
         candlePlot.ZoomX(pos, delta);
     }
@@ -99,6 +100,7 @@ void CandleChart::Paint(QPainter & painter) const
     candlePlot.StartInner(painter);
 
     //time_t startTime = time(nullptr); // or lastUPdateTime / manual scroll value
+    // if auto scroll at new time seg
 
     // mode = 1hr... others
     //double yRange = (max-min);
@@ -110,9 +112,16 @@ void CandleChart::Paint(QPainter & painter) const
     QPen penDown(QColor(qRgb(255,0,0)), 1);
     QBrush brushDown(QColor(qRgb(255,0,0)));
 
-    // binary find range...
-    for (const auto & c : candles) // draws right to left, todo binary find in view window
+    CandleLess less;
+    QRectF v = candlePlot.View();
+    auto start = (time_t)v.left() - timeDelta/2;
+    auto finish = (time_t)v.right() + timeDelta/2;
+    for (auto it = std::lower_bound(candles.rbegin(), candles.rend(), start, less),
+         end = std::upper_bound(candles.rbegin(), candles.rend(), finish, less);
+         it!=end; ++it)
     {
+        const auto & c = *it;
+
         if (c.closingPrice > c.openingPrice)
         {
             painter.setPen(penUp);

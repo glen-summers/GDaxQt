@@ -179,7 +179,8 @@ void Plot::DrawYAxis(QPainter & painter, double position, bool drawLabels) const
 
 }
 
-void Plot::DrawCandle(QPainter & painter, double start, double end, double min, double max, double open, double close) const
+void Plot::DrawCandle(QPainter & painter, double start, double end, double min, double max,
+                      double open, double close) const
 {
     // use a painter transform?
     double x0 = inner.left() + (start - view.left()) * inner.width() / view.width();

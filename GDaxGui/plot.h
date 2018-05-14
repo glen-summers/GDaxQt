@@ -41,6 +41,12 @@ public:
     void SetView(const QRectF & value);
     QRectF View() const { return view; }
     QPointF MapToView(const QPointF & p) const;
+
+    QPointF ScaleToScreen(const QPointF & p) const
+    {
+        return p * inner.width() / view.width();
+    }
+
     void ZoomY(const QPointF & at, double scale);
     void ZoomX(const QPointF & at, double scale);
     void Pan(double dx, double dy);
