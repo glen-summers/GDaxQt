@@ -19,24 +19,24 @@ Plot::Plot(double edge, bool xAxisLabels, bool yAxisLabels)
 {
 }
 
-void Plot::setView(const QRectF & value)
+void Plot::SetView(const QRectF & value)
 {
     view = value;
 }
 
-void Plot::startInner(QPainter &painter) const
+void Plot::StartInner(QPainter &painter) const
 {
     painter.setPen(QPen(QColor(qRgb(80,80,80))));
     painter.drawRect(inner);
     painter.setClipRect(inner);
 }
 
-void Plot::endInner(QPainter & painter) const
+void Plot::EndInner(QPainter & painter) const
 {
     painter.setClipping(false);
 }
 
-void Plot::drawTimeAxis(QPainter &painter) const
+void Plot::DrawTimeAxis(QPainter &painter) const
 {
     painter.setPen(qRgb(180,180,180)); // window\custom styles? move
 
@@ -106,7 +106,7 @@ void Plot::drawTimeAxis(QPainter &painter) const
     }
 }
 
-void Plot::drawYAxis(QPainter & painter, double position, bool drawLabels) const
+void Plot::DrawYAxis(QPainter & painter, double position, bool drawLabels) const
 {
     painter.setPen(qRgb(180,180,180)); // window\custom styles? move
 
@@ -179,7 +179,7 @@ void Plot::drawYAxis(QPainter & painter, double position, bool drawLabels) const
 
 }
 
-void Plot::drawCandle(QPainter & painter, double start, double end, double min, double max, double open, double close) const
+void Plot::DrawCandle(QPainter & painter, double start, double end, double min, double max, double open, double close) const
 {
     // use a painter transform?
     double x0 = inner.left() + (start - view.left()) * inner.width() / view.width();
@@ -187,20 +187,49 @@ void Plot::drawCandle(QPainter & painter, double start, double end, double min, 
     double y1 = inner.bottom() - (max - view.top()) * inner.height() / view.height();
     painter.drawLine(QPointF(x0, y0), QPointF(x0, y1));
 
-    auto yy0 = inner.bottom() - (open - view.top()) * inner.height() / view.height();
-    auto yy1 = inner.bottom() - (close - view.top()) * inner.height() / view.height();
-
-    double wedgie = std::min(1., (end-start) * inner.width() / view.width() /2 - 1);
-    painter.drawRect(QRectF(QPointF(x0 - wedgie, yy0), QPointF(x0 + wedgie, yy1)));
+    double wedgie = (end-start) * inner.width() / view.width() /2 - 2;
+    if (wedgie>1)
+    {
+        auto yy0 = inner.bottom() - (open - view.top()) * inner.height() / view.height();
+        auto yy1 = inner.bottom() - (close - view.top()) * inner.height() / view.height();
+        painter.drawRect(QRectF(QPointF(x0 - wedgie, yy0), QPointF(x0 + wedgie, yy1)));
+    }
 }
 
-double Plot::calcYAxisLabelWidth(double min, double max, double scale) const
+double Plot::CalcYAxisLabelWidth(double min, double max, double scale) const
 {
     double step = GetScale((max-min)/scale/10, 1); // 10 steps, use param\constant
     int decs = std::max(0, static_cast<int>(1 - log10(step))); // floor?
     double value = step * floor(max / scale / step); // max od abs(max), abs(min)?
 
     return metrics.boundingRect(QString::number(value, 'g', decs)).width();
+}
+
+QPointF Plot::MapToView(const QPointF & p) const
+{
+    return
+    {
+        // transform?
+        view.x() + (p.x()-inner.x())/inner.width() * view.width(),
+        view.y() + (inner.bottom()-p.y())/inner.height() * view.height(),
+    };
+}
+
+void Plot::ZoomY(const QPointF &at, double scale)
+{
+    double mappedY = MapToView(at).y();
+    view.adjust(0,(mappedY - view.top())*scale, 0, (mappedY - view.bottom())*scale);
+}
+
+void Plot::ZoomX(const QPointF &at, double scale)
+{
+    double mappedX = MapToView(at).x();
+    view.adjust((mappedX - view.left())*scale, 0, (mappedX - view.right())*scale, 0);
+}
+
+void Plot::Pan(double dx, double dy)
+{
+    view.translate(-dx/inner.width() * view.width(), dy/inner.height() * view.height());
 }
 
 double Plot::GetScale(double range, double scale)

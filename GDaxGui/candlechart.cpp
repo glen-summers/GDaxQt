@@ -9,7 +9,7 @@ CandleChart::CandleChart(QWidget *parent)
 {
 }
 
-void CandleChart::setCandles(std::deque<Candle> forkHandles)
+void CandleChart::SetCandles(std::deque<Candle> forkHandles)
 {
     double min = std::numeric_limits<double>::max();
     double max = std::numeric_limits<double>::lowest();
@@ -41,12 +41,50 @@ void CandleChart::setCandles(std::deque<Candle> forkHandles)
     }
 
     QRectF view(minTime, min, maxTime-minTime, max-min);
-    double  margin = view.height()*0.1;
+    double margin = view.height()*0.1;
     view.adjust(0, -margin, 0, margin);
-    candlePlot.setView(view);
+    candlePlot.SetView(view);
 }
 
-void CandleChart::paint(QPainter & painter) const
+void CandleChart::wheelEvent(QWheelEvent * event)
+{
+    QPointF pos = event->posF();
+    double delta = event->angleDelta().y()/1200.; // 120|15degs per click
+
+    if (pos.x() > candlePlot.Inner().right())
+    {
+        candlePlot.ZoomY(pos, delta);
+    }
+    else
+    {
+        candlePlot.ZoomX(pos, delta);
+    }
+    event->accept();
+    update();
+}
+
+void CandleChart::mousePressEvent(QMouseEvent *event)
+{
+    lastDrag = event->pos();
+    qApp->setOverrideCursor(Qt::ClosedHandCursor);
+    setMouseTracking(true);
+}
+
+void CandleChart::mouseMoveEvent(QMouseEvent *event)
+{
+    auto delta = (event->pos() - lastDrag);
+    lastDrag = event->pos();
+    candlePlot.Pan(delta.x(), delta.y());
+    update();
+}
+
+void CandleChart::mouseReleaseEvent(QMouseEvent *)
+{
+    qApp->restoreOverrideCursor();
+    setMouseTracking(false);
+}
+
+void CandleChart::Paint(QPainter & painter) const
 {
     // todo, feed in new tick values
     // add ema
@@ -57,8 +95,8 @@ void CandleChart::paint(QPainter & painter) const
         return;
     }
 
-    candlePlot.setRect(rect()); // or on event?
-    candlePlot.startInner(painter);
+    candlePlot.SetRect(rect()); // or on event?
+    candlePlot.StartInner(painter);
 
     //time_t startTime = time(nullptr); // or lastUPdateTime / manual scroll value
 
@@ -73,7 +111,7 @@ void CandleChart::paint(QPainter & painter) const
     QBrush brushDown(QColor(qRgb(255,0,0)));
 
     // binary find range...
-    for (const auto & c : candles) // goes back in time...
+    for (const auto & c : candles) // draws right to left, todo binary find in view window
     {
         if (c.closingPrice > c.openingPrice)
         {
@@ -90,15 +128,15 @@ void CandleChart::paint(QPainter & painter) const
             continue;
         }
 
-        candlePlot.drawCandle(painter, c.startTime, c.startTime + timeDelta
+        candlePlot.DrawCandle(painter, c.startTime, c.startTime + timeDelta
                               , c.lowestPrice.getAsDouble()
                               , c.highestPrice.getAsDouble()
                               , c.openingPrice.getAsDouble()
                               , c.closingPrice.getAsDouble());
     }
 
-    candlePlot.endInner(painter);
-    candlePlot.drawTimeAxis(painter);
-    candlePlot.drawYAxis(painter, 0, false);
-    candlePlot.drawYAxis(painter, 1, true);
+    candlePlot.EndInner(painter);
+    candlePlot.DrawTimeAxis(painter);
+    candlePlot.DrawYAxis(painter, 0, false);
+    candlePlot.DrawYAxis(painter, 1, true);
 }

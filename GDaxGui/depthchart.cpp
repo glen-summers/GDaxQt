@@ -18,7 +18,7 @@ DepthChart::DepthChart(QWidget *parent)
     setAutoFillBackground(false);
 }
 
-void DepthChart::paint(QPainter & painter) const
+void DepthChart::Paint(QPainter & painter) const
 {
     if (!g)
     {
@@ -38,11 +38,11 @@ void DepthChart::paint(QPainter & painter) const
     //double yOrg = ((priceMax + priceMin)/2).getAsDouble();
     double yOrg = ((bids.rbegin()->first + asks.begin()->first) / 2).getAsDouble();
 
-    depthPlot.setView(QRectF{QPointF{0, g->PriceMin().getAsDouble()},
+    depthPlot.SetView(QRectF{QPointF{0, g->PriceMin().getAsDouble()},
                              QPointF{xrange, g->PriceMax().getAsDouble()}});
 
-    depthPlot.setRect(rect()); // or on event?
-    depthPlot.startInner(painter);
+    depthPlot.SetRect(rect()); // or on event?
+    depthPlot.StartInner(painter);
 
      // calc xy ranges
     // use %age of values around mid price, binary find?
@@ -52,7 +52,7 @@ void DepthChart::paint(QPainter & painter) const
     Decimal amount;
     bool first = true;
 
-    QRectF rect = depthPlot.getInner();
+    QRectF rect = depthPlot.Inner();
     double width = rect.width() * fillFactor;
     double height = rect.height();
     double ox = rect.right(), oy = rect.y();
@@ -125,8 +125,8 @@ void DepthChart::paint(QPainter & painter) const
         }
     }
 
-    depthPlot.endInner(painter);
+    depthPlot.EndInner(painter);
 
-    depthPlot.drawYAxis(painter, 0, false);
-    depthPlot.drawYAxis(painter, 1, true);
+    depthPlot.DrawYAxis(painter, 0, false);
+    depthPlot.DrawYAxis(painter, 1, true);
 }

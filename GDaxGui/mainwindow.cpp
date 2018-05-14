@@ -13,14 +13,14 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    ui->depthChart->setGDaxLib(&gDaxLib);
+    ui->depthChart->SetGDaxLib(&gDaxLib);
 
     connect(timer.get(), &QTimer::timeout, this, &MainWindow::Update);
     connect(&restProvider, &RestProvider::OnCandles, this, &MainWindow::Candles);
     connect(&restProvider, &RestProvider::OnTrades, this, &MainWindow::Trades);
     connect(&gDaxLib, &GDaxLib::OnTick, this, &MainWindow::Ticker);
 
-    timer->start(1000);
+    timer->start(5000);
 
     restProvider.FetchTrades();
     restProvider.FetchCandles();
@@ -204,7 +204,7 @@ td.amount span { color:grey; }
 
 void MainWindow::Candles(std::deque<Candle> values)
 {
-    this->ui->candleChart->setCandles(std::move(values)); // prevents elision?
+    this->ui->candleChart->SetCandles(std::move(values)); // prevents elision?
 }
 
 void MainWindow::Trades(std::deque<Trade> values)

@@ -21,7 +21,7 @@ class Plot
 public:
     Plot(double edge, bool xAxisLabels, bool yAxisLabels);
 
-    void setRect(const QRect & rect)
+    void SetRect(const QRect & rect)
     {
         outer = inner = rect;
         inner.adjust(edge, edge, -edge, -edge);
@@ -31,21 +31,27 @@ public:
         }
         if (yAxisLabels)
         {
-            double width = calcYAxisLabelWidth(view.top(), view.bottom(), 1);
+            double width = CalcYAxisLabelWidth(view.top(), view.bottom(), 1);
             inner.adjust(0, 0, -width, 0);
         }
     }
 
-    const QRectF getInner() const { return inner; }
+    const QRectF Inner() const { return inner; }
 
-    void setView(const QRectF & value);
-    void startInner(QPainter & painter) const;
-    void endInner(QPainter & painter) const;
-    void drawTimeAxis(QPainter & painter) const;
-    void drawYAxis(QPainter & painter, double position, bool drawLabels) const;
-    void drawCandle(QPainter & painter, double start, double end, double min, double max, double open, double close) const;
+    void SetView(const QRectF & value);
+    QRectF View() const { return view; }
+    QPointF MapToView(const QPointF & p) const;
+    void ZoomY(const QPointF & at, double scale);
+    void ZoomX(const QPointF & at, double scale);
+    void Pan(double dx, double dy);
 
-    double calcYAxisLabelWidth(double min, double max, double scale) const;
+    void StartInner(QPainter & painter) const;
+    void EndInner(QPainter & painter) const;
+    void DrawTimeAxis(QPainter & painter) const;
+    void DrawYAxis(QPainter & painter, double position, bool drawLabels) const;
+    void DrawCandle(QPainter & painter, double start, double end, double min, double max, double open, double close) const;
+
+    double CalcYAxisLabelWidth(double min, double max, double scale) const;
 
 private:
     static double GetScale(double range, double scale);

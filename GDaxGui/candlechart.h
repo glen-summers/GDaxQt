@@ -20,11 +20,12 @@ class CandleChart : public QOpenGLWidget
     QColor background;
     Plot mutable candlePlot;
     std::deque<Candle> candles;
+    QPoint lastDrag;
 
 public:
     CandleChart(QWidget *parent = 0);
 
-    void setCandles(std::deque<Candle> newCandles);
+    void SetCandles(std::deque<Candle> newCandles);
 
 private:
     void paintEvent(QPaintEvent *event) override
@@ -33,11 +34,16 @@ private:
         painter.begin(this);
         painter.fillRect(event->rect(), background);
         painter.setRenderHint(QPainter::Antialiasing);
-        paint(painter);
+        Paint(painter);
         painter.end();
     }
 
-    void paint(QPainter & painter) const;
+    void wheelEvent(QWheelEvent *event) override;
+    void mousePressEvent(QMouseEvent *event) override;
+    void mouseMoveEvent(QMouseEvent *event) override;
+    void mouseReleaseEvent(QMouseEvent *) override;
+
+    void Paint(QPainter & painter) const;
 };
 
 #endif // CANDLECHART_H

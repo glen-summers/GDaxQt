@@ -23,14 +23,9 @@ class DepthChart : public QOpenGLWidget
 public:
     DepthChart(QWidget *parent = 0);
 
-    void setGDaxLib(const GDaxLib * value)
+    void SetGDaxLib(const GDaxLib * value)
     {
         g = value;
-    }
-
-    void update()
-    {
-        repaint();
     }
 
 private:
@@ -40,12 +35,12 @@ private:
         painter.begin(this);
         painter.fillRect(event->rect(), background);
         painter.setRenderHint(QPainter::Antialiasing);
-        paint(painter);
+        Paint(painter);
         painter.end();
     }
 
 private:
-    void paint(QPainter & painter) const;
+    void Paint(QPainter & painter) const;
 };
 
 #endif // GRAPHICSWIDGET_H
