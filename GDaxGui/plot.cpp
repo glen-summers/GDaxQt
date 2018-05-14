@@ -180,21 +180,33 @@ void Plot::DrawYAxis(QPainter & painter, double position, bool drawLabels) const
 }
 
 void Plot::DrawCandle(QPainter & painter, double start, double end, double min, double max,
-                      double open, double close) const
+                      double open, double close, QBrush * fillBrush) const
 {
-    // use a painter transform?
-    double x0 = inner.left() + (start - view.left()) * inner.width() / view.width();
-    double y0 = inner.bottom() - (min - view.top()) * inner.height() / view.height();
-    double y1 = inner.bottom() - (max - view.top()) * inner.height() / view.height();
-    painter.drawLine(QPointF(x0, y0), QPointF(x0, y1));
+    painter.save();
 
-    double wedgie = (end-start) * inner.width() / view.width() /2 - 2;
-    if (wedgie>1)
+    painter.translate(inner.left(), inner.top());
+    painter.scale(inner.width()/view.width(), -inner.height()/view.height());
+    painter.translate(-view.left(), -view.bottom());
+
+    auto p0 = QPointF{start, min};
+    auto p1 = QPointF{start, max};
+    painter.drawLine(p0, p1);
+
+    double pixels = painter.transform().mapRect(QRectF{0,0,end-start,0}).width()/2 - 2;
+    if (pixels > 1)
     {
-        auto yy0 = inner.bottom() - (open - view.top()) * inner.height() / view.height();
-        auto yy1 = inner.bottom() - (close - view.top()) * inner.height() / view.height();
-        painter.drawRect(QRectF(QPointF(x0 - wedgie, yy0), QPointF(x0 + wedgie, yy1)));
+        double wedgie = pixels*view.width()/inner.width(); //no reverse transform?
+
+        if (fillBrush) // fix for scaled pen\brush pxelation. just draw fill
+        {
+            painter.fillRect(QRectF(QPointF(start - wedgie, open), QPointF(start + wedgie, close)), *fillBrush);
+        }
+        else
+        {
+            painter.drawRect(QRectF(QPointF(start - wedgie, open), QPointF(start + wedgie, close)));
+        }
     }
+    painter.restore();
 }
 
 double Plot::CalcYAxisLabelWidth(double min, double max, double scale) const

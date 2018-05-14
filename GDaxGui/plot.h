@@ -55,7 +55,7 @@ public:
     void EndInner(QPainter & painter) const;
     void DrawTimeAxis(QPainter & painter) const;
     void DrawYAxis(QPainter & painter, double position, bool drawLabels) const;
-    void DrawCandle(QPainter & painter, double start, double end, double min, double max, double open, double close) const;
+    void DrawCandle(QPainter & painter, double start, double end, double min, double max, double open, double close, QBrush * filled) const;
 
     double CalcYAxisLabelWidth(double min, double max, double scale) const;
 

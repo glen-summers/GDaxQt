@@ -111,6 +111,8 @@ void CandleChart::Paint(QPainter & painter) const
     QBrush brushUp(background);
     QPen penDown(QColor(qRgb(255,0,0)), 1);
     QBrush brushDown(QColor(qRgb(255,0,0)));
+    penUp.setCosmetic(true);
+    penDown.setCosmetic(true);
 
     CandleLess less;
     QRectF v = candlePlot.View();
@@ -122,6 +124,7 @@ void CandleChart::Paint(QPainter & painter) const
     {
         const auto & c = *it;
 
+        QBrush * fillBrush = nullptr;
         if (c.closingPrice > c.openingPrice)
         {
             painter.setPen(penUp);
@@ -130,7 +133,7 @@ void CandleChart::Paint(QPainter & painter) const
         else if (c.closingPrice < c.openingPrice)
         {
             painter.setPen(penDown);
-            painter.setBrush(brushDown);
+            fillBrush = &brushDown;
         }
         else
         {
@@ -141,7 +144,8 @@ void CandleChart::Paint(QPainter & painter) const
                               , c.lowestPrice.getAsDouble()
                               , c.highestPrice.getAsDouble()
                               , c.openingPrice.getAsDouble()
-                              , c.closingPrice.getAsDouble());
+                              , c.closingPrice.getAsDouble(),
+                              fillBrush);
     }
 
     candlePlot.EndInner(painter);

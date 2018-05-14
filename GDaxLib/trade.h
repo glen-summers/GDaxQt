@@ -6,7 +6,6 @@
 #include <QJsonObject>
 #include <QDateTime>
 
-// merge trade\tick - are they the same? trade missing sequence number
 class Trade
 {
 public:
