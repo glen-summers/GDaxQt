@@ -1,5 +1,7 @@
 #include "candlechart.h"
 
+#include "sma.h"
+
 #include <QApplication>
 
 CandleChart::CandleChart(QWidget *parent)
@@ -32,32 +34,16 @@ void CandleChart::SetCandles(std::deque<Candle> forkHandles)
         min = std::min(min, it->lowestPrice.getAsDouble());
     }
 
-    //QPainterPath newPath;
-    double total = 0;
-    size_t count = 0, smaPoints = 15;
-    for (auto it = candles.rbegin(), it2=it; it!=candles.rend(); ++it)
+    Sma sma1(smaPath1, 15);
+    Sma sma2(smaPath2, 50);
+    for (auto it = candles.rbegin(); it!=candles.rend(); ++it)
     {
-        double close = it->closingPrice.getAsDouble();
-        total += close;
         auto endTime = static_cast<double>(it->startTime + timeDelta);
-
-        if (count == smaPoints)
-        {
-            double closeOut = (it2++)->closingPrice.getAsDouble();
-            total -= closeOut;
-            smaPath.lineTo({endTime, total/smaPoints});
-        }
-        else if (count++ == 0)
-        {
-            smaPath.moveTo({endTime, close});
-        }
-        else
-        {
-            smaPath.lineTo({endTime, close});
-        }
+        double close = it->closingPrice.getAsDouble();
+        sma1.Add(endTime, close);
+        sma2.Add(endTime, close);
     }
 
-    //smaPath = newPath;
     QRectF view(minTime, min, maxTime-minTime, max-min);
     double margin = view.height()*0.1;
     view.adjust(0, -margin, 0, margin);
@@ -172,7 +158,10 @@ void CandleChart::Paint(QPainter & painter) const
     QPen smaPen(QColor(qRgb(255,255,0)), 1.5);
     smaPen.setCosmetic(true);
     painter.setPen(smaPen);
-    candlePlot.DrawPath(painter, smaPath);
+    candlePlot.DrawPath(painter, smaPath1);
+    smaPen.setColor(qRgb(0,255,255));
+    painter.setPen(smaPen);
+    candlePlot.DrawPath(painter, smaPath2);
 
     painter.restore();
     candlePlot.EndInner(painter);
