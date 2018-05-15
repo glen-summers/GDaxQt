@@ -28,6 +28,7 @@ namespace
 
 GDaxLib::FunctionMap GDaxLib::functionMap =
 {
+    { "subscriptions", &GDaxLib::ProcessSubscriptions },
     { "snapshot", &GDaxLib::ProcessSnapshot },
     { "l2update", &GDaxLib::ProcessUpdate },
     { "heartbeat", &GDaxLib::ProcessHeartbeat },
@@ -165,7 +166,13 @@ GDaxLib::State GDaxLib::ToState(QAbstractSocket::SocketState socketState)
 
 }
 
-void GDaxLib::ProcessError(const QJsonObject &object)
+void GDaxLib::ProcessSubscriptions(const QJsonObject & object)
+{
+    (void)object;
+    log.Info("Subscription response");
+}
+
+void GDaxLib::ProcessError(const QJsonObject & object)
 {
     // will be in the message pump, so cannot throw? need to notify ui
     QString errorMessage = object["message"].toString();

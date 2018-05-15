@@ -87,6 +87,7 @@ private slots:
 private:
     void clear();
     State ToState(QAbstractSocket::SocketState socketState);
+    void ProcessSubscriptions(const QJsonObject & object);
     void ProcessError(const QJsonObject & object);
     void ProcessSnapshot(const QJsonObject & object);
     void ProcessUpdate(const QJsonObject & object);
