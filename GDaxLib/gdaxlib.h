@@ -26,18 +26,21 @@ class GDaxLib : public QObject
 
     QWebSocket webSocket;
 
-    // mov eto client code
+    // move to client code?
     std::map<Decimal, Decimal> bids, asks;
     Decimal priceMin;
     Decimal priceMax;
     Decimal amountMax;
     TradeId lastTradeId;
 
-signals:
-    void OnUpdate();
-    void OnTick(Tick tick);
-
 public:
+    enum class State
+    {
+        NotConnected,
+        Connecting,
+        Connected,
+    };
+
     explicit GDaxLib(QObject * parent = nullptr);
 
     const std::map<Decimal, Decimal> & Bids() const
@@ -65,13 +68,25 @@ public:
         return amountMax;
     }
 
+    void Ping();
+
+private:
+signals:
+    void OnUpdate();
+    void OnTick(Tick tick);
+    void OnStateChanged(State state);
+
 private slots:
     void Connected();
     void TextMessageReceived(QString message);
+    void StateChanged(QAbstractSocket::SocketState socketState);
     void Error(QAbstractSocket::SocketError error);
     void SslErrors(const QList<QSslError> &errors);
+    void Pong();
 
 private:
+    void clear();
+    State ToState(QAbstractSocket::SocketState socketState);
     void ProcessError(const QJsonObject & object);
     void ProcessSnapshot(const QJsonObject & object);
     void ProcessUpdate(const QJsonObject & object);

@@ -44,11 +44,39 @@ GDaxLib::GDaxLib(QObject * parent) // parent?
 
     connect(&webSocket, &QWebSocket::connected, this, &GDaxLib::Connected);
     connect(&webSocket, &QWebSocket::textMessageReceived, this, &GDaxLib::TextMessageReceived);
+
+    // weird this one doesnt seem to like direct binding, something todo with unregistered meta enum?
+    //connect(&webSocket, &QWebSocket::stateChanged, this, &GDaxLib::StateChanged);
+    connect(&webSocket, SIGNAL(stateChanged(QAbstractSocket::SocketState)), SLOT(StateChanged(QAbstractSocket::SocketState)));
+
     connect(&webSocket, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error), this, &GDaxLib::Error);
     connect(&webSocket, QOverload<const QList<QSslError> &>::of(&QWebSocket::sslErrors), this, &GDaxLib::SslErrors);
 
+    connect(&webSocket, &QWebSocket::pong, this, &GDaxLib::Pong);
+
     log.Info(QString("Connecting to %1").arg(url));
     webSocket.open(QUrl(url));
+}
+
+void GDaxLib::Ping()
+{
+    switch (webSocket.state())
+    {
+        case QAbstractSocket::SocketState::UnconnectedState:
+            log.Info("Reconnecting...");
+            webSocket.open(QUrl(url));
+            break;
+
+        case QAbstractSocket::SocketState::ConnectedState:
+            webSocket.ping();
+            break;
+
+        default:
+            log.Warning(QString("Ping, WebSocket state: %1").arg(
+                            QMetaEnum::fromType<QAbstractSocket::SocketState>()
+                            .valueToKey(webSocket.state())));
+            break;
+    }
 }
 
 void GDaxLib::Connected()
@@ -57,7 +85,7 @@ void GDaxLib::Connected()
     // https://stackoverflow.com/questions/28540571/how-to-enable-and-disable-qdebug-messages
     // https://gist.github.com/polovik/10714049
     log.Info("onConnected, subscribing...");
-
+    clear();
     webSocket.sendTextMessage(subscribeMessage);
 }
 
@@ -86,6 +114,13 @@ void GDaxLib::TextMessageReceived(QString message)
     }
 }
 
+void GDaxLib::StateChanged(QAbstractSocket::SocketState socketState)
+{
+    log.Info(QString("WebSocket state: %1").arg(QMetaEnum::fromType<QAbstractSocket::SocketState>().valueToKey(socketState)));
+
+    emit OnStateChanged(ToState(socketState));
+}
+
 void GDaxLib::Error(QAbstractSocket::SocketError error)
 {
     log.Error(QString("SocketError: %1").arg(QMetaEnum::fromType<QAbstractSocket::SocketError>().valueToKey(error)));
@@ -97,6 +132,37 @@ void GDaxLib::SslErrors(const QList<QSslError> &errors)
     {
         log.Error(QString("SslError: %1, %2").arg(e.error()).arg(e.errorString()));
     }
+}
+
+void GDaxLib::Pong()
+{
+    log.Spam("Pong");
+}
+
+void GDaxLib::clear()
+{
+    bids.clear();
+    asks.clear();
+    lastTradeId = 0;
+    priceMin = Decimal();
+    priceMax = Decimal();
+    amountMax = Decimal();
+}
+
+GDaxLib::State GDaxLib::ToState(QAbstractSocket::SocketState socketState)
+{
+    switch (socketState)
+    {
+        case QAbstractSocket::ConnectingState:
+            return State::Connecting;
+
+        case QAbstractSocket::ConnectedState:
+            return State::Connected;
+
+        default:
+            return State::NotConnected;;
+    };
+
 }
 
 void GDaxLib::ProcessError(const QJsonObject &object)

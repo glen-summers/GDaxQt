@@ -5,6 +5,7 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 #include <QJsonValueRef>
+#include <QMetaEnum>
 
 // rework as a basic request response handler
 // "One QNetworkAccessManager should be enough for the whole Qt application."
@@ -34,15 +35,14 @@ void RestProvider::FetchTrades()
 
 void RestProvider::Error(QNetworkReply::NetworkError error)
 {
-    // ContentNotFoundError 203
-    qWarning() << QString("RestProvider::error %1)").arg(error);
+    log.Error(QString("SocketError: %1").arg(QMetaEnum::fromType<QAbstractSocket::SocketError>().valueToKey(error)));
 }
 
 void RestProvider::SslErrors(QList<QSslError> errors)
 {
     for(auto & e : errors)
     {
-        qWarning() << e.errorString();
+        log.Error(QString("SslError: %1, %2").arg(e.error()).arg(e.errorString()));
     }
 }
 
@@ -50,7 +50,6 @@ void RestProvider::CandlesFinished(QNetworkReply *reply)
 {
     if (reply->error())
     {
-        qWarning() << reply->error();
         emit OnError();
         return;
     }
@@ -78,7 +77,6 @@ void RestProvider::TradesFinished(QNetworkReply *reply)
 {
     if (reply->error())
     {
-        qWarning() << reply->error();
         emit OnError();
         return;
     }

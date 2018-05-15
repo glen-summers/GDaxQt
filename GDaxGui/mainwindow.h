@@ -37,8 +37,10 @@ private slots:
     void Candles(std::deque<Candle> values);
     void Trades(std::deque<Trade> values);
     void Ticker(Tick tick);
+    void StateChanged(GDaxLib::State state);
 
 private:
+    void Connected();
     void GenerateOrderBook();
     void GenerateTradeList();
 };

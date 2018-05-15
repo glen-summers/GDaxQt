@@ -49,6 +49,8 @@ void CandleChart::SetCandles(std::deque<Candle> forkHandles)
     double margin = view.height()*0.1;
     view.adjust(0, -margin, 0, margin);
     candlePlot.SetView(view);
+
+    update();
 }
 
 void CandleChart::wheelEvent(QWheelEvent * event)

@@ -24,7 +24,5 @@ Tick Tick::FromJson(const QJsonObject & object)
     Decimal bestBid(object["best_bid"].toString().toStdString());
     Decimal bestAsk(object["best_ask"].toString().toStdString());
 
-    //qInfo(QString("Ticker: %1 %2 %3 %4 %5 %6").arg(seq).arg(tradeId).arg(time, side, price, size).toStdString());
-
     return { tradeId, sequence, time, price, side, lastSize, bestBid, bestAsk };
 }

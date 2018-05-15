@@ -19,11 +19,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&restProvider, &RestProvider::OnCandles, this, &MainWindow::Candles);
     connect(&restProvider, &RestProvider::OnTrades, this, &MainWindow::Trades);
     connect(&gDaxLib, &GDaxLib::OnTick, this, &MainWindow::Ticker);
+    connect(&gDaxLib, &GDaxLib::OnStateChanged, this, &MainWindow::StateChanged);
 
     timer->start(5000);
-
-    restProvider.FetchTrades();
-    restProvider.FetchCandles();
 }
 
 void MainWindow::Update()
@@ -32,6 +30,8 @@ void MainWindow::Update()
     ui->candleChart->update();
     GenerateOrderBook();
     GenerateTradeList();
+
+    gDaxLib.Ping();
 }
 
 void MainWindow::on_actionE_xit_triggered()
@@ -254,4 +254,42 @@ void MainWindow::Ticker(Tick tick)
     {
         trades.pop_back();
     }
+}
+
+void MainWindow::StateChanged(GDaxLib::State state)
+{
+    switch (state)
+    {
+    case GDaxLib::State::NotConnected:
+        ui->statusBar->setStyleSheet("background-color: red; color: white");
+        ui->statusBar->showMessage("Not Connected");
+        break;
+
+    case GDaxLib::State::Connecting:
+        ui->statusBar->setStyleSheet("color: yellow");
+        ui->statusBar->showMessage("Connecting...");
+        break;
+
+    case GDaxLib::State::Connected:
+        ui->statusBar->setStyleSheet("color: limegreen");
+        ui->statusBar->showMessage("Connected");
+        Connected();
+        break;
+    }
+}
+
+void MainWindow::Connected()
+{
+    // clear now to avoid ticks being added to old data will blank display while fetching
+    // better model to store all data in an atomically swapable entity
+
+    trades.clear();
+    ui->candleChart->SetCandles({});
+    ui->orderBook->document()->clear();
+    ui->trades->document()->clear();
+
+    ui->depthChart->update();
+
+    restProvider.FetchTrades();
+    restProvider.FetchCandles();
 }
