@@ -1,6 +1,16 @@
 #ifndef CANDLE_H
 #define CANDLE_H
 
+enum class Granularity : unsigned int
+{
+    Seconds=60,
+    FiveMinutes=300,
+    FifteenMinutes=900,
+    Hours=3600,
+    SixHours=21600,
+    Days=86400
+};
+
 struct Candle
 {
     time_t startTime;

@@ -14,21 +14,20 @@
 
 class CandleChart : public QOpenGLWidget
 {
-    static constexpr time_t timeDelta = 60*60; //1d init, max = endTime - startTime;
-    static constexpr time_t initDisplay = 100*60*60;
     static constexpr int MaxCandleWidth = 32;
     static constexpr int MinCandleWidth = 6;
 
     QColor background;
     Plot mutable candlePlot;
     std::deque<Candle> candles;
+    time_t timeDelta;
     QPainterPath smaPath, emaPath;
     QPoint lastDrag;
 
 public:
     CandleChart(QWidget *parent = 0);
 
-    void SetCandles(std::deque<Candle> newCandles);
+    void SetCandles(std::deque<Candle> newCandles, Granularity granularity);
 
 private:
     void paintEvent(QPaintEvent *event) override

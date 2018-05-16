@@ -12,8 +12,9 @@ CandleChart::CandleChart(QWidget *parent)
 {
 }
 
-void CandleChart::SetCandles(std::deque<Candle> forkHandles)
+void CandleChart::SetCandles(std::deque<Candle> forkHandles, Granularity granularity)
 {
+    timeDelta = (unsigned int)granularity;
     double min = std::numeric_limits<double>::max();
     double max = std::numeric_limits<double>::lowest();
     double maxTime;
@@ -26,7 +27,7 @@ void CandleChart::SetCandles(std::deque<Candle> forkHandles)
     {
         maxTime = time(nullptr);
     }
-    double minTime = maxTime - initDisplay;
+    double minTime = maxTime - timeDelta*100; // param, validate\calc for maxCandleWidth?
 
     CandleLess less{};
     for (auto it = std::lower_bound(candles.rbegin(), candles.rend(), (time_t)minTime, less); it!=candles.rend(); ++it)

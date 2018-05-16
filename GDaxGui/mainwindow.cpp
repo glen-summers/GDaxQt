@@ -204,7 +204,7 @@ td.amount span { color:grey; }
 
 void MainWindow::Candles(std::deque<Candle> values)
 {
-    this->ui->candleChart->SetCandles(std::move(values)); // prevents elision?
+    this->ui->candleChart->SetCandles(std::move(values), granularity); // prevents elision?
 }
 
 void MainWindow::Trades(std::deque<Trade> values)
@@ -284,7 +284,7 @@ void MainWindow::Connected()
     // better model to store all data in an atomically swapable entity
 
     trades.clear();
-    ui->candleChart->SetCandles({});
+    ui->candleChart->SetCandles({}, granularity);
     ui->orderBook->document()->clear();
     ui->trades->document()->clear();
 
@@ -293,5 +293,5 @@ void MainWindow::Connected()
     // calc value? want to be >= trade history window rows
     restProvider.FetchTrades(100);
 
-    restProvider.FetchAllCandles(Granularity::Hours);
+    restProvider.FetchAllCandles(granularity);
 }
