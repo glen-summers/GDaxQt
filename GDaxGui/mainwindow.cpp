@@ -290,9 +290,8 @@ void MainWindow::Connected()
 
     ui->depthChart->update();
 
-    restProvider.FetchTrades();
+    // calc value? want to be >= trade history window rows
+    restProvider.FetchTrades(100);
 
-    QDateTime start = QDateTime::currentDateTimeUtc().addDays(-5);
-    QDateTime end = QDateTime::currentDateTimeUtc().addSecs(-60);
-    restProvider.FetchCandles(start, end, 3600);
+    restProvider.FetchAllCandles(Granularity::Hours);
 }

@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
     RestProvider restProvider;
     QDateTime start = QDateTime::currentDateTimeUtc().addDays(-1);
     QDateTime end = QDateTime::currentDateTimeUtc().addSecs(-60);// avoid future value, causes full dl
-    restProvider.FetchCandles(start, end, 3600);
+    restProvider.FetchCandles(start, end, Granularity::Hours);
 
     return a.exec();
 }

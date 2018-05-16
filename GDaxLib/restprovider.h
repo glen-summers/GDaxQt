@@ -12,17 +12,33 @@
 
 #include <deque>
 
+enum class Granularity : unsigned int
+{
+    Seconds=60,
+    FiveMinutes=300,
+    FifteenMinutes=900,
+    Hours=3600,
+    SixHours=21600,
+    Days=86400
+};
+
 class RestProvider : public QObject
 {
     inline static const Flog::Log log = Flog::LogManager::GetLog<RestProvider>();
+
+    static constexpr const char Url[] = "https://api.gdax.com/products/%1/%2";
+    static constexpr const char Product[] = "BTC-EUR";
+    static constexpr const char Candles[] = "candles";
+    static constexpr const char Trades[] = "trades";
 
     Q_OBJECT
 
     QNetworkAccessManager manager;
 
 public:
-    void FetchTrades();
-    void FetchCandles(const QDateTime & start, const QDateTime & end, unsigned int granularity);
+    void FetchTrades(unsigned int limit);
+    void FetchAllCandles(Granularity granularity);
+    void FetchCandles(const QDateTime & start, const QDateTime & end, Granularity granularity);
 
 signals:
     void OnError();

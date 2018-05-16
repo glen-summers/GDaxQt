@@ -9,15 +9,13 @@
 #include <QNetworkCookieJar>
 #include <QUrlQuery>
 
-void RestProvider::FetchCandles(const QDateTime & start, const QDateTime & end, unsigned int granularity)
+void RestProvider::FetchAllCandles(Granularity granularity)
 {
-    QUrlQuery q;
-    q.addQueryItem("start", start.toString(Qt::ISODate));
-    q.addQueryItem("end", end.toString(Qt::ISODate));
-    q.addQueryItem("granularity", QString::number(granularity));
+    QUrlQuery query;
+    query.addQueryItem("granularity", QString::number(static_cast<unsigned int>(granularity)));
 
-    QUrl url("https://api.gdax.com/products/BTC-EUR/candles");
-    url.setQuery(q);
+    QUrl url(QString(Url).arg(Product, Candles));
+    url.setQuery(query);
 
     log.Info(QString("Requesting %1").arg(url.toString()));
     QNetworkRequest request(url);
@@ -28,10 +26,36 @@ void RestProvider::FetchCandles(const QDateTime & start, const QDateTime & end, 
     connect(reply, &QNetworkReply::finished, [this, reply]() { RestProvider::CandlesFinished(reply); });
 }
 
-void RestProvider::FetchTrades()
+void RestProvider::FetchCandles(const QDateTime & start, const QDateTime & end, Granularity granularity)
 {
-    // parameterise fetch? want to be >= trade history window rows
-    QUrl url("https://api.gdax.com/products/BTC-EUR/trades?limit=100");
+    // this version seems flakey on the server, if we request with an endtime > server UTC time then
+    // both parameters are ignored and the last 300 candles are returned
+
+    QUrlQuery query;
+    query.addQueryItem("start", start.toString(Qt::ISODate));
+    query.addQueryItem("end", end.toString(Qt::ISODate));
+    query.addQueryItem("granularity", QString::number(static_cast<unsigned int>(granularity)));
+
+    QUrl url(QString(Url).arg(Product, Candles));
+    url.setQuery(query);
+
+    log.Info(QString("Requesting %1").arg(url.toString()));
+    QNetworkRequest request(url);
+    QNetworkReply * reply = manager.get(request);
+    // reply->ignoreSslErrors();// allows fidler, set in cfg
+    connect(reply, &QNetworkReply::sslErrors, this, &RestProvider::SslErrors);
+    connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), this, &RestProvider::Error);
+    connect(reply, &QNetworkReply::finished, [this, reply]() { RestProvider::CandlesFinished(reply); });
+}
+
+void RestProvider::FetchTrades(unsigned int limit)
+{
+    QUrlQuery query;
+    query.addQueryItem("limit", QString::number(limit));
+
+    QUrl url(QString(Url).arg(Product, Trades));
+    url.setQuery(query);
+
     QNetworkRequest request(url);
     QNetworkReply * reply = manager.get(request);
 
