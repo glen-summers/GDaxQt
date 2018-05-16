@@ -26,7 +26,8 @@ class MainWindow : public QMainWindow
     std::deque<Candle> candles;
     std::deque<Trade> trades;
 
-    Granularity granularity = Granularity::Hours;
+    // use finer grain and map to GDax::Granularity
+    Granularity granularity = Granularity::Minutes;
 
 public:
     explicit MainWindow(QWidget *parent = 0);

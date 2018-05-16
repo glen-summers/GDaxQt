@@ -40,10 +40,10 @@ void CandleChart::SetCandles(std::deque<Candle> forkHandles, Granularity granula
     Ema ema(emaPath, 15);
     for (auto it = candles.rbegin(); it!=candles.rend(); ++it)
     {
-        auto endTime = static_cast<double>(it->startTime + timeDelta);
+        auto startTime = static_cast<double>(it->startTime);
         double close = it->closingPrice.getAsDouble();
-        sma.Add(endTime, close);
-        ema.Add(endTime, close);
+        sma.Add(startTime, close);
+        ema.Add(startTime, close);
     }
 
     QRectF view(minTime, min, maxTime-minTime, max-min);

@@ -36,6 +36,7 @@ private:
         painter.begin(this);
         painter.fillRect(event->rect(), background);
         painter.setRenderHint(QPainter::Antialiasing);
+        //painter.setRenderHint(QPainter::HighQualityAntialiasing);
         Paint(painter);
         painter.end();
     }
