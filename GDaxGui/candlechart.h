@@ -20,7 +20,7 @@ class CandleChart : public QOpenGLWidget
     QColor background;
     Plot mutable candlePlot;
     std::deque<Candle> candles;
-    time_t timeDelta;
+    time_t baseTime, timeDelta;
     QPainterPath smaPath, emaPath;
     QPoint lastDrag;
 

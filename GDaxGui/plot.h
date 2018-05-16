@@ -55,9 +55,9 @@ public:
 
     void StartInner(QPainter & painter) const;
     void EndInner(QPainter & painter) const;
-    void DrawTimeAxis(QPainter & painter) const;
+    void DrawTimeAxis(QPainter & painter, time_t offset) const;
     void DrawYAxis(QPainter & painter, double position, bool drawLabels) const;
-    void DrawCandle(QPainter & painter, double start, double end, double min, double max, double open, double close, QBrush * filled) const;
+    void DrawCandle(QPainter & painter, double start, double end, double min, double max, double open, double close) const;
 
     void DrawPath(QPainter & painter, const QPainterPath & path) const;
 

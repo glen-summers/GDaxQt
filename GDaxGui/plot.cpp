@@ -44,7 +44,7 @@ void Plot::EndInner(QPainter & painter) const
     painter.setClipping(false);
 }
 
-void Plot::DrawTimeAxis(QPainter &painter) const
+void Plot::DrawTimeAxis(QPainter &painter, time_t timeOffset) const
 {
     painter.setPen(qRgb(180,180,180)); // window\custom styles? move
 
@@ -56,8 +56,8 @@ void Plot::DrawTimeAxis(QPainter &painter) const
     int subDiv = pair.second;
 
     auto utcOffset = QDateTime::currentDateTimeUtc().toLocalTime().offsetFromUtc();
-    auto minLocal = view.left() + utcOffset;
-    auto maxLocal = view.right() + utcOffset;
+    auto minLocal = timeOffset + view.left() + utcOffset;
+    auto maxLocal = timeOffset + view.right() + utcOffset;
 
     double offset = floor(xScale * minLocal);
     double halfBox = step * xScale/2;
@@ -188,7 +188,7 @@ void Plot::DrawYAxis(QPainter & painter, double position, bool drawLabels) const
 }
 
 void Plot::DrawCandle(QPainter & painter, double start, double end, double min, double max,
-                      double open, double close, QBrush * fillBrush) const
+                      double open, double close) const
 {
     auto p0 = QPointF{start, min};
     auto p1 = QPointF{start, max};
@@ -199,15 +199,7 @@ void Plot::DrawCandle(QPainter & painter, double start, double end, double min, 
     if (pixels > 1)
     {
         double wedgie = pixels*view.width()/inner.width(); //no reverse transform?
-
-        if (fillBrush) // fix for scaled pen\brush pxelation. just draw fill
-        {
-            painter.fillRect(QRectF(QPointF(start - wedgie, open), QPointF(start + wedgie, close)), *fillBrush);
-        }
-        else
-        {
-            painter.drawRect(QRectF(QPointF(start - wedgie, open), QPointF(start + wedgie, close)));
-        }
+        painter.drawRect(QRectF(QPointF(start - wedgie, open), QPointF(start + wedgie, close)));
     }
 }
 
