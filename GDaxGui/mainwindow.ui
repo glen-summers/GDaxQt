@@ -161,12 +161,54 @@
     </property>
     <addaction name="actionE_xit"/>
    </widget>
+   <widget class="QMenu" name="menuGranularity">
+    <property name="title">
+     <string>Candles</string>
+    </property>
+    <addaction name="action1M"/>
+    <addaction name="action5M"/>
+    <addaction name="action15M"/>
+    <addaction name="action1H"/>
+    <addaction name="action6H"/>
+    <addaction name="action1D"/>
+   </widget>
    <addaction name="menuExit"/>
+   <addaction name="menuGranularity"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionE_xit">
    <property name="text">
     <string>E&amp;xit</string>
+   </property>
+  </action>
+  <action name="action1M">
+   <property name="text">
+    <string>1M</string>
+   </property>
+  </action>
+  <action name="action5M">
+   <property name="text">
+    <string>5M</string>
+   </property>
+  </action>
+  <action name="action15M">
+   <property name="text">
+    <string>15M</string>
+   </property>
+  </action>
+  <action name="action1H">
+   <property name="text">
+    <string>1H</string>
+   </property>
+  </action>
+  <action name="action6H">
+   <property name="text">
+    <string>6H</string>
+   </property>
+  </action>
+  <action name="action1D">
+   <property name="text">
+    <string>1D</string>
    </property>
   </action>
  </widget>

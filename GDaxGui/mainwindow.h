@@ -9,6 +9,7 @@
 #include <QMainWindow>
 #include <QTimer>
 #include <QTextEdit>
+#include <QComboBox>
 
 #include <memory>
 
@@ -41,6 +42,7 @@ private slots:
     void Trades(std::deque<Trade> values);
     void Ticker(Tick tick);
     void StateChanged(GDaxLib::State state);
+    void GranularityChanged(QAction *);
 
 private:
     void Connected();

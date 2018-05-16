@@ -4,7 +4,9 @@
 #include "utils.h"
 
 #include <QTextEdit>
+#include <QComboBox>
 #include <QTimer>
+#include <QToolBar>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -12,6 +14,14 @@ MainWindow::MainWindow(QWidget *parent)
     , timer(std::make_unique<QTimer>())
 {
     ui->setupUi(this);
+
+    ui->action1M->setData((unsigned int)Granularity::Minutes);
+    ui->action5M->setData((unsigned int)Granularity::FiveMinutes);
+    ui->action15M->setData((unsigned int)Granularity::FifteenMinutes);
+    ui->action1H->setData((unsigned int)Granularity::Hours);
+    ui->action6H->setData((unsigned int)Granularity::SixHours);
+    ui->action1D->setData((unsigned int)Granularity::Days);
+    connect(ui->menuGranularity, SIGNAL(triggered(QAction *)), this, SLOT(GranularityChanged(QAction *)));
 
     ui->depthChart->SetGDaxLib(&gDaxLib);
 
@@ -276,6 +286,12 @@ void MainWindow::StateChanged(GDaxLib::State state)
         Connected();
         break;
     }
+}
+
+void MainWindow::GranularityChanged(QAction * action)
+{
+    granularity = (Granularity)action->data().toUInt();
+    restProvider.FetchAllCandles(granularity);
 }
 
 void MainWindow::Connected()
