@@ -158,6 +158,7 @@ void CandleChart::Paint(QPainter & painter) const
                               fillBrush);
     }
 
+    painter.setBrush({});
     QPen smaPen(QColor(qRgb(255,255,0)), 1.5);
     smaPen.setCosmetic(true);
     painter.setPen(smaPen);

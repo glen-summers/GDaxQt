@@ -291,5 +291,8 @@ void MainWindow::Connected()
     ui->depthChart->update();
 
     restProvider.FetchTrades();
-    restProvider.FetchCandles();
+
+    QDateTime start = QDateTime::currentDateTimeUtc().addDays(-5);
+    QDateTime end = QDateTime::currentDateTimeUtc().addSecs(-60);
+    restProvider.FetchCandles(start, end, 3600);
 }

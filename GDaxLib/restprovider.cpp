@@ -6,16 +6,23 @@
 #include <QJsonArray>
 #include <QJsonValueRef>
 #include <QMetaEnum>
+#include <QNetworkCookieJar>
+#include <QUrlQuery>
 
-// rework as a basic request response handler
-// "One QNetworkAccessManager should be enough for the whole Qt application."
-
-void RestProvider::FetchCandles()
+void RestProvider::FetchCandles(const QDateTime & start, const QDateTime & end, unsigned int granularity)
 {
-    QUrl url("https://api.gdax.com/products/BTC-EUR/candles?granularity=3600");
+    QUrlQuery q;
+    q.addQueryItem("start", start.toString(Qt::ISODate));
+    q.addQueryItem("end", end.toString(Qt::ISODate));
+    q.addQueryItem("granularity", QString::number(granularity));
+
+    QUrl url("https://api.gdax.com/products/BTC-EUR/candles");
+    url.setQuery(q);
+
+    log.Info(QString("Requesting %1").arg(url.toString()));
     QNetworkRequest request(url);
     QNetworkReply * reply = manager.get(request);
-
+    // reply->ignoreSslErrors();// allows fidler, set in cfg
     connect(reply, &QNetworkReply::sslErrors, this, &RestProvider::SslErrors);
     connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), this, &RestProvider::Error);
     connect(reply, &QNetworkReply::finished, [this, reply]() { RestProvider::CandlesFinished(reply); });
@@ -35,7 +42,7 @@ void RestProvider::FetchTrades()
 
 void RestProvider::Error(QNetworkReply::NetworkError error)
 {
-    log.Error(QString("SocketError: %1").arg(QMetaEnum::fromType<QAbstractSocket::SocketError>().valueToKey(error)));
+    log.Error(QString("SocketError: %1").arg(QMetaEnum::fromType<QNetworkReply::NetworkError>().valueToKey(error)));
 }
 
 void RestProvider::SslErrors(QList<QSslError> errors)
@@ -69,6 +76,8 @@ void RestProvider::CandlesFinished(QNetworkReply *reply)
       candles.push_back({startTime, lowestPrice, highestPrice, openingPrice, closingPrice, volume});
     }
     reply->deleteLater();
+
+    log.Info(QString("candles %1").arg(candles.size()));
 
     emit OnCandles(std::move(candles));
 }

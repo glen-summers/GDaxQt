@@ -22,7 +22,7 @@ class RestProvider : public QObject
 
 public:
     void FetchTrades();
-    void FetchCandles();
+    void FetchCandles(const QDateTime & start, const QDateTime & end, unsigned int granularity);
 
 signals:
     void OnError();
