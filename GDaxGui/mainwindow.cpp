@@ -7,20 +7,39 @@
 #include <QComboBox>
 #include <QTimer>
 #include <QToolBar>
+#include <QActionGroup>
+
+namespace
+{
+    void SetupActionGroup(QActionGroup & group, const std::initializer_list<std::pair<QAction &, Granularity>> & actions, QAction & selected)
+    {
+        for (const auto & action : actions)
+        {
+            action.first.setData(static_cast<unsigned int>(action.second));
+            group.addAction(&action.first);
+        }
+        selected.setChecked(true);
+    }
+}
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(std::make_unique<Ui::MainWindow>())
     , timer(std::make_unique<QTimer>())
+    , granularity()
 {
     ui->setupUi(this);
 
-    ui->action1M->setData((unsigned int)Granularity::Minutes);
-    ui->action5M->setData((unsigned int)Granularity::FiveMinutes);
-    ui->action15M->setData((unsigned int)Granularity::FifteenMinutes);
-    ui->action1H->setData((unsigned int)Granularity::Hours);
-    ui->action6H->setData((unsigned int)Granularity::SixHours);
-    ui->action1D->setData((unsigned int)Granularity::Days);
+    granularity = Granularity::Hours; // persist
+    SetupActionGroup(*new QActionGroup(this),
+    {
+        {*ui->action1M, Granularity::Minutes},
+        {*ui->action5M, Granularity::FiveMinutes},
+        {*ui->action15M, Granularity::FifteenMinutes},
+        {*ui->action1H, Granularity::Hours},
+        {*ui->action6H, Granularity::SixHours},
+        {*ui->action1D, Granularity::Days}
+    }, *ui->action1H);
     connect(ui->menuGranularity, SIGNAL(triggered(QAction *)), this, SLOT(GranularityChanged(QAction *)));
 
     ui->depthChart->SetGDaxLib(&gDaxLib);

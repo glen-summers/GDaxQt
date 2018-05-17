@@ -182,31 +182,49 @@
    </property>
   </action>
   <action name="action1M">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>1M</string>
    </property>
   </action>
   <action name="action5M">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>5M</string>
    </property>
   </action>
   <action name="action15M">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>15M</string>
    </property>
   </action>
   <action name="action1H">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>1H</string>
    </property>
   </action>
   <action name="action6H">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>6H</string>
    </property>
   </action>
   <action name="action1D">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>1D</string>
    </property>
