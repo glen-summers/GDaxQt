@@ -16,6 +16,7 @@ public:
         , count()
         , ema()
     {
+        path = {}; // reset
     }
 
     void Add(double x, double value)

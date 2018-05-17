@@ -20,6 +20,7 @@ public:
         , count()
         , total()
     {
+        path = {}; // reset
     }
 
     void Add(double x, double value)
