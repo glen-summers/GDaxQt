@@ -1,5 +1,5 @@
 #include "candleoverlay.h"
-#include "candleChart.h"
+#include "candlechart.h"
 
 CandleOverlay::CandleOverlay(CandleChart & candleChart)
     : OverlayWidget(&candleChart)
