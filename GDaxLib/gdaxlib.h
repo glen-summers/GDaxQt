@@ -73,6 +73,7 @@ public:
 private:
 signals:
     void OnUpdate();
+    void OnHeartbeat(const QDateTime & serverTime);
     void OnTick(Tick tick);
     void OnStateChanged(State state);
 

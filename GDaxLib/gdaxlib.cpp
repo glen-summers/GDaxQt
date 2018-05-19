@@ -280,17 +280,19 @@ void GDaxLib::ProcessHeartbeat(const QJsonObject & object)
 {
     auto seq = static_cast<SequenceNumber>(object["sequence"].toDouble());
     auto tradeId = static_cast<TradeId>(object["last_trade_id"].toDouble());
-    QString serverTime = object["time"].toString();
+    QString serverTimeString = object["time"].toString();
 
     if (lastTradeId!=0 && lastTradeId+1 != tradeId)
     {
         log.Info(QString("[%1] [%2] MissedTrade(s): %3 - %4")
-                 .arg(serverTime)
+                 .arg(serverTimeString)
                  .arg(seq)
                  .arg(lastTradeId+1)
-                 .arg(tradeId-1)
-                 .arg(serverTime));
+                 .arg(tradeId-1));
     }
+
+    QDateTime serverTime = QDateTime::fromString(serverTimeString, Qt::ISODateWithMs);
+    emit OnHeartbeat(serverTime);
 }
 
 void GDaxLib::ProcessTicker(const QJsonObject & object)

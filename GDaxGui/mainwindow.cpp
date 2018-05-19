@@ -50,6 +50,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&restProvider, &RestProvider::OnCandles, this, &MainWindow::Candles);
     connect(&restProvider, &RestProvider::OnTrades, this, &MainWindow::Trades);
     connect(&gDaxLib, &GDaxLib::OnTick, this, &MainWindow::Ticker);
+    connect(&gDaxLib, &GDaxLib::OnHeartbeat, this, &MainWindow::Heartbeat);
     connect(&gDaxLib, &GDaxLib::OnStateChanged, this, &MainWindow::StateChanged);
 
     timer->start(5000);
@@ -287,6 +288,13 @@ void MainWindow::Ticker(Tick tick)
     {
         trades.pop_back();
     }
+
+    ui->candleChart->AddTick(tick);
+}
+
+void MainWindow::Heartbeat(const QDateTime & serverTime)
+{
+    ui->candleChart->Heartbeat(serverTime);
 }
 
 void MainWindow::StateChanged(GDaxLib::State state)

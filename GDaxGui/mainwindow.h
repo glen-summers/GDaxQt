@@ -41,6 +41,7 @@ private slots:
     void Candles(std::deque<Candle> values);
     void Trades(std::deque<Trade> values);
     void Ticker(Tick tick);
+    void Heartbeat(const QDateTime & serverTime);
     void StateChanged(GDaxLib::State state);
     void GranularityChanged(QAction *);
 

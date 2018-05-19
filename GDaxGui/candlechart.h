@@ -4,6 +4,7 @@
 #include "restprovider.h"
 
 #include "plot.h"
+struct Tick;
 
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
@@ -28,12 +29,15 @@ public:
     CandleChart(QWidget * parent = nullptr);
 
     void SetCandles(std::deque<Candle> newCandles, Granularity granularity);
-
+    void AddTick(const Tick & tick);
+    void Heartbeat(const QDateTime & serverTime);
     time_t HitTest(const QPoint & point) const;
     const Candle * FindCandle(time_t time) const;
     void DrawCandleValues(QPainter &painter, const Candle & candle) const;
 
 private:
+    bool CheckCandleRollover(const QDateTime & time, const Decimal & price);
+
     void paintEvent(QPaintEvent *event) override
     {
         QPainter painter;

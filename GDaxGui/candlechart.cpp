@@ -2,6 +2,7 @@
 
 #include "sma.h"
 #include "ema.h"
+#include "tick.h"
 
 #include <QApplication>
 
@@ -58,8 +59,49 @@ void CandleChart::SetCandles(std::deque<Candle> forkHandles, Granularity granula
     double margin = view.height()*0.1;
     view.adjust(0, -margin, 0, margin);
     candlePlot.SetView(view);
-
     update();
+}
+
+void CandleChart::AddTick(const Tick & tick)
+{
+    if (candles.empty())
+    {
+        return;
+    }
+
+    bool updated = CheckCandleRollover(tick.time, tick.price);
+    if (!updated)
+    {
+        auto & candle = candles.front();
+        if (tick.price > candle.highestPrice)
+        {
+            candle.highestPrice = tick.price;
+            updated = true;
+        }
+        else if (tick.price < candle.lowestPrice)
+        {
+            candle.lowestPrice = tick.price;
+            updated = true;
+        }
+        if (tick.price != candle.closingPrice)
+        {
+            candle.closingPrice = tick.price;
+            updated = true;
+        }
+    }
+
+    if (updated)
+    {
+        update();
+    }
+}
+
+void CandleChart::Heartbeat(const QDateTime & serverTime)
+{
+    if (!candles.empty())
+    {
+       CheckCandleRollover(serverTime, candles.front().closingPrice);
+    }
 }
 
 const Candle * CandleChart::FindCandle(time_t time) const
@@ -87,6 +129,20 @@ void CandleChart::DrawCandleValues(QPainter & painter, const Candle & candle) co
     // draw alpha rect for text visibility
     painter.drawText(candlePlot.Inner().topLeft()+QPointF{5,15}, text);
     painter.setClipping(false);
+}
+
+bool CandleChart::CheckCandleRollover(const QDateTime & dateTime, const Decimal & price)
+{
+    bool updated = false;
+    time_t time = dateTime.toSecsSinceEpoch();
+    time_t nextStartTime = candles.front().startTime + timeDelta;
+    if (time >= nextStartTime)
+    {
+        candles.push_front(Candle{nextStartTime, price, price, price, price}); // +amount
+        updated = true;
+        // add price to sma\ema...
+    }
+    return updated;
 }
 
 void CandleChart::wheelEvent(QWheelEvent * event)
