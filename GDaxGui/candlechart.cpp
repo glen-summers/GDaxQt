@@ -62,6 +62,29 @@ void CandleChart::SetCandles(std::deque<Candle> forkHandles, Granularity granula
     update();
 }
 
+const Candle * CandleChart::candle(time_t time) const
+{
+    auto it = std::upper_bound(candles.rbegin(), candles.rend(), time, CandleLess{});
+    return (it == candles.rend()) ? nullptr : &*it;
+}
+
+time_t CandleChart::HitTest(const QPoint & point) const
+{
+    return baseTime + candlePlot.MapToView(point).x() - timeDelta /2;
+}
+
+void CandleChart::drawCandleValues(QPainter & painter, const Candle & candle) const
+{
+    auto text = QString("%1 O:%2 H:%3 L:%4 C:%5") // +% change
+            .arg(QDateTime::fromSecsSinceEpoch(candle.startTime).toString("MMM dd yyyy hh:mm"))
+            .arg(candle.openingPrice.getAsDouble(), 0, 'f', 2)
+            .arg(candle.highestPrice.getAsDouble(), 0, 'f', 2)
+            .arg(candle.lowestPrice.getAsDouble(), 0, 'f', 2)
+            .arg(candle.closingPrice.getAsDouble(), 0, 'f', 2);
+
+    painter.drawText(candlePlot.Inner(), text, Qt::AlignLeft | Qt::AlignTop);
+}
+
 void CandleChart::wheelEvent(QWheelEvent * event)
 {
     QPointF pos = event->posF();
@@ -104,8 +127,6 @@ void CandleChart::mouseReleaseEvent(QMouseEvent *)
 void CandleChart::Paint(QPainter & painter) const
 {
     // todo, feed in new tick values
-    // add ema
-    // init 1d hourly
 
     if (candles.empty())
     {
@@ -117,10 +138,6 @@ void CandleChart::Paint(QPainter & painter) const
 
     //time_t startTime = time(nullptr); // or lastUPdateTime / manual scroll value
     // if auto scroll at new time seg
-
-    // mode = 1hr... others
-    //double yRange = (max-min);
-    //double wedgie = 0.3*timeDelta*xScale;
 
     // to cfg
     QPen penUp(QColor(qRgb(0,255,0)), 1);

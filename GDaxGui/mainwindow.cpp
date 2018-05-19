@@ -3,6 +3,8 @@
 #include "depthchart.h"
 #include "utils.h"
 
+#include "candleoverlay.h"
+
 #include <QTextEdit>
 #include <QComboBox>
 #include <QTimer>
@@ -51,6 +53,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(&gDaxLib, &GDaxLib::OnStateChanged, this, &MainWindow::StateChanged);
 
     timer->start(5000);
+
+    new CandleOverlay(*ui->candleChart);
 }
 
 void MainWindow::Update()

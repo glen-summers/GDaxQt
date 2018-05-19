@@ -2,6 +2,7 @@
 #define TICK_H
 
 #include "defs.h"
+#include "decimalwrap.h"
 
 #include <QDateTime>
 

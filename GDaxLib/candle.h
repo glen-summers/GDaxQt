@@ -1,6 +1,8 @@
 #ifndef CANDLE_H
 #define CANDLE_H
 
+#include "decimalwrap.h"
+
 enum class Granularity : unsigned int
 {
     Minutes=60,

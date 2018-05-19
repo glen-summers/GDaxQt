@@ -29,7 +29,8 @@ HEADERS += \
     filelogger.h \
     flogging.h \
     trade.h \
-    candle.h
+    candle.h \
+    decimalwrap.h
 
 DISTFILES += \
     misc.pri \

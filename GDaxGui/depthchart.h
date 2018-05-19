@@ -21,7 +21,7 @@ class DepthChart : public QOpenGLWidget
     const GDaxLib * g;
 
 public:
-    DepthChart(QWidget *parent = 0);
+    DepthChart(QWidget *parent = nullptr);
 
     void SetGDaxLib(const GDaxLib * value)
     {

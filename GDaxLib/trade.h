@@ -2,6 +2,7 @@
 #define TRADE_H
 
 #include "defs.h"
+#include "decimalwrap.h"
 
 #include <QJsonObject>
 #include <QDateTime>

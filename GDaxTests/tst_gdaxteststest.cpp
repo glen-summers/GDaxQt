@@ -1,5 +1,6 @@
 
 #include "defs.h"
+#include "decimalwrap.h"
 
 #include "rapidjson/document.h"
 using namespace rapidjson;

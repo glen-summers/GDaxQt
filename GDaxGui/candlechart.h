@@ -25,9 +25,13 @@ class CandleChart : public QOpenGLWidget
     QPoint lastDrag;
 
 public:
-    CandleChart(QWidget *parent = 0);
+    CandleChart(QWidget * parent = nullptr);
 
     void SetCandles(std::deque<Candle> newCandles, Granularity granularity);
+
+    time_t HitTest(const QPoint & point) const;
+    const Candle * candle(time_t time) const;
+    void drawCandleValues(QPainter &painter, const Candle & candle) const;
 
 private:
     void paintEvent(QPaintEvent *event) override

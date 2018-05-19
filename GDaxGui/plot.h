@@ -37,7 +37,7 @@ public:
         }
     }
 
-    const QRectF Inner() const { return inner; }
+    const QRectF & Inner() const { return inner; }
 
     void SetView(const QRectF & value);
     void ApplyViewTransform(QPainter &painter);
