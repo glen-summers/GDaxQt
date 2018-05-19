@@ -11,7 +11,7 @@ public:
    OverlayWidget(QWidget * parent = nullptr) : QWidget(parent)
    {
       setAttribute(Qt::WA_NoSystemBackground);
-      newParent();
+      NewParent();
    }
 
 protected:
@@ -42,14 +42,14 @@ protected:
       }
       else if (ev->type() == QEvent::ParentChange)
       {
-          newParent();
+          NewParent();
           raise();
       }
       return QWidget::event(ev);
    }
 
 private:
-    void newParent()
+    void NewParent()
     {
         if (parent())
         {

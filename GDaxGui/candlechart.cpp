@@ -62,10 +62,10 @@ void CandleChart::SetCandles(std::deque<Candle> forkHandles, Granularity granula
     update();
 }
 
-const Candle * CandleChart::candle(time_t time) const
+const Candle * CandleChart::FindCandle(time_t time) const
 {
-    auto it = std::upper_bound(candles.rbegin(), candles.rend(), time, CandleLess{});
-    return (it == candles.rend()) ? nullptr : &*it;
+    auto it = std::lower_bound(candles.rbegin(), candles.rend(), time, CandleLess{});
+    return it == candles.rend() || it->startTime > time + timeDelta ? nullptr : &*it;
 }
 
 time_t CandleChart::HitTest(const QPoint & point) const
@@ -73,16 +73,20 @@ time_t CandleChart::HitTest(const QPoint & point) const
     return baseTime + candlePlot.MapToView(point).x() - timeDelta /2;
 }
 
-void CandleChart::drawCandleValues(QPainter & painter, const Candle & candle) const
+void CandleChart::DrawCandleValues(QPainter & painter, const Candle & candle) const
 {
-    auto text = QString("%1 O:%2 H:%3 L:%4 C:%5") // +% change
+    auto text = QString("%1 O:%2 H:%3 L:%4 C:%5") // +% change, need previous candle
             .arg(QDateTime::fromSecsSinceEpoch(candle.startTime).toString("MMM dd yyyy hh:mm"))
             .arg(candle.openingPrice.getAsDouble(), 0, 'f', 2)
             .arg(candle.highestPrice.getAsDouble(), 0, 'f', 2)
             .arg(candle.lowestPrice.getAsDouble(), 0, 'f', 2)
             .arg(candle.closingPrice.getAsDouble(), 0, 'f', 2);
 
-    painter.drawText(candlePlot.Inner(), text, Qt::AlignLeft | Qt::AlignTop);
+    auto inner = candlePlot.Inner();
+    painter.setClipRect(inner);
+    // draw alpha rect for text visibility
+    painter.drawText(candlePlot.Inner().topLeft()+QPointF{5,15}, text);
+    painter.setClipping(false);
 }
 
 void CandleChart::wheelEvent(QWheelEvent * event)
@@ -154,12 +158,10 @@ void CandleChart::Paint(QPainter & painter) const
     QRectF v = candlePlot.View();
     auto start = (time_t)v.left() - timeDelta/2;
     auto finish = (time_t)v.right() + timeDelta/2;
-    for (auto it = std::lower_bound(candles.rbegin(), candles.rend(), baseTime + start, less),
-         end = std::upper_bound(candles.rbegin(), candles.rend(), baseTime + finish, less);
-         it!=end; ++it)
+    for (auto end = candles.rend(), it = std::lower_bound(candles.rbegin(), end, baseTime + start, less);
+         it != end && it->startTime < baseTime + finish; ++it)
     {
-        const auto & c = *it; // getting non decremental exception here, *it calls --
-
+        const auto & c = *it;
         if (c.closingPrice >= c.openingPrice)
         {
             painter.setPen(penUp);

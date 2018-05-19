@@ -30,8 +30,8 @@ public:
     void SetCandles(std::deque<Candle> newCandles, Granularity granularity);
 
     time_t HitTest(const QPoint & point) const;
-    const Candle * candle(time_t time) const;
-    void drawCandleValues(QPainter &painter, const Candle & candle) const;
+    const Candle * FindCandle(time_t time) const;
+    void DrawCandleValues(QPainter &painter, const Candle & candle) const;
 
 private:
     void paintEvent(QPaintEvent *event) override

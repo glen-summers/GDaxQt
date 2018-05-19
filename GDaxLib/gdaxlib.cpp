@@ -86,7 +86,7 @@ void GDaxLib::Connected()
     // https://stackoverflow.com/questions/28540571/how-to-enable-and-disable-qdebug-messages
     // https://gist.github.com/polovik/10714049
     log.Info("onConnected, subscribing...");
-    clear();
+    Clear();
     webSocket.sendTextMessage(subscribeMessage);
 }
 
@@ -140,7 +140,7 @@ void GDaxLib::Pong()
     log.Spam("Pong");
 }
 
-void GDaxLib::clear()
+void GDaxLib::Clear()
 {
     bids.clear();
     asks.clear();

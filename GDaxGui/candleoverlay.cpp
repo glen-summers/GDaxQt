@@ -27,10 +27,10 @@ void CandleOverlay::mouseMoveEvent(QMouseEvent * event)
 
 void CandleOverlay::paintEvent(QPaintEvent *)
 {
-    const Candle * candle = candleChart.candle(candleTime);
+    const Candle * candle = candleChart.FindCandle(candleTime);
     if (candle)
     {
         QPainter painter(this);
-        candleChart.drawCandleValues(painter, *candle);
+        candleChart.DrawCandleValues(painter, *candle);
     }
 }
