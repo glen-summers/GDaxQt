@@ -7,20 +7,28 @@
 
 class Sma
 {
-    QPainterPath & path;
     size_t const periods;
     size_t count;
     double total;
     std::deque<double> buffer;
+    QPainterPath path;
 
 public:
-    Sma(QPainterPath & path, size_t periods)
-        : path(path)
-        , periods(periods)
+    Sma(size_t periods)
+        : periods(periods)
         , count()
         , total()
     {
-        path = {}; // reset
+    }
+
+    const QPainterPath & Path() const { return path; }
+
+    void Reset()
+    {
+        count = 0;
+        total = 0;
+        buffer.clear();
+        path = {};
     }
 
     void Add(double x, double value)

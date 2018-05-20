@@ -1,22 +1,33 @@
 #ifndef EMA_H
 #define EMA_H
 
+#include <QPainterPath>
+
+#include <deque>
+
 class Ema
 {
-    QPainterPath & path;
     size_t const periods;
-    double multiplier = 2./(periods+1);
+    double const multiplier = 2./(periods+1);
     size_t count;
     double ema;
+    QPainterPath path;
 
 public:
-    Ema(QPainterPath & path, size_t periods)
-        : path(path)
-        , periods(periods)
+    Ema(size_t periods)
+        : periods(periods)
         , count()
         , ema()
     {
-        path = {}; // reset
+    }
+
+    const QPainterPath & Path() const { return path; }
+
+    void Reset()
+    {
+        count = 0;
+        ema = 0;
+        path = {};
     }
 
     void Add(double x, double value)

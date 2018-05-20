@@ -1,7 +1,5 @@
 #include "candlechart.h"
 
-#include "sma.h"
-#include "ema.h"
 #include "tick.h"
 
 #include <QApplication>
@@ -12,7 +10,10 @@ CandleChart::CandleChart(QWidget *parent)
     , candlePlot(10, true, true)
     , baseTime()
     , timeDelta()
+    , lastCandleStartTime()
     , lastDrag()
+    , sma(15)
+    , ema(15)
 {
 }
 
@@ -28,7 +29,8 @@ void CandleChart::SetCandles(std::deque<Candle> forkHandles, Granularity granula
     candles = std::move(forkHandles);
     if (!candles.empty())
     {
-        maxTime = candles.begin()->startTime + timeDelta /2;
+        lastCandleStartTime = candles.begin()->startTime;
+        maxTime = lastCandleStartTime + timeDelta /2;
         baseTime = candles.rbegin()->startTime;
     }
     else
@@ -45,8 +47,8 @@ void CandleChart::SetCandles(std::deque<Candle> forkHandles, Granularity granula
         min = std::min(min, it->lowestPrice.getAsDouble());
     }
 
-    Sma sma(smaPath, 15);
-    Ema ema(emaPath, 15);
+    sma.Reset();
+    ema.Reset();
     for (auto it = candles.rbegin(); it!=candles.rend(); ++it)
     {
         auto startTime = static_cast<double>(it->startTime - baseTime);
@@ -69,10 +71,10 @@ void CandleChart::AddTick(const Tick & tick)
         return;
     }
 
-    bool updated = CheckCandleRollover(tick.time, tick.price);
+    auto & candle = candles.front();
+    bool updated = CheckCandleRollover(tick.time, candle.closingPrice);
     if (!updated)
     {
-        auto & candle = candles.front();
         if (tick.price > candle.highestPrice)
         {
             candle.highestPrice = tick.price;
@@ -135,12 +137,20 @@ bool CandleChart::CheckCandleRollover(const QDateTime & dateTime, const Decimal 
 {
     bool updated = false;
     time_t time = dateTime.toSecsSinceEpoch();
-    time_t nextStartTime = candles.front().startTime + timeDelta;
-    if (time >= nextStartTime)
+    time_t previousStartTime = candles.front().startTime;
+    if (time >= previousStartTime + timeDelta) // while in case multiple gaps?
     {
-        candles.push_front(Candle{nextStartTime, price, price, price, price}); // +amount
+        candles.push_front(Candle{previousStartTime+timeDelta, price, price, price, price}); // +amount
         updated = true;
-        // add price to sma\ema...
+        auto prd = price.getAsDouble();
+
+        if (previousStartTime > lastCandleStartTime) // avoid double counting last loaded candle
+        {
+            // try updating last point of path directly in the tick callback rather than rollover
+            auto startTime = static_cast<double>(previousStartTime - baseTime);
+            sma.Add(startTime, prd);
+            ema.Add(startTime, prd);
+        }
     }
     return updated;
 }
@@ -241,10 +251,10 @@ void CandleChart::Paint(QPainter & painter) const
     QPen smaPen(QColor(qRgb(255,255,0)), 1.5);
     smaPen.setCosmetic(true);
     painter.setPen(smaPen);
-    candlePlot.DrawPath(painter, smaPath);
+    candlePlot.DrawPath(painter, sma.Path());
     smaPen.setColor(qRgb(0,255,255));
     painter.setPen(smaPen);
-    candlePlot.DrawPath(painter, emaPath);
+    candlePlot.DrawPath(painter, ema.Path());
 
     painter.restore();
     candlePlot.EndInner(painter);

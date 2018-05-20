@@ -4,6 +4,9 @@
 #include "restprovider.h"
 
 #include "plot.h"
+#include "sma.h"
+#include "ema.h"
+
 struct Tick;
 
 #include <QOpenGLWidget>
@@ -21,9 +24,11 @@ class CandleChart : public QOpenGLWidget
     QColor background;
     Plot mutable candlePlot;
     std::deque<Candle> candles;
-    time_t baseTime, timeDelta;
-    QPainterPath smaPath, emaPath;
+    time_t baseTime, timeDelta, lastCandleStartTime;
     QPoint lastDrag;
+
+    Sma sma;
+    Ema ema;
 
 public:
     CandleChart(QWidget * parent = nullptr);
