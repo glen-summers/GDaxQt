@@ -24,12 +24,23 @@ class CandleChart : public QOpenGLWidget
     QColor background;
     Plot mutable candlePlot;
     std::deque<Candle> candles;
-    time_t baseTime, timeDelta, lastCandleStartTime;
+    time_t baseTime, timeDelta;
     QPoint lastDrag;
 
+    // wrap
     Sma sma;
     Ema ema;
-
+    void AddMetric(double x, double y)
+    {
+        sma.Add(x-baseTime, y);
+        ema.Add(x-baseTime, y);
+    }
+    void SetMetric(double x, double y)
+    {
+        sma.SetCurrentValue(x-baseTime, y);
+        ema.SetCurrentValue(x-baseTime, y);
+    }
+    //wrap
 public:
     CandleChart(QWidget * parent = nullptr);
 

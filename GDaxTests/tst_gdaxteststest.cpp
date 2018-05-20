@@ -5,12 +5,14 @@
 #include "rapidjson/document.h"
 using namespace rapidjson;
 
-#include "utils.h"
-
 #ifdef _MSC_VER
 #pragma warning(push)
 #pragma warning(push,3)
 #endif
+
+#include "utils.h"
+#include "../GDaxGui/sma.h"
+#include "../GDaxGui/ema.h"
 
 #include <QtTest>
 #include <QAbstractSocket>
@@ -270,7 +272,49 @@ private slots:
     {
         AssertEquals("SocketTimeoutError", QMetaEnum::fromType<QAbstractSocket::SocketError>().valueToKey(QAbstractSocket::SocketError::SocketTimeoutError));
     }
+
+
+    void SmaTest()
+    {
+        Sma sma(2);
+        AssertEquals(1, sma.Add(0, 1));
+        AssertEquals(2, sma.Add(1, 2));
+        AssertEquals("2.5", QString::number(sma.Add(2, 3)));
+        AssertEquals("3.5", QString::number(sma.Add(3, 4)));
+    }
+
+    void SmaUndoTest()
+    {
+        Sma sma(2);
+        AssertEquals(1, sma.Add(0, 1));
+        AssertEquals(2, sma.Add(1, 2));
+        AssertEquals("2.5", QString::number(sma.Add(2, 3)));
+        AssertEquals("4", QString::number(sma.Add(3, 5)));
+        double newValue = sma.SetCurrentValue(3, 4);
+        AssertEquals("3.5", QString::number(newValue));
+    }
+
+    void EmaTest()
+    {
+        Ema ema(2);
+        AssertEquals("1", QString::number(ema.Add(0, 1))); //
+        AssertEquals("2", QString::number(ema.Add(1, 2))); // ema=1.5
+        AssertEquals("2.5", QString::number(ema.Add(2, 3))); // (value - ema) * 2/3 + ema = (3-1.5)2/3+1.5
+        AssertEquals("3.5", QString::number(ema.Add(3, 4)));
+    }
+
+    void EmaUndoTest()
+    {
+        Ema ema(2);
+        AssertEquals("1", QString::number(ema.Add(0, 1))); //
+        AssertEquals("2", QString::number(ema.Add(1, 2))); // ema=1.5
+        AssertEquals("2.5", QString::number(ema.Add(2, 3))); // (value - ema) * 2/3 + ema = (3-1.5)2/3+1.5
+        AssertEquals("4.16667", QString::number(ema.Add(3, 5)));
+        double newValue = ema.SetCurrentValue(3, 4);
+        AssertEquals("3.5", QString::number(newValue));
+    }
 };
+
 
 /*
  {

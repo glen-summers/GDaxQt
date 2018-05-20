@@ -3,7 +3,7 @@
 }
 
 QT       += testlib
-QT       -= gui
+QT       += gui
 
 CONFIG   += console
 CONFIG   -= app_bundle

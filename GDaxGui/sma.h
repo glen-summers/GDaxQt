@@ -8,9 +8,10 @@
 class Sma
 {
     size_t const periods;
-    size_t count;
+    unsigned int  count;
     double total;
     std::deque<double> buffer;
+    double previous;
     QPainterPath path;
 
 public:
@@ -18,6 +19,7 @@ public:
         : periods(periods)
         , count()
         , total()
+        , previous()
     {
     }
 
@@ -27,29 +29,80 @@ public:
     {
         count = 0;
         total = 0;
+        previous = 0;
         buffer.clear();
         path = {};
     }
 
-    void Add(double x, double value)
+    double Add(double x, double value)
+    {
+        double newValue = Calc(value);
+        AddToPath(x, newValue);
+        ++count;
+        return newValue;
+    }
+
+    double SetCurrentValue(double x, double value)
+    {
+        double newValue = 0;
+        if (count != 0)
+        {
+            Undo();
+            newValue = Calc(value);
+            ModifyPath(x, newValue);
+            ++count;
+        }
+        return newValue;
+    }
+
+private:
+    void Undo()
+    {
+        if (count == 0)
+        {
+            return;
+        }
+
+        if (count >= periods)
+        {
+            buffer.push_back(previous);
+            total += previous;
+        }
+        total -= buffer.front();
+        buffer.pop_front();
+        --count;
+    }
+
+    double Calc(double value)
     {
         buffer.push_front(value);
         total += value;
 
-        if (count == periods)
+        if (count >= periods)
         {
-            total -= buffer.back();
+            previous = buffer.back();
+            total -= previous;
             buffer.pop_back();
-            path.lineTo({x, total/periods});
+            return total/periods;
         }
-        else if (count++ == 0)
+        return value;
+    }
+
+    void AddToPath(double x, double y)
+    {
+        if (count == 0)
         {
-            path.moveTo({x, value});
+            path.moveTo({x, y});
         }
         else
         {
-            path.lineTo({x, value});
+            path.lineTo({x, y});
         }
+    }
+
+    void ModifyPath(double x, double y)
+    {
+        path.setElementPositionAt(count, x, y);
     }
 };
 

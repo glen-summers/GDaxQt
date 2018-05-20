@@ -9,8 +9,8 @@ class Ema
 {
     size_t const periods;
     double const multiplier = 2./(periods+1);
-    size_t count;
-    double ema;
+    unsigned int count;
+    double ema, previous;
     QPainterPath path;
 
 public:
@@ -18,6 +18,7 @@ public:
         : periods(periods)
         , count()
         , ema()
+        , previous()
     {
     }
 
@@ -26,27 +27,79 @@ public:
     void Reset()
     {
         count = 0;
-        ema = 0;
+        ema = previous = 0;
         path = {};
     }
 
-    void Add(double x, double value)
+    double Add(double x, double value)
     {
-        if (count == periods)
+        double newValue = Calc(value);
+        AddToPath(x, newValue);
+        ++count;
+        return newValue;
+    }
+
+    double SetCurrentValue(double x, double value)
+    {
+        double newValue = 0;
+        if (count != 0)
         {
-            ema = (value - ema) * multiplier + ema;
-            path.lineTo({x, ema});
+            Undo();
+            newValue = Calc(value);
+            ModifyPath(x, newValue);
+            ++count;
         }
-        else if (count++ == 0)
+        return newValue;
+    }
+
+private:
+    void Undo()
+    {
+        if (count == 0)
         {
-            ema += value/periods;
-            path.moveTo({x, value});
+            return;
+        }
+
+        if (count >= periods)
+        {
+            ema = previous;
+        }
+        else
+        {
+            ema -= previous/periods;
+        }
+        --count;
+    }
+
+    double Calc(double value)
+    {
+        previous = ema;
+        if (count >= periods)
+        {
+            return ema = (value - ema) * multiplier + ema;
         }
         else
         {
             ema += value/periods;
-            path.lineTo({x, value});
         }
+        return value;
+    }
+
+    void AddToPath(double x, double y)
+    {
+        if (count == 0)
+        {
+            path.moveTo({x, y});
+        }
+        else
+        {
+            path.lineTo({x, y});
+        }
+    }
+
+    void ModifyPath(double x, double y)
+    {
+        path.setElementPositionAt(count, x, y);
     }
 };
 
