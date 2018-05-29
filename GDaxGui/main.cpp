@@ -29,8 +29,12 @@ int main(int argc, char *argv[])
     fmt.setSamples(4);
     QSurfaceFormat::setDefaultFormat(fmt);
 
+    Flog::LogManager::SetLevel(Flog::Level::Spam);
+
     MainWindow w;
     w.showMaximized();
 
-    return a.exec();
+    int ret = a.exec();
+    w.Wait();
+    return ret;
 }

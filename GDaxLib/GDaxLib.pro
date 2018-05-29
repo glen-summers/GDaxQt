@@ -31,7 +31,8 @@ HEADERS += \
     trade.h \
     candle.h \
     decimalwrap.h \
-    accuratetimer.h
+    accuratetimer.h \
+    orderbook.h
 
 DISTFILES += \
     misc.pri \

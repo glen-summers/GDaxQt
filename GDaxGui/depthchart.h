@@ -35,7 +35,7 @@ public:
 private:
     void paintEvent(QPaintEvent *event) override
     {
-        Flog::ScopeLog s(log, Flog::Level::Debug, "paintEvent");
+        Flog::ScopeLog s(log, Flog::Level::Debug, "paintEvent", "--");
 
         QPainter painter;
         painter.begin(this);

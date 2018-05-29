@@ -20,10 +20,12 @@ namespace
     static constexpr const char * HeaderFooterSeparator = "------------------------------------------------";
     static constexpr const char * Delimiter = " : ";
     static constexpr int THREAD_ID_WIDTH = 5;
+    static constexpr int LEVEL_WIDTH = 8;
+    static constexpr int PREFIX_WIDTH = 12;
     static constexpr size_t maxFileSize = 5*1024*1024;
     static constexpr size_t ReserveDiskSpace = 10*1024*1024;
     static Flog::Level logLevel = Flog::Level::Info;
-    static int depth = 0;
+    static thread_local int depth = 0;
 
     void TranslateLevel(std::ostream & stm, Flog::Level level)
     {
@@ -230,21 +232,21 @@ namespace Flog
         FileLogger::Write(level, name.c_str(), message);
     }
 
-    void Log::ScopeStart(Level level, const char * message) const
+    void Log::ScopeStart(Level level, const char * message, const char * stem) const
     {
         std::ostringstream s;
-        s << std::setw(depth+4) << "==> " << message;
+        s << std::setw(depth) << "" << stem << "> " << message;
         FileLogger::Write(level, name.c_str(), s.str().c_str());
         ++depth;
     }
 
-    void Log::ScopeEnd(Level level, const char * message, std::chrono::nanoseconds ns) const
+    void Log::ScopeEnd(Level level, const char * message, const char * stem, std::chrono::nanoseconds ns) const
     {
         --depth;
         using days = std::chrono::duration<long, std::ratio_multiply<std::chrono::hours::period, std::ratio<24>>>;
 
         std::ostringstream s;
-        s << std::setw(depth+4) << "<== " << message << " ";
+        s << std::setw(depth) << "" << "<" << stem << " " << message << " ";
 
         if (std::chrono::duration_cast<std::chrono::seconds>(ns).count() == 0)
         {
@@ -409,10 +411,11 @@ void FileLogger::InternalWrite(Flog::Level level, const char * prefix, const cha
             int ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count() % 1000;
 
             streamInfo.Stream()
+                << std::left
                 << std::put_time(&tm, "%d %b %Y, %H:%M:%S") << "." << std::setw(3) << std::setfill('0') << ms << std::setfill(' ')
                 << " : [ " << std::setw(THREAD_ID_WIDTH) << GetThreadId() << " ] : "
-                << std::setw(8) << Manip<Flog::Level>(TranslateLevel, level) << " : "
-                << prefix << " : "
+                << std::setw(LEVEL_WIDTH) << Manip<Flog::Level>(TranslateLevel, level) << " : "
+                << std::setw(PREFIX_WIDTH) << prefix << " : "
                 << message << std::endl << std::flush;
         }
         catch (...)

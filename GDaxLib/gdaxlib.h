@@ -4,6 +4,7 @@
 #include "defs.h"
 #include "tick.h"
 #include "trade.h"
+#include "orderbook.h"
 
 #include "flogging.h"
 
@@ -11,8 +12,6 @@
 #include <QWebSocket>
 QT_FORWARD_DECLARE_CLASS(QJsonObject)
 
-#include <map>
-#include <deque>
 #include <unordered_map>
 
 class GDaxLib : public QObject
@@ -24,13 +23,8 @@ class GDaxLib : public QObject
     typedef std::unordered_map<std::string, void(GDaxLib::*)(const QJsonObject & object)> FunctionMap;
     static FunctionMap functionMap;
 
-    QWebSocket webSocket;
-
-    // move to client code?
-    std::map<Decimal, Decimal> bids, asks;
-    Decimal priceMin;
-    Decimal priceMax;
-    Decimal amountMax;
+    QWebSocket * const webSocket;
+    OrderBook orderBook;
     TradeId lastTradeId;
 
 public:
@@ -43,30 +37,7 @@ public:
 
     explicit GDaxLib(QObject * parent = nullptr);
 
-    const std::map<Decimal, Decimal> & Bids() const
-    {
-        return bids;
-    }
-
-    const std::map<Decimal, Decimal> & Asks() const
-    {
-        return asks;
-    }
-
-    const Decimal & PriceMin() const
-    {
-        return priceMin;
-    }
-
-    const Decimal & PriceMax() const
-    {
-        return priceMax;
-    }
-
-    const Decimal & AmountMax() const
-    {
-        return amountMax;
-    }
+    const OrderBook & Orders() const { return orderBook; }
 
     void Ping();
 

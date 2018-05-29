@@ -36,46 +36,50 @@ GDaxLib::FunctionMap GDaxLib::functionMap =
     { "error", &GDaxLib::ProcessError }
 };
 
-GDaxLib::GDaxLib(QObject * parent) // parent?
+GDaxLib::GDaxLib(QObject * parent)
     : QObject(parent)
+    , webSocket(new QWebSocket(QString(), QWebSocketProtocol::VersionLatest, this)) // check needed
     , lastTradeId()
 {
     // proxy?
     // QList<QNetworkProxy> QNetworkProxyFactory::systemProxyForQuery(const QNetworkProxyQuery &query = QNetworkProxyQuery())
 
-    connect(&webSocket, &QWebSocket::connected, this, &GDaxLib::Connected);
-    connect(&webSocket, &QWebSocket::textMessageReceived, this, &GDaxLib::TextMessageReceived);
+    connect(webSocket, &QWebSocket::connected, this, &GDaxLib::Connected);
+    connect(webSocket, &QWebSocket::textMessageReceived, this, &GDaxLib::TextMessageReceived);
 
     // weird this one doesnt seem to like direct binding, something todo with unregistered meta enum?
     //connect(&webSocket, &QWebSocket::stateChanged, this, &GDaxLib::StateChanged);
-    connect(&webSocket, SIGNAL(stateChanged(QAbstractSocket::SocketState)), SLOT(StateChanged(QAbstractSocket::SocketState)));
+    connect(webSocket, SIGNAL(stateChanged(QAbstractSocket::SocketState)), SLOT(StateChanged(QAbstractSocket::SocketState)));
 
-    connect(&webSocket, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error), this, &GDaxLib::Error);
-    connect(&webSocket, QOverload<const QList<QSslError> &>::of(&QWebSocket::sslErrors), this, &GDaxLib::SslErrors);
+    connect(webSocket, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error), this, &GDaxLib::Error);
+    connect(webSocket, QOverload<const QList<QSslError> &>::of(&QWebSocket::sslErrors), this, &GDaxLib::SslErrors);
 
-    connect(&webSocket, &QWebSocket::pong, this, &GDaxLib::Pong);
+    connect(webSocket, &QWebSocket::pong, this, &GDaxLib::Pong);
+
+    qRegisterMetaType<State>("State");
+    qRegisterMetaType<Tick>("Tick");
 
     log.Info(QString("Connecting to %1").arg(url));
-    webSocket.open(QUrl(url));
+    webSocket->open(QUrl(url));
 }
 
 void GDaxLib::Ping()
 {
-    switch (webSocket.state())
+    switch (webSocket->state())
     {
         case QAbstractSocket::SocketState::UnconnectedState:
             log.Info("Reconnecting...");
-            webSocket.open(QUrl(url));
+            webSocket->open(QUrl(url));
             break;
 
         case QAbstractSocket::SocketState::ConnectedState:
-            webSocket.ping();
+            webSocket->ping();
             break;
 
         default:
             log.Warning(QString("Ping, WebSocket state: %1").arg(
                             QMetaEnum::fromType<QAbstractSocket::SocketState>()
-                            .valueToKey(webSocket.state())));
+                            .valueToKey(webSocket->state())));
             break;
     }
 }
@@ -87,7 +91,7 @@ void GDaxLib::Connected()
     // https://gist.github.com/polovik/10714049
     log.Info("onConnected, subscribing...");
     Clear();
-    webSocket.sendTextMessage(subscribeMessage);
+    webSocket->sendTextMessage(subscribeMessage);
 }
 
 void GDaxLib::TextMessageReceived(QString message)
@@ -142,12 +146,10 @@ void GDaxLib::Pong()
 
 void GDaxLib::Clear()
 {
-    bids.clear();
-    asks.clear();
+    // lock orderbook, move\improve impl
+    QMutexLocker lock(&const_cast<QMutex&>(orderBook.Mutex()));
+    orderBook.Clear();
     lastTradeId = 0;
-    priceMin = Decimal();
-    priceMax = Decimal();
-    amountMax = Decimal();
 }
 
 GDaxLib::State GDaxLib::ToState(QAbstractSocket::SocketState socketState)
@@ -182,7 +184,10 @@ void GDaxLib::ProcessError(const QJsonObject & object)
 
 void GDaxLib::ProcessSnapshot(const QJsonObject & object)
 {
-    log.Info("Snapshot");
+    Flog::ScopeLog s(log, Flog::Level::Info, "Snapshot");
+
+    // lock orderbook, move\improve impl
+    QMutexLocker lock(&const_cast<QMutex&>(orderBook.Mutex()));
 
     Decimal totBid;
     for (QJsonValueRef bid : object["bids"].toArray())
@@ -193,7 +198,8 @@ void GDaxLib::ProcessSnapshot(const QJsonObject & object)
 
         Decimal dp(price.toStdString());
         Decimal da(amount.toStdString());
-        bids[dp] += da;
+
+        orderBook.AddBid(dp, da);
         totBid += da;
     }
 
@@ -206,38 +212,24 @@ void GDaxLib::ProcessSnapshot(const QJsonObject & object)
 
         Decimal dp(price.toStdString());
         Decimal da(amount.toStdString());
-        asks[dp] += da;
-        //amountMax = std::max(amountMax, da);
+
+        orderBook.AddAsk(dp, da);
         totAsk += da;
     }
 
     Decimal target = (totBid + totAsk) / 1000; // .1% -- move to depths chart
-    Decimal tot;
-
-    auto bidIt = bids.rbegin();
-    auto askIt = asks.begin();
-    for(; tot<target;++bidIt,++askIt)
-    {
-        if (bidIt!=bids.rend())
-        {
-            tot += bidIt->second;
-        }
-        if (askIt!=asks.end())
-        {
-            tot += askIt->second;
-        }
-    }
-    // check for end
-    priceMin = bidIt->first;
-    priceMax = askIt->first;
-    amountMax = tot;
+    orderBook.SeekRange(target);
 
     emit OnUpdate();
 }
 
 void GDaxLib::ProcessUpdate(const QJsonObject & object)
 {
-    log.Info("Update");
+    Flog::ScopeLog s(log, Flog::Level::Spam, "Update");
+
+    // lock orderbook, move\improve impl
+    QMutexLocker lock(&const_cast<QMutex&>(orderBook.Mutex()));
+
     for(QJsonValueRef changes : object["changes"].toArray())
     {
         QJsonArray array = changes.toArray();
@@ -246,29 +238,14 @@ void GDaxLib::ProcessUpdate(const QJsonObject & object)
 
         Decimal pd(array[1].toString().toStdString());
         Decimal ad(array[2].toString().toStdString());
-        bool zeroSize = ad == Decimal();
 
         if (bid)
         {
-            if (zeroSize)
-            {
-                bids.erase(pd);
-            }
-            else
-            {
-                bids[pd] = ad;
-            }
+            orderBook.UpdateBid(pd, ad);
         }
         else
         {
-            if (zeroSize)
-            {
-                asks.erase(pd);
-            }
-            else
-            {
-                asks[pd] = ad;
-            }
+            orderBook.UpdateAsk(pd, ad);
         }
     }
     // adjust scales here?
@@ -278,6 +255,8 @@ void GDaxLib::ProcessUpdate(const QJsonObject & object)
 
 void GDaxLib::ProcessHeartbeat(const QJsonObject & object)
 {
+    Flog::ScopeLog s(log, Flog::Level::Spam, "Heartbeat");
+
     auto seq = static_cast<SequenceNumber>(object["sequence"].toDouble());
     auto tradeId = static_cast<TradeId>(object["last_trade_id"].toDouble());
     QString serverTimeString = object["time"].toString();
@@ -297,7 +276,7 @@ void GDaxLib::ProcessHeartbeat(const QJsonObject & object)
 
 void GDaxLib::ProcessTicker(const QJsonObject & object)
 {
-    log.Info("Tick");
+    Flog::ScopeLog s(log, Flog::Level::Info, "Tick");
 
     auto tick(Tick::FromJson(object));
     if (tick.side == TakerSide::None)

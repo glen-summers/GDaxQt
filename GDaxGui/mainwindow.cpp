@@ -10,6 +10,7 @@
 #include <QTimer>
 #include <QToolBar>
 #include <QActionGroup>
+#include <QThread>
 
 namespace
 {
@@ -28,6 +29,8 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(std::make_unique<Ui::MainWindow>())
     , timer(std::make_unique<QTimer>())
+    , gDaxLib(new GDaxLib())
+    , workerThread(new QThread())
     , granularity()
 {
     ui->setupUi(this);
@@ -44,28 +47,41 @@ MainWindow::MainWindow(QWidget *parent)
     }, *ui->action1H);
     connect(ui->menuGranularity, SIGNAL(triggered(QAction *)), this, SLOT(GranularityChanged(QAction *)));
 
-    ui->depthChart->SetGDaxLib(&gDaxLib);
+    ui->depthChart->SetGDaxLib(gDaxLib);
 
     connect(timer.get(), &QTimer::timeout, this, &MainWindow::Update);
     connect(&restProvider, &RestProvider::OnCandles, this, &MainWindow::Candles);
     connect(&restProvider, &RestProvider::OnTrades, this, &MainWindow::Trades);
-    connect(&gDaxLib, &GDaxLib::OnTick, this, &MainWindow::Ticker);
-    connect(&gDaxLib, &GDaxLib::OnHeartbeat, this, &MainWindow::Heartbeat);
-    connect(&gDaxLib, &GDaxLib::OnStateChanged, this, &MainWindow::StateChanged);
+    connect(gDaxLib, &GDaxLib::OnTick, this, &MainWindow::Ticker);
+    connect(gDaxLib, &GDaxLib::OnHeartbeat, this, &MainWindow::Heartbeat);
+    connect(gDaxLib, &GDaxLib::OnStateChanged, this, &MainWindow::StateChanged);
 
     timer->start(5000);
 
     new CandleOverlay(*ui->candleChart);
+
+    gDaxLib->moveToThread(workerThread);
+    QObject::connect(workerThread, &QThread::finished, workerThread, &QObject::deleteLater);
+    QObject::connect(workerThread, &QThread::finished, gDaxLib, &QObject::deleteLater);
+    workerThread->start();
+}
+
+void MainWindow::Wait() const
+{
+    workerThread->quit();
+    workerThread->wait();
 }
 
 void MainWindow::Update()
 {
+    Flog::ScopeLog s(log, Flog::Level::Info, "Update");
+
     ui->depthChart->update();
     ui->candleChart->update();
     GenerateOrderBook();
     GenerateTradeList();
 
-    gDaxLib.Ping();
+    gDaxLib->Ping();
 }
 
 void MainWindow::on_actionE_xit_triggered()
@@ -75,14 +91,20 @@ void MainWindow::on_actionE_xit_triggered()
 
 void MainWindow::GenerateOrderBook()
 {
-    auto & orderBook = *ui->orderBook;
-    QFont font = orderBook.document()->defaultFont();
+    Flog::ScopeLog s(log, Flog::Level::Info, "GenerateOrderBook");
+
+    auto & orderBookUi = *ui->orderBook;
+    QFont font = orderBookUi.document()->defaultFont();
     QFontMetrics fm(font);
     int fontHeight = fm.height();
-    int lines = orderBook.height()/2/fontHeight-1;
+    int lines = orderBookUi.height()/2/fontHeight-1;
 
-    const auto & asks = gDaxLib.Asks();
-    const auto & bids = gDaxLib.Bids();
+    // lock orderbook, move\improve impl
+    const auto & orderBook = gDaxLib->Orders();
+    QMutexLocker lock(&const_cast<QMutex&>(orderBook.Mutex()));
+
+    const auto & asks = orderBook.Asks();
+    const auto & bids = orderBook.Bids();
     int priceDecs = 2;
     int amountDecs = 4;
     Decimal tot;
@@ -168,11 +190,13 @@ td.amount span { color:grey; }
    }
 
    stream << "</table>";
-   orderBook.document()->setHtml(*stream.string());
+   orderBookUi.document()->setHtml(*stream.string());
 }
 
 void MainWindow::GenerateTradeList()
 {
+    Flog::ScopeLog s(log, Flog::Level::Info, "GenerateTradeList");
+
     auto & tradesWidget = *ui->trades;
     QFont font = tradesWidget.document()->defaultFont();
     QFontMetrics fm(font);

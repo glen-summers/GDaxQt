@@ -18,7 +18,7 @@ CandleChart::CandleChart(QWidget *parent)
 
 void CandleChart::SetCandles(std::deque<Candle> forkHandles, Granularity granularity)
 {
-    Flog::ScopeLog s(log, Flog::Level::Debug, "SetCandles");
+    Flog::ScopeLog s(log, Flog::Level::Info, "SetCandles");
 
     timeDelta = (unsigned int)granularity;
     double min = std::numeric_limits<double>::max();

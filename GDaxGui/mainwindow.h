@@ -22,7 +22,8 @@ class MainWindow : public QMainWindow
     std::unique_ptr<Ui::MainWindow> ui;
     std::unique_ptr<QTimer> timer;
 
-    GDaxLib gDaxLib;
+    GDaxLib * const gDaxLib;
+    QThread * const workerThread;
     RestProvider restProvider;
     std::deque<Candle> candles;
     std::deque<Trade> trades;
@@ -32,6 +33,7 @@ class MainWindow : public QMainWindow
 
 public:
     explicit MainWindow(QWidget *parent = 0);
+    void Wait() const;
 
 public slots:
     void Update();

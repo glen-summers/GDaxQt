@@ -25,21 +25,25 @@ void DepthChart::Paint(QPainter & painter) const
         return;
     }
 
-    const auto & bids = g->Bids();
-    const auto & asks = g->Asks();
+    // lock orderbook, move\improve impl
+    const auto & orderBook = g->Orders();
+    QMutexLocker lock(&const_cast<QMutex&>(orderBook.Mutex()));
+
+    const auto & bids = orderBook.Bids();
+    const auto & asks = orderBook.Asks();
 
     if (bids.empty() || asks.empty())
     {
         return;
     }
 
-    double xrange = g->AmountMax().getAsDouble();
-    double yrange = (g->PriceMax()-g->PriceMin()).getAsDouble();
+    double xrange = orderBook.AmountMax().getAsDouble();
+    double yrange = (orderBook.PriceMax()-orderBook.PriceMin()).getAsDouble();
     //double yOrg = ((priceMax + priceMin)/2).getAsDouble();
     double yOrg = ((bids.rbegin()->first + asks.begin()->first) / 2).getAsDouble();
 
-    depthPlot.SetView(QRectF{QPointF{0, g->PriceMin().getAsDouble()},
-                             QPointF{xrange, g->PriceMax().getAsDouble()}});
+    depthPlot.SetView(QRectF{QPointF{0, orderBook.PriceMin().getAsDouble()},
+                             QPointF{xrange, orderBook.PriceMax().getAsDouble()}});
 
     depthPlot.SetRect(rect()); // or on event?
     depthPlot.StartInner(painter);
