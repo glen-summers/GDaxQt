@@ -18,6 +18,8 @@ struct Tick;
 
 class CandleChart : public QOpenGLWidget
 {
+    inline static const Flog::Log log = Flog::LogManager::GetLog<CandleChart>();
+
     static constexpr int MaxCandleWidth = 32;
     static constexpr int MinCandleWidth = 6;
 
@@ -56,6 +58,8 @@ private:
 
     void paintEvent(QPaintEvent *event) override
     {
+        Flog::ScopeLog s(log, Flog::Level::Debug, "paintEvent");
+
         QPainter painter;
         painter.begin(this);
         painter.fillRect(event->rect(), background);

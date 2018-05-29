@@ -18,6 +18,8 @@ CandleChart::CandleChart(QWidget *parent)
 
 void CandleChart::SetCandles(std::deque<Candle> forkHandles, Granularity granularity)
 {
+    Flog::ScopeLog s(log, Flog::Level::Debug, "SetCandles");
+
     timeDelta = (unsigned int)granularity;
     double min = std::numeric_limits<double>::max();
     double max = std::numeric_limits<double>::lowest();
@@ -119,7 +121,7 @@ bool CandleChart::CheckCandleRollover(const QDateTime & dateTime, const Decimal 
     time_t endTime = candles.front().startTime + timeDelta;
     if (time >= endTime) // while in case multiple gaps?
     {
-        candles.push_front(Candle{endTime, price, price, price, price}); // +amount
+        candles.push_front(Candle{endTime, price, price, price, price, {}}); // +amount
         AddMetric(endTime, price.getAsDouble());
         updated = true;
     }

@@ -1,6 +1,8 @@
 #ifndef FLOGGING_H
 #define FLOGGING_H
 
+#include "accuratetimer.h"
+
 #include <QString>
 #include <string>
 
@@ -9,6 +11,7 @@ namespace Flog
     enum class Level : unsigned { Spam, Debug, Info, Warning, Error, Critical, Fatal } ;
 
     class LogManager;
+    class ScopeLog;
 
     class Log
     {
@@ -32,16 +35,47 @@ namespace Flog
         void Error(const QString & message) const { Write(Level::Error, message.toStdString().c_str()); }
 
         friend class LogManager;
+        friend class ScopeLog;
 
     private:
         Log(const std::string & name) : name(name) {}
 
         void Write(Level level, const char * message) const;
+        void ScopeStart(Level level, const char * message) const;
+        void ScopeEnd(Level level, const char * message, std::chrono::nanoseconds ns) const;
+    };
+
+    class ScopeLog
+    {
+        const Log & log;
+        Level level;
+        std::string scope;
+        AccurateTimer timer;
+
+        ScopeLog(const ScopeLog&) = delete;
+        ScopeLog& operator=(const ScopeLog&) = delete;
+        ScopeLog(ScopeLog&&) = default;
+        ScopeLog& operator=(ScopeLog&&) = default;
+
+    public:
+        ScopeLog(const Log & log, Level level, const char * scope)
+            : log(log), level(level), scope(scope)
+        {
+            log.ScopeStart(level, scope);
+        }
+
+        ~ScopeLog()
+        {
+            log.ScopeEnd(level, scope.c_str(), timer.Elapsed<long long, std::nano>());
+        }
     };
 
     class LogManager
     {
+        static std::string Unmangle(const std::string & name);
     public:
+        static void SetLevel(Level level);
+
         static Log GetLog(const std::string & name)
         {
             return Log(name);
@@ -50,7 +84,7 @@ namespace Flog
         template <typename T>
         static Log GetLog()
         {
-            return Log(typeid(T).name());
+            return Log(Unmangle(typeid(T).name()));
         }
     };
 }

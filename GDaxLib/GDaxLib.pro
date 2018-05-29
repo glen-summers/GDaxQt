@@ -30,7 +30,8 @@ HEADERS += \
     flogging.h \
     trade.h \
     candle.h \
-    decimalwrap.h
+    decimalwrap.h \
+    accuratetimer.h
 
 DISTFILES += \
     misc.pri \

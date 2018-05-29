@@ -3,6 +3,8 @@
 
 #include "plot.h"
 
+#include "flogging.h"
+
 #include <QOpenGLWidget>
 #include <QOpenGLFunctions>
 #include <QPainter>
@@ -14,6 +16,8 @@ class GDaxLib;
 
 class DepthChart : public QOpenGLWidget
 {
+    inline static const Flog::Log log = Flog::LogManager::GetLog<DepthChart>();
+
     Q_OBJECT
 
     QBrush background;
@@ -31,6 +35,8 @@ public:
 private:
     void paintEvent(QPaintEvent *event) override
     {
+        Flog::ScopeLog s(log, Flog::Level::Debug, "paintEvent");
+
         QPainter painter;
         painter.begin(this);
         painter.fillRect(event->rect(), background);

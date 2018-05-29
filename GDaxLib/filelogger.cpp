@@ -19,6 +19,7 @@ namespace
     static constexpr size_t maxFileSize = 5*1024*1024;
     static constexpr size_t ReserveDiskSpace = 10*1024*1024;
     static Flog::Level logLevel = Flog::Level::Info;
+    static int depth = 0;
 
     void TranslateLevel(std::ostream & stm, Flog::Level level)
     {
@@ -200,9 +201,82 @@ namespace Flog
 //        ss.rdbuf().Reset(); // AV here
 //    }
 
+    void LogManager::SetLevel(Level level)
+    {
+        logLevel = level;
+    }
+
+    std::string LogManager::Unmangle(const std::string & name)
+    {
+        #ifdef _MSC_VER
+        return ::strncmp(name.c_str(), "class ", 6)==0
+                ? name.substr(6)
+                : name; // struct etc...
+        #else
+        // __cxa_demangle...
+        return name;
+        #endif
+    }
+
     void Log::Write(Level level, const char * message) const
     {
         FileLogger::Write(level, name.c_str(), message);
+    }
+
+    void Log::ScopeStart(Level level, const char * message) const
+    {
+        std::ostringstream s;
+        s << std::setw(depth+4) << "==> " << message;
+        FileLogger::Write(level, name.c_str(), s.str().c_str());
+        ++depth;
+    }
+
+    void Log::ScopeEnd(Level level, const char * message, std::chrono::nanoseconds ns) const
+    {
+        --depth;
+        using days = std::chrono::duration<long, std::ratio_multiply<std::chrono::hours::period, std::ratio<24>>>;
+
+        std::ostringstream s;
+        s << std::setw(depth+4) << "<== " << message << " ";
+
+        if (std::chrono::duration_cast<std::chrono::seconds>(ns).count() == 0)
+        {
+            s << std::setprecision(1) << std::fixed << std::chrono::duration<double>(ns).count()*1000 << "ms";
+        }
+        else
+        {
+            days day = std::chrono::duration_cast<days>(ns);
+            ns -= day;
+            std::chrono::hours hours = std::chrono::duration_cast<std::chrono::hours>(ns);
+            ns -= hours;
+            std::chrono::minutes minutes = std::chrono::duration_cast<std::chrono::minutes>(ns);
+            ns -= minutes;
+
+            long long millis = ns.count()/1000000;
+            int effectiveDigits = 3;
+            while (effectiveDigits > 0)
+            {
+                if (millis % 10 == 0)
+                {
+                    millis /= 10;
+                    effectiveDigits--;
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            if (day.count() != 0)
+            {
+                s << day.count() << ".";
+            }
+            s << hours.count() << ":";
+            s << minutes.count() << ":";
+            s << std::setprecision(effectiveDigits) << std::fixed << ns.count()/1e9;
+        }
+
+        FileLogger::Write(level, name.c_str(), s.str().c_str());
     }
 }
 
@@ -219,7 +293,7 @@ FileLogger::~FileLogger()
     CloseStream(); //
 }
 
-void FileLogger::Write(Flog::Level level, const char * prefix, const char *message)
+void FileLogger::Write(Flog::Level level, const char * prefix, const char * message)
 {
     static FileLogger ftl;
     ftl.InternalWrite(level, prefix, message);
