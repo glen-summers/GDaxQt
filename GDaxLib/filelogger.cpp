@@ -9,6 +9,10 @@
 #include <sstream>
 #include <thread>
 
+#ifdef __GNUG__
+#include <cxxabi.h>
+#endif
+
 namespace fs = std::experimental::filesystem;
 
 namespace
@@ -206,16 +210,19 @@ namespace Flog
         logLevel = level;
     }
 
-    std::string LogManager::Unmangle(const std::string & name)
+    std::string LogManager::Unmangle(const char * name)
     {
-        #ifdef _MSC_VER
-        return ::strncmp(name.c_str(), "class ", 6)==0
-                ? name.substr(6)
+#ifdef _MSC_VER
+        return ::strncmp(name, "class ", 6)==0
+                ? name + 6
                 : name; // struct etc...
-        #else
-        // __cxa_demangle...
+#elif __GNUG__
+        int status = -1;
+        std::unique_ptr<char, void(*)(void*)> res { abi::__cxa_demangle(name, NULL, NULL, &status), std::free };
+        return status==0 ? res.get() : name ;
+#else
         return name;
-        #endif
+#endif
     }
 
     void Log::Write(Level level, const char * message) const

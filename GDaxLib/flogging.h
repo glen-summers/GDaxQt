@@ -72,7 +72,7 @@ namespace Flog
 
     class LogManager
     {
-        static std::string Unmangle(const std::string & name);
+        static std::string Unmangle(const char * name);
     public:
         static void SetLevel(Level level);
 
