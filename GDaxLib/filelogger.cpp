@@ -8,6 +8,7 @@
 #include <iomanip>
 #include <sstream>
 #include <thread>
+#include <stack>
 
 #ifdef __GNUG__
 #include <cxxabi.h>
@@ -24,7 +25,19 @@ namespace
     static constexpr int PREFIX_WIDTH = 12;
     static constexpr size_t maxFileSize = 5*1024*1024;
     static constexpr size_t ReserveDiskSpace = 10*1024*1024;
+
     static Flog::Level logLevel = Flog::Level::Info;
+
+    struct Scope
+    {
+        Flog::Level level;
+        const char * scope;
+        const char * stem;
+        std::chrono::high_resolution_clock::time_point start;
+    };
+
+    static thread_local std::stack<Scope> scopes;
+    static thread_local const char * pendingScope = nullptr;
     static thread_local int depth = 0;
 
     void TranslateLevel(std::ostream & stm, Flog::Level level)
@@ -227,27 +240,59 @@ namespace Flog
 #endif
     }
 
+    void CommitScope(const char * name)
+    {
+        const Scope & scope = scopes.top();
+
+        std::ostringstream s;
+        s << std::setw(depth) << "" << scope.stem << "> " << scope.scope;
+        FileLogger::Write(scope.level, name, s.str().c_str());
+        ++depth;
+        pendingScope = nullptr;
+    }
+
     void Log::Write(Level level, const char * message) const
     {
+        if (pendingScope)
+        {
+            CommitScope(name.c_str());
+        }
         FileLogger::Write(level, name.c_str(), message);
     }
 
-    void Log::ScopeStart(Level level, const char * message, const char * stem) const
+    void Log::ScopeStart(Level level, const char * scope, const char * stem) const
     {
-        std::ostringstream s;
-        s << std::setw(depth) << "" << stem << "> " << message;
-        FileLogger::Write(level, name.c_str(), s.str().c_str());
-        ++depth;
+        if (pendingScope)
+        {
+            CommitScope(name.c_str());
+        }
+        scopes.push({level, scope, stem, std::chrono::high_resolution_clock::now()});
+        pendingScope = scope;
     }
 
-    void Log::ScopeEnd(Level level, const char * message, const char * stem, std::chrono::nanoseconds ns) const
+    void Log::ScopeEnd() const
     {
-        --depth;
         using days = std::chrono::duration<long, std::ratio_multiply<std::chrono::hours::period, std::ratio<24>>>;
 
-        std::ostringstream s;
-        s << std::setw(depth) << "" << "<" << stem << " " << message << " ";
+        Scope scope = scopes.top();
+        scopes.pop();
 
+        if (!pendingScope)
+        {
+            --depth;
+        }
+
+        std::ostringstream s;
+        s << std::setw(depth) << "" << "<" << scope.stem;
+
+        if (pendingScope)
+        {
+            s << ">";
+            pendingScope = nullptr;
+        }
+        s << " " << scope.scope << " ";
+
+        auto ns = std::chrono::high_resolution_clock::now() - scope.start;
         if (std::chrono::duration_cast<std::chrono::seconds>(ns).count() == 0)
         {
             s << std::setprecision(1) << std::fixed << std::chrono::duration<double>(ns).count()*1000 << "ms";
@@ -285,7 +330,7 @@ namespace Flog
             s << std::setprecision(effectiveDigits) << std::fixed << ns.count()/1e9;
         }
 
-        FileLogger::Write(level, name.c_str(), s.str().c_str());
+        FileLogger::Write(scope.level, name.c_str(), s.str().c_str());
     }
 }
 

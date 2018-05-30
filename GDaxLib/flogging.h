@@ -41,8 +41,8 @@ namespace Flog
         Log(const std::string & name) : name(name) {}
 
         void Write(Level level, const char * message) const;
-        void ScopeStart(Level level, const char * message, const char * stem) const;
-        void ScopeEnd(Level level, const char * message, const char * stem, std::chrono::nanoseconds ns) const;
+        void ScopeStart(Level level, const char * scope, const char * stem) const;
+        void ScopeEnd() const;
     };
 
     class ScopeLog
@@ -51,7 +51,6 @@ namespace Flog
         Level level;
         const char * scope;
         const char * stem;
-        AccurateTimer timer;
 
         ScopeLog(const ScopeLog&) = delete;
         ScopeLog& operator=(const ScopeLog&) = delete;
@@ -67,7 +66,7 @@ namespace Flog
 
         ~ScopeLog()
         {
-            log.ScopeEnd(level, scope, stem, timer.Elapsed<long long, std::nano>());
+            log.ScopeEnd();
         }
     };
 
