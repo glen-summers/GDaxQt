@@ -17,7 +17,8 @@ SOURCES += \
     candlechart.cpp \
     depthchart.cpp \
     plot.cpp \
-    candleoverlay.cpp
+    candleoverlay.cpp \
+    expandbutton.cpp
 
 HEADERS += \
     mainwindow.h \
@@ -27,7 +28,8 @@ HEADERS += \
     sma.h \
     ema.h \
     overlaywidget.h \
-    candleoverlay.h
+    candleoverlay.h \
+    expandbutton.h
 
 FORMS += \
         mainwindow.ui

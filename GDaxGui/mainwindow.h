@@ -48,6 +48,7 @@ private slots:
     void GranularityChanged(QAction *);
 
 private:
+    void AttachExpander(QWidget * parent, QWidget * widget);
     void Connected();
     void GenerateOrderBook();
     void GenerateTradeList();

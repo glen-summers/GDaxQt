@@ -4,6 +4,7 @@
 #include "utils.h"
 
 #include "candleoverlay.h"
+#include "expandbutton.h"
 
 #include <QTextEdit>
 #include <QComboBox>
@@ -35,6 +36,10 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
+    AttachExpander(ui->centralWidget, ui->trades);
+    AttachExpander(ui->centralWidget, ui->orderBook);
+    AttachExpander(ui->centralWidget, ui->depthChart);
+
     granularity = Granularity::Hours; // persist
     SetupActionGroup(*new QActionGroup(this),
     {
@@ -64,6 +69,15 @@ MainWindow::MainWindow(QWidget *parent)
     QObject::connect(workerThread, &QThread::finished, workerThread, &QObject::deleteLater);
     QObject::connect(workerThread, &QThread::finished, gDaxLib, &QObject::deleteLater);
     workerThread->start();
+}
+
+void MainWindow::AttachExpander(QWidget * parent, QWidget * widget)
+{
+    auto layout = (QBoxLayout*)parent->layout();
+    int index = layout->indexOf(widget);
+    auto button = new ExpandButton(parent);
+    button->setControlled(widget);
+    layout->insertWidget(index, button);
 }
 
 void MainWindow::Wait() const
