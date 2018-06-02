@@ -1,20 +1,19 @@
 #ifndef CANDLECHART_H
 #define CANDLECHART_H
 
-#include "restprovider.h"
-
 #include "plot.h"
 #include "sma.h"
 #include "ema.h"
+#include "candle.h"
 
-struct Tick;
+#include "flogging.h"
 
 #include <QOpenGLWidget>
-#include <QOpenGLFunctions>
-#include <QPainter>
-#include <QPaintEvent>
 
 #include <deque>
+
+struct Tick;
+class QPaintEvent;
 
 class CandleChart : public QOpenGLWidget
 {
@@ -51,24 +50,12 @@ public:
     void Heartbeat(const QDateTime & serverTime);
     time_t HitTest(const QPoint & point) const;
     const Candle * FindCandle(time_t time) const;
-    void DrawCandleValues(QPainter &painter, const Candle & candle) const;
+    void DrawCandleValues(QPainter & painter, const Candle & candle) const;
 
 private:
     bool CheckCandleRollover(const QDateTime & time, const Decimal & price);
 
-    void paintEvent(QPaintEvent *event) override
-    {
-        Flog::ScopeLog s(log, Flog::Level::Debug, "paintEvent", "--");
-
-        QPainter painter;
-        painter.begin(this);
-        painter.fillRect(event->rect(), background);
-        painter.setRenderHint(QPainter::Antialiasing);
-        //painter.setRenderHint(QPainter::HighQualityAntialiasing);
-        Paint(painter);
-        painter.end();
-    }
-
+    void paintEvent(QPaintEvent *event) override;
     void wheelEvent(QWheelEvent *event) override;
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;

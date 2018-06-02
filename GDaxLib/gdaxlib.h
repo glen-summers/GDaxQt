@@ -2,17 +2,19 @@
 #define GDAXLIB_H
 
 #include "defs.h"
-#include "tick.h"
-#include "trade.h"
 #include "orderbook.h"
 
 #include "flogging.h"
 
 #include <QObject>
-#include <QWebSocket>
-QT_FORWARD_DECLARE_CLASS(QJsonObject)
+#include <QAbstractSocket> // avoid
+#include <QSslError> // avoid
 
 #include <unordered_map>
+
+struct Tick;
+class QWebSocket;
+class QJsonObject;
 
 class GDaxLib : public QObject
 {
@@ -28,13 +30,6 @@ class GDaxLib : public QObject
     TradeId lastTradeId;
 
 public:
-    enum class State
-    {
-        NotConnected,
-        Connecting,
-        Connected,
-    };
-
     explicit GDaxLib(QObject * parent = nullptr);
 
     const OrderBook & Orders() const { return orderBook; }
@@ -45,20 +40,20 @@ private:
 signals:
     void OnUpdate();
     void OnHeartbeat(const QDateTime & serverTime);
-    void OnTick(Tick tick);
-    void OnStateChanged(State state);
+    void OnTick(const Tick & tick);
+    void OnStateChanged(ConnectedState state);
 
 private slots:
     void Connected();
     void TextMessageReceived(QString message);
-    void StateChanged(QAbstractSocket::SocketState socketState);
+    void StateChanged(QAbstractSocket::SocketState socketState); // avoid
     void Error(QAbstractSocket::SocketError error);
-    void SslErrors(const QList<QSslError> &errors);
+    void SslErrors(const QList<QSslError> &errors); // avoid
     void Pong();
 
 private:
     void Clear();
-    State ToState(QAbstractSocket::SocketState socketState);
+    ConnectedState ToState(QAbstractSocket::SocketState socketState); // avoid
     void ProcessSubscriptions(const QJsonObject & object);
     void ProcessError(const QJsonObject & object);
     void ProcessSnapshot(const QJsonObject & object);

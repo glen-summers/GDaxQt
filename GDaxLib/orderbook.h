@@ -1,7 +1,7 @@
 #ifndef ORDERBOOK_H
 #define ORDERBOOK_H
 
-#include "defs.h"
+#include "decimalwrap.h"
 
 #include <QMutex>
 

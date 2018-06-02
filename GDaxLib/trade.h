@@ -4,8 +4,9 @@
 #include "defs.h"
 #include "decimalwrap.h"
 
-#include <QJsonObject>
 #include <QDateTime>
+
+class QJsonObject;
 
 class Trade
 {

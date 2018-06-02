@@ -1,6 +1,7 @@
 #include "trade.h"
 
 #include <QDateTime>
+#include <QJsonObject>
 
 Trade Trade::FromJson(const QJsonObject & object)
 {

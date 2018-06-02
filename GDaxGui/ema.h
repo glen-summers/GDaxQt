@@ -3,8 +3,6 @@
 
 #include <QPainterPath>
 
-#include <deque>
-
 class Ema
 {
     size_t const periods;

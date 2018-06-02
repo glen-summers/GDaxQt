@@ -1,13 +1,21 @@
-
 #include "restprovider.h"
+
+#include "utils.h"
 
 #include <QNetworkReply>
 #include <QJsonDocument>
+#include <QJsonObject>
 #include <QJsonArray>
 #include <QJsonValueRef>
 #include <QMetaEnum>
 #include <QNetworkCookieJar>
 #include <QUrlQuery>
+
+RestProvider::RestProvider(QObject * parent)
+    : QObject(parent)
+    , manager(Utils::QMake<QNetworkAccessManager>("manager", this))
+{
+}
 
 void RestProvider::FetchAllCandles(Granularity granularity)
 {
@@ -19,7 +27,7 @@ void RestProvider::FetchAllCandles(Granularity granularity)
 
     log.Info(QString("Requesting %1").arg(url.toString()));
     QNetworkRequest request(url);
-    QNetworkReply * reply = manager.get(request);
+    QNetworkReply * reply = manager->get(request);
     // reply->ignoreSslErrors();// allows fidler, set in cfg
     connect(reply, &QNetworkReply::sslErrors, this, &RestProvider::SslErrors);
     connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), this, &RestProvider::Error);
@@ -41,7 +49,7 @@ void RestProvider::FetchCandles(const QDateTime & start, const QDateTime & end, 
 
     log.Info(QString("Requesting %1").arg(url.toString()));
     QNetworkRequest request(url);
-    QNetworkReply * reply = manager.get(request);
+    QNetworkReply * reply = manager->get(request);
     // reply->ignoreSslErrors();// allows fidler, set in cfg
     connect(reply, &QNetworkReply::sslErrors, this, &RestProvider::SslErrors);
     connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), this, &RestProvider::Error);
@@ -57,7 +65,7 @@ void RestProvider::FetchTrades(unsigned int limit)
     url.setQuery(query);
 
     QNetworkRequest request(url);
-    QNetworkReply * reply = manager.get(request);
+    QNetworkReply * reply = manager->get(request);
 
     connect(reply, &QNetworkReply::sslErrors, this, &RestProvider::SslErrors);
     connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), this, &RestProvider::Error);

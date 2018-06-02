@@ -6,11 +6,6 @@
 #include "flogging.h"
 
 #include <QOpenGLWidget>
-#include <QOpenGLFunctions>
-#include <QPainter>
-#include <QPaintEvent>
-
-#include <memory>
 
 class GDaxLib;
 
@@ -33,17 +28,7 @@ public:
     }
 
 private:
-    void paintEvent(QPaintEvent *event) override
-    {
-        Flog::ScopeLog s(log, Flog::Level::Debug, "paintEvent", "--");
-
-        QPainter painter;
-        painter.begin(this);
-        painter.fillRect(event->rect(), background);
-        painter.setRenderHint(QPainter::Antialiasing);
-        Paint(painter);
-        painter.end();
-    }
+    void paintEvent(QPaintEvent *event) override;
 
 private:
     void Paint(QPainter & painter) const;

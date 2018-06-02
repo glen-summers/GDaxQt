@@ -3,6 +3,8 @@
 #include "tick.h"
 
 #include <QApplication>
+#include <QPainter>
+#include <QPaintEvent>
 
 CandleChart::CandleChart(QWidget *parent)
     : QOpenGLWidget(parent)
@@ -126,6 +128,19 @@ bool CandleChart::CheckCandleRollover(const QDateTime & dateTime, const Decimal 
         updated = true;
     }
     return updated;
+}
+
+void CandleChart::paintEvent(QPaintEvent *event)
+{
+    Flog::ScopeLog s(log, Flog::Level::Debug, "paintEvent", "--");
+
+    QPainter painter;
+    painter.begin(this);
+    painter.fillRect(event->rect(), background);
+    painter.setRenderHint(QPainter::Antialiasing);
+    //painter.setRenderHint(QPainter::HighQualityAntialiasing);
+    Paint(painter);
+    painter.end();
 }
 
 void CandleChart::wheelEvent(QWheelEvent * event)

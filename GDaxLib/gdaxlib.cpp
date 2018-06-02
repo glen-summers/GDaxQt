@@ -1,7 +1,9 @@
 #include "gdaxlib.h"
 
+#include "tick.h"
 #include "utils.h"
 
+#include <QWebSocket>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -48,17 +50,13 @@ GDaxLib::GDaxLib(QObject * parent)
 
     connect(webSocket, &QWebSocket::connected, this, &GDaxLib::Connected);
     connect(webSocket, &QWebSocket::textMessageReceived, this, &GDaxLib::TextMessageReceived);
-
-    // weird this one doesnt seem to like direct binding, something todo with unregistered meta enum?
-    //connect(&webSocket, &QWebSocket::stateChanged, this, &GDaxLib::StateChanged);
-    connect(webSocket, SIGNAL(stateChanged(QAbstractSocket::SocketState)), SLOT(StateChanged(QAbstractSocket::SocketState)));
-
+    connect(webSocket, &QWebSocket::stateChanged, this, &GDaxLib::StateChanged);
     connect(webSocket, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error), this, &GDaxLib::Error);
     connect(webSocket, QOverload<const QList<QSslError> &>::of(&QWebSocket::sslErrors), this, &GDaxLib::SslErrors);
 
     connect(webSocket, &QWebSocket::pong, this, &GDaxLib::Pong);
 
-    qRegisterMetaType<State>("State");
+    qRegisterMetaType<ConnectedState>("ConnectedState");
     qRegisterMetaType<Tick>("Tick");
 
     log.Info(QString("Connecting to %1").arg(url));
@@ -154,18 +152,18 @@ void GDaxLib::Clear()
     lastTradeId = 0;
 }
 
-GDaxLib::State GDaxLib::ToState(QAbstractSocket::SocketState socketState)
+ConnectedState GDaxLib::ToState(QAbstractSocket::SocketState socketState)
 {
     switch (socketState)
     {
         case QAbstractSocket::ConnectingState:
-            return State::Connecting;
+            return ConnectedState::Connecting;
 
         case QAbstractSocket::ConnectedState:
-            return State::Connected;
+            return ConnectedState::Connected;
 
         default:
-            return State::NotConnected;;
+            return ConnectedState::NotConnected;;
     };
 
 }

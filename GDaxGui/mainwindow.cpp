@@ -1,10 +1,15 @@
 #include "mainwindow.h"
 
+#include "tick.h"
 #include "depthchart.h"
-#include "utils.h"
-
 #include "candleoverlay.h"
+#include "restprovider.h"
+#include "gdaxlib.h"
+
+#include "utils.h"
 #include "expandbutton.h"
+
+#include "ui_mainwindow.h"
 
 #include <QTimer>
 #include <QToolBar>
@@ -35,6 +40,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(std::make_unique<Ui::MainWindow>())
     , timer(Utils::QMake<QTimer>("timer", this))
     , gDaxLib(Utils::QMake<GDaxLib>("gDaxLib")) // cannot have parent if sent to thread
+    , restProvider(Utils::QMake<RestProvider>("restProvider", this)) // has parent atm, until used on thread
     , workerThread(Utils::QMake<QThread>("QThread", this))
     , granularity()
 {
@@ -54,13 +60,13 @@ MainWindow::MainWindow(QWidget *parent)
         {*ui->action6H, Granularity::SixHours},
         {*ui->action1D, Granularity::Days}
     }, *ui->action1H);
-    connect(ui->menuGranularity, SIGNAL(triggered(QAction *)), this, SLOT(GranularityChanged(QAction *)));
+    connect(ui->menuGranularity, &QMenu::triggered, this, &MainWindow::GranularityChanged);
 
     ui->depthChart->SetGDaxLib(gDaxLib);
 
     connect(timer, &QTimer::timeout, this, &MainWindow::Update);
-    connect(&restProvider, &RestProvider::OnCandles, this, &MainWindow::Candles);
-    connect(&restProvider, &RestProvider::OnTrades, this, &MainWindow::Trades);
+    connect(restProvider, &RestProvider::OnCandles, this, &MainWindow::Candles);
+    connect(restProvider, &RestProvider::OnTrades, this, &MainWindow::Trades);
     connect(gDaxLib, &GDaxLib::OnTick, this, &MainWindow::Ticker);
     connect(gDaxLib, &GDaxLib::OnHeartbeat, this, &MainWindow::Heartbeat);
     connect(gDaxLib, &GDaxLib::OnStateChanged, this, &MainWindow::StateChanged);
@@ -73,6 +79,8 @@ MainWindow::MainWindow(QWidget *parent)
     QObject::connect(workerThread, &QThread::finished, gDaxLib, &QObject::deleteLater);
     workerThread->start();
 }
+
+MainWindow::~MainWindow() = default;
 
 void MainWindow::AttachExpander(QWidget * parent, QWidget * widget, bool expanded)
 {
@@ -307,7 +315,7 @@ void MainWindow::Trades(std::deque<Trade> values)
     this->trades = std::move(values); // prevents elision?
 }
 
-void MainWindow::Ticker(Tick tick)
+void MainWindow::Ticker(const Tick &tick)
 {
 //    if (!trades.empty())
 //    {
@@ -358,21 +366,21 @@ void MainWindow::Heartbeat(const QDateTime & serverTime)
     ui->candleChart->Heartbeat(serverTime);
 }
 
-void MainWindow::StateChanged(GDaxLib::State state)
+void MainWindow::StateChanged(ConnectedState state)
 {
     switch (state)
     {
-    case GDaxLib::State::NotConnected:
+    case ConnectedState::NotConnected:
         ui->statusBar->setStyleSheet("background-color: red; color: white");
         ui->statusBar->showMessage("Not Connected");
         break;
 
-    case GDaxLib::State::Connecting:
+    case ConnectedState::Connecting:
         ui->statusBar->setStyleSheet("color: yellow");
         ui->statusBar->showMessage("Connecting...");
         break;
 
-    case GDaxLib::State::Connected:
+    case ConnectedState::Connected:
         ui->statusBar->setStyleSheet("color: limegreen");
         ui->statusBar->showMessage("Connected");
         Connected();
@@ -383,7 +391,7 @@ void MainWindow::StateChanged(GDaxLib::State state)
 void MainWindow::GranularityChanged(QAction * action)
 {
     granularity = (Granularity)action->data().toUInt();
-    restProvider.FetchAllCandles(granularity);
+    restProvider->FetchAllCandles(granularity);
 }
 
 void MainWindow::Connected()
@@ -399,7 +407,6 @@ void MainWindow::Connected()
     ui->depthChart->update();
 
     // calc value? want to be >= trade history window rows
-    restProvider.FetchTrades(100);
-
-    restProvider.FetchAllCandles(granularity);
+    restProvider->FetchTrades(100);
+    restProvider->FetchAllCandles(granularity);
 }

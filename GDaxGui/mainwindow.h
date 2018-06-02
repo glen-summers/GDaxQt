@@ -1,15 +1,23 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include "gdaxlib.h"
-#include "restprovider.h"
+#include "candle.h"
+#include "trade.h"
 
-#include "ui_mainwindow.h"
+#include "flogging.h"
 
 #include <QMainWindow>
 
 #include <memory>
+#include <deque>
 
+namespace Ui
+{
+    class MainWindow;
+}
+struct Tick;
+class GDaxLib;
+class RestProvider;
 class QTimer;
 class QSettings;
 
@@ -24,7 +32,7 @@ class MainWindow : public QMainWindow
     QTimer * const timer;
     GDaxLib * const gDaxLib;
     QThread * const workerThread;
-    RestProvider restProvider;
+    RestProvider * const restProvider;
     std::deque<Candle> candles;
     std::deque<Trade> trades;
 
@@ -33,6 +41,7 @@ class MainWindow : public QMainWindow
 
 public:
     explicit MainWindow(QWidget *parent = nullptr);
+    ~MainWindow();
     void Shutdown() const;
 
 public slots:
@@ -42,10 +51,10 @@ private slots:
     void on_actionE_xit_triggered();
     void Candles(std::deque<Candle> values);
     void Trades(std::deque<Trade> values);
-    void Ticker(Tick tick);
+    void Ticker(const Tick & tick);
     void Heartbeat(const QDateTime & serverTime);
-    void StateChanged(GDaxLib::State state);
-    void GranularityChanged(QAction *);
+    void StateChanged(ConnectedState state);
+    void GranularityChanged(QAction * action);
 
 private:
     void AttachExpander(QWidget * parent, QWidget * widget, bool expanded);

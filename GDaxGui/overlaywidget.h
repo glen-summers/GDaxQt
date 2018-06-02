@@ -3,7 +3,6 @@
 
 #include <QWidget>
 #include <QResizeEvent>
-#include <QPainter>
 
 class OverlayWidget : public QWidget
 {

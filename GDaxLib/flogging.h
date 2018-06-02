@@ -1,8 +1,6 @@
 #ifndef FLOGGING_H
 #define FLOGGING_H
 
-#include "accuratetimer.h"
-
 #include <QString>
 #include <string>
 
@@ -88,7 +86,5 @@ namespace Flog
         }
     };
 }
-
-
 
 #endif // FLOGGING_H

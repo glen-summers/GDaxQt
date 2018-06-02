@@ -1,6 +1,8 @@
 #include "candleoverlay.h"
 #include "candlechart.h"
 
+#include <QPainter>
+
 CandleOverlay::CandleOverlay(CandleChart & candleChart)
     : OverlayWidget(&candleChart)
     , candleChart(candleChart)

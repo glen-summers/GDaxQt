@@ -1,16 +1,16 @@
 #ifndef RESTPROVIDER_H
 #define RESTPROVIDER_H
 
-#include "defs.h"
 #include "trade.h"
 #include "candle.h"
 
 #include "flogging.h"
 
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
+#include <QNetworkReply> // avoid
 
 #include <deque>
+
+class QNetworkAccessManager;
 
 class RestProvider : public QObject
 {
@@ -23,9 +23,11 @@ class RestProvider : public QObject
 
     Q_OBJECT
 
-    QNetworkAccessManager manager;
+    QNetworkAccessManager * manager;
 
 public:
+    RestProvider(QObject * parent = nullptr);
+
     void FetchTrades(unsigned int limit);
     void FetchAllCandles(Granularity granularity);
     void FetchCandles(const QDateTime & start, const QDateTime & end, Granularity granularity);

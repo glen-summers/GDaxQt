@@ -8,6 +8,8 @@ static constexpr QRgb AskFillColour = qRgb(139,0,0);
 static constexpr QRgb AskEdgeColour = qRgb(255,0,0);
 
 #include <QApplication>
+#include <QPainter>
+#include <QPaintEvent>
 
 DepthChart::DepthChart(QWidget *parent)
     : QOpenGLWidget(parent)
@@ -16,6 +18,18 @@ DepthChart::DepthChart(QWidget *parent)
     , g()
 {
     setAutoFillBackground(false);
+}
+
+void DepthChart::paintEvent(QPaintEvent *event)
+{
+    Flog::ScopeLog s(log, Flog::Level::Debug, "paintEvent", "--");
+
+    QPainter painter;
+    painter.begin(this);
+    painter.fillRect(event->rect(), background);
+    painter.setRenderHint(QPainter::Antialiasing);
+    Paint(painter);
+    painter.end();
 }
 
 void DepthChart::Paint(QPainter & painter) const

@@ -56,7 +56,6 @@ int main(int argc, char *argv[])
     });
     exitTimer.start();
 
-    //qRegisterMetaType<QAbstractSocket::SocketState>();
     QThread *workerThread = new QThread();
     GDaxLib * g = new GDaxLib();
     g->moveToThread(workerThread);
