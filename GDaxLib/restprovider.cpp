@@ -2,6 +2,8 @@
 
 #include "utils.h"
 
+#include "flogging.h"
+
 #include <QNetworkReply>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -10,6 +12,25 @@
 #include <QMetaEnum>
 #include <QNetworkCookieJar>
 #include <QUrlQuery>
+
+namespace
+{
+    inline static const Flog::Log flog = Flog::LogManager::GetLog<RestProvider>(); // log ambiguous
+
+    // informational atm
+    void Error(QNetworkReply::NetworkError error)
+    {
+        flog.Error(QString("SocketError: %1").arg(QMetaEnum::fromType<QNetworkReply::NetworkError>().valueToKey(error)));
+    }
+
+    void SslErrors(QList<QSslError> errors)
+    {
+        for(auto & e : errors)
+        {
+            flog.Error(QString("SslError: %1, %2").arg(e.error()).arg(e.errorString()));
+        }
+    }
+}
 
 RestProvider::RestProvider(QObject * parent)
     : QObject(parent)
@@ -25,12 +46,12 @@ void RestProvider::FetchAllCandles(Granularity granularity)
     QUrl url(QString(Url).arg(Product, Candles));
     url.setQuery(query);
 
-    log.Info(QString("Requesting %1").arg(url.toString()));
+    flog.Info(QString("Requesting %1").arg(url.toString()));
     QNetworkRequest request(url);
     QNetworkReply * reply = manager->get(request);
     // reply->ignoreSslErrors();// allows fidler, set in cfg
-    connect(reply, &QNetworkReply::sslErrors, this, &RestProvider::SslErrors);
-    connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), this, &RestProvider::Error);
+    connect(reply, &QNetworkReply::sslErrors, &SslErrors);
+    connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), &Error);
     connect(reply, &QNetworkReply::finished, [this, reply]() { RestProvider::CandlesFinished(reply); });
 }
 
@@ -47,12 +68,12 @@ void RestProvider::FetchCandles(const QDateTime & start, const QDateTime & end, 
     QUrl url(QString(Url).arg(Product, Candles));
     url.setQuery(query);
 
-    log.Info(QString("Requesting %1").arg(url.toString()));
+    flog.Info(QString("Requesting %1").arg(url.toString()));
     QNetworkRequest request(url);
     QNetworkReply * reply = manager->get(request);
     // reply->ignoreSslErrors();// allows fidler, set in cfg
-    connect(reply, &QNetworkReply::sslErrors, this, &RestProvider::SslErrors);
-    connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), this, &RestProvider::Error);
+    connect(reply, &QNetworkReply::sslErrors, &SslErrors);
+    connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), &Error);
     connect(reply, &QNetworkReply::finished, [this, reply]() { RestProvider::CandlesFinished(reply); });
 }
 
@@ -67,22 +88,9 @@ void RestProvider::FetchTrades(unsigned int limit)
     QNetworkRequest request(url);
     QNetworkReply * reply = manager->get(request);
 
-    connect(reply, &QNetworkReply::sslErrors, this, &RestProvider::SslErrors);
-    connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), this, &RestProvider::Error);
+    connect(reply, &QNetworkReply::sslErrors, &SslErrors);
+    connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), &Error);
     connect(reply, &QNetworkReply::finished, [this, reply]() { RestProvider::TradesFinished(reply); });
-}
-
-void RestProvider::Error(QNetworkReply::NetworkError error)
-{
-    log.Error(QString("SocketError: %1").arg(QMetaEnum::fromType<QNetworkReply::NetworkError>().valueToKey(error)));
-}
-
-void RestProvider::SslErrors(QList<QSslError> errors)
-{
-    for(auto & e : errors)
-    {
-        log.Error(QString("SslError: %1, %2").arg(e.error()).arg(e.errorString()));
-    }
 }
 
 void RestProvider::CandlesFinished(QNetworkReply *reply)
@@ -109,7 +117,7 @@ void RestProvider::CandlesFinished(QNetworkReply *reply)
     }
     reply->deleteLater();
 
-    log.Info(QString("candles %1").arg(candles.size()));
+    flog.Info(QString("candles %1").arg(candles.size()));
 
     emit OnCandles(std::move(candles));
 }

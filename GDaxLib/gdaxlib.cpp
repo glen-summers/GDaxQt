@@ -9,6 +9,7 @@
 #include <QJsonArray>
 #include <QThread>
 #include <QMetaEnum>
+#include <QNetworkReply>
 
 namespace
 {
@@ -28,6 +29,36 @@ namespace
 ]
 })";
 
+    inline static const Flog::Log flog = Flog::LogManager::GetLog<GDaxLib>(); // log ambiguous
+
+    // informational atm
+    void Error(QAbstractSocket::SocketError error)
+    {
+        flog.Error(QString("SocketError: %1").arg(QMetaEnum::fromType<QNetworkReply::NetworkError>().valueToKey(error)));
+    }
+
+    void SslErrors(QList<QSslError> errors)
+    {
+        for(auto & e : errors)
+        {
+            flog.Error(QString("SslError: %1, %2").arg(e.error()).arg(e.errorString()));
+        }
+    }
+
+    ConnectedState ToState(QAbstractSocket::SocketState socketState)
+    {
+        switch (socketState)
+        {
+            case QAbstractSocket::ConnectingState:
+                return ConnectedState::Connecting;
+
+            case QAbstractSocket::ConnectedState:
+                return ConnectedState::Connected;
+
+            default:
+                return ConnectedState::NotConnected;;
+        };
+    }
 }
 
 GDaxLib::FunctionMap GDaxLib::functionMap =
@@ -50,9 +81,15 @@ GDaxLib::GDaxLib(QObject * parent)
 
     connect(webSocket, &QWebSocket::connected, this, &GDaxLib::Connected);
     connect(webSocket, &QWebSocket::textMessageReceived, this, &GDaxLib::TextMessageReceived);
-    connect(webSocket, &QWebSocket::stateChanged, this, &GDaxLib::StateChanged);
-    connect(webSocket, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error), this, &GDaxLib::Error);
-    connect(webSocket, QOverload<const QList<QSslError> &>::of(&QWebSocket::sslErrors), this, &GDaxLib::SslErrors);
+
+    connect(webSocket, &QWebSocket::stateChanged, [&](QAbstractSocket::SocketState socketState)
+    {
+        log.Info(QString("WebSocket state: %1").arg(QMetaEnum::fromType<QAbstractSocket::SocketState>().valueToKey(socketState)));
+        emit OnStateChanged(ToState(socketState));
+    });
+
+    connect(webSocket, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error), Error);
+    connect(webSocket, QOverload<const QList<QSslError> &>::of(&QWebSocket::sslErrors), SslErrors);
 
     connect(webSocket, &QWebSocket::pong, this, &GDaxLib::Pong);
 
@@ -119,26 +156,6 @@ void GDaxLib::TextMessageReceived(QString message)
     }
 }
 
-void GDaxLib::StateChanged(QAbstractSocket::SocketState socketState)
-{
-    log.Info(QString("WebSocket state: %1").arg(QMetaEnum::fromType<QAbstractSocket::SocketState>().valueToKey(socketState)));
-
-    emit OnStateChanged(ToState(socketState));
-}
-
-void GDaxLib::Error(QAbstractSocket::SocketError error)
-{
-    log.Error(QString("SocketError: %1").arg(QMetaEnum::fromType<QAbstractSocket::SocketError>().valueToKey(error)));
-}
-
-void GDaxLib::SslErrors(const QList<QSslError> &errors)
-{
-    for(auto & e : errors)
-    {
-        log.Error(QString("SslError: %1, %2").arg(e.error()).arg(e.errorString()));
-    }
-}
-
 void GDaxLib::Pong()
 {
     log.Spam("Pong");
@@ -150,22 +167,6 @@ void GDaxLib::Clear()
     QMutexLocker lock(&const_cast<QMutex&>(orderBook.Mutex()));
     orderBook.Clear();
     lastTradeId = 0;
-}
-
-ConnectedState GDaxLib::ToState(QAbstractSocket::SocketState socketState)
-{
-    switch (socketState)
-    {
-        case QAbstractSocket::ConnectingState:
-            return ConnectedState::Connecting;
-
-        case QAbstractSocket::ConnectedState:
-            return ConnectedState::Connected;
-
-        default:
-            return ConnectedState::NotConnected;;
-    };
-
 }
 
 void GDaxLib::ProcessSubscriptions(const QJsonObject & object)

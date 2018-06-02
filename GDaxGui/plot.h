@@ -4,9 +4,9 @@
 #include <QRectF>
 #include <QFont>
 #include <QFontMetrics>
-#include <QPainterPath>
 
 QT_FORWARD_DECLARE_CLASS(QPainter)
+QT_FORWARD_DECLARE_CLASS(QPainterPath)
 
 class Plot
 {

@@ -7,9 +7,6 @@
 #include "flogging.h"
 
 #include <QObject>
-#include <QAbstractSocket> // avoid
-#include <QSslError> // avoid
-
 #include <unordered_map>
 
 struct Tick;
@@ -36,7 +33,6 @@ public:
 
     void Ping();
 
-private:
 signals:
     void OnUpdate();
     void OnHeartbeat(const QDateTime & serverTime);
@@ -46,14 +42,10 @@ signals:
 private slots:
     void Connected();
     void TextMessageReceived(QString message);
-    void StateChanged(QAbstractSocket::SocketState socketState); // avoid
-    void Error(QAbstractSocket::SocketError error);
-    void SslErrors(const QList<QSslError> &errors); // avoid
     void Pong();
 
 private:
     void Clear();
-    ConnectedState ToState(QAbstractSocket::SocketState socketState); // avoid
     void ProcessSubscriptions(const QJsonObject & object);
     void ProcessError(const QJsonObject & object);
     void ProcessSnapshot(const QJsonObject & object);

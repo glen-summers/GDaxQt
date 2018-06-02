@@ -16,6 +16,7 @@
 #include <QActionGroup>
 #include <QThread>
 #include <QSettings>
+#include <QTextStream>
 
 namespace
 {
