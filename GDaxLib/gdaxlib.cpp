@@ -1,5 +1,7 @@
 #include "gdaxlib.h"
 
+#include "utils.h"
+
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -38,7 +40,7 @@ GDaxLib::FunctionMap GDaxLib::functionMap =
 
 GDaxLib::GDaxLib(QObject * parent)
     : QObject(parent)
-    , webSocket(new QWebSocket(QString(), QWebSocketProtocol::VersionLatest, this)) // check needed
+    , webSocket(Utils::QMake<QWebSocket>("webSocket", QString(), QWebSocketProtocol::VersionLatest, this))
     , lastTradeId()
 {
     // proxy?

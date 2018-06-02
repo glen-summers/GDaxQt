@@ -6,12 +6,11 @@
 #include "candleoverlay.h"
 #include "expandbutton.h"
 
-#include <QTextEdit>
-#include <QComboBox>
 #include <QTimer>
 #include <QToolBar>
 #include <QActionGroup>
 #include <QThread>
+#include <QSettings>
 
 namespace
 {
@@ -24,21 +23,26 @@ namespace
         }
         selected.setChecked(true);
     }
+
+    static constexpr const char * TradesVisibleSetting = "TradesVisible";
+    static constexpr const char * OrdersVisibleSetting = "OrdersVisible";
+    static constexpr const char * DepthVisibleSetting = "DepthVisible";
 }
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
+    , settings(Utils::QMake<QSettings>("settings", "Crapola", nullptr, this))
     , ui(std::make_unique<Ui::MainWindow>())
-    , timer(std::make_unique<QTimer>())
-    , gDaxLib(new GDaxLib())
-    , workerThread(new QThread())
+    , timer(Utils::QMake<QTimer>("timer", this))
+    , gDaxLib(Utils::QMake<GDaxLib>("gDaxLib")) // cannot have parent if sent to thread
+    , workerThread(Utils::QMake<QThread>("QThread", this))
     , granularity()
 {
     ui->setupUi(this);
 
-    AttachExpander(ui->centralWidget, ui->trades);
-    AttachExpander(ui->centralWidget, ui->orderBook);
-    AttachExpander(ui->centralWidget, ui->depthChart);
+    AttachExpander(ui->centralWidget, ui->trades, settings->value(TradesVisibleSetting, true).toBool());
+    AttachExpander(ui->centralWidget, ui->orderBook, settings->value(OrdersVisibleSetting, true).toBool());
+    AttachExpander(ui->centralWidget, ui->depthChart, settings->value(DepthVisibleSetting, true).toBool());
 
     granularity = Granularity::Hours; // persist
     SetupActionGroup(*new QActionGroup(this),
@@ -54,7 +58,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->depthChart->SetGDaxLib(gDaxLib);
 
-    connect(timer.get(), &QTimer::timeout, this, &MainWindow::Update);
+    connect(timer, &QTimer::timeout, this, &MainWindow::Update);
     connect(&restProvider, &RestProvider::OnCandles, this, &MainWindow::Candles);
     connect(&restProvider, &RestProvider::OnTrades, this, &MainWindow::Trades);
     connect(gDaxLib, &GDaxLib::OnTick, this, &MainWindow::Ticker);
@@ -63,25 +67,32 @@ MainWindow::MainWindow(QWidget *parent)
 
     timer->start(5000);
 
-    new CandleOverlay(*ui->candleChart);
+    Utils::QMake<CandleOverlay>("CandleOverlay", *ui->candleChart);
 
     gDaxLib->moveToThread(workerThread);
-    QObject::connect(workerThread, &QThread::finished, workerThread, &QObject::deleteLater);
     QObject::connect(workerThread, &QThread::finished, gDaxLib, &QObject::deleteLater);
     workerThread->start();
 }
 
-void MainWindow::AttachExpander(QWidget * parent, QWidget * widget)
+void MainWindow::AttachExpander(QWidget * parent, QWidget * widget, bool expanded)
 {
     auto layout = (QBoxLayout*)parent->layout();
     int index = layout->indexOf(widget);
-    auto button = new ExpandButton(parent);
+    auto button = Utils::QMake<ExpandButton>("ExpandButton", parent);
     button->setControlled(widget);
     layout->insertWidget(index, button);
+    if (!expanded)
+    {
+        button->toggle();
+    }
 }
 
-void MainWindow::Wait() const
+void MainWindow::Shutdown() const
 {
+    settings->setValue(TradesVisibleSetting, !ui->trades->isHidden());
+    settings->setValue(OrdersVisibleSetting, !ui->orderBook->isHidden());
+    settings->setValue(DepthVisibleSetting, !ui->depthChart->isHidden());
+
     workerThread->quit();
     workerThread->wait();
 }
@@ -105,9 +116,15 @@ void MainWindow::on_actionE_xit_triggered()
 
 void MainWindow::GenerateOrderBook()
 {
+    auto & orderBookUi = *ui->orderBook;
+    if (orderBookUi.isHidden())
+    {
+        orderBookUi.document()->clear();
+        return;
+    }
+
     Flog::ScopeLog s(log, Flog::Level::Info, "GenerateOrderBook");
 
-    auto & orderBookUi = *ui->orderBook;
     QFont font = orderBookUi.document()->defaultFont();
     QFontMetrics fm(font);
     int fontHeight = fm.height();
@@ -156,9 +173,9 @@ td.amount span { color:grey; }
         QString totAmount = QString::number(tot.getAsDouble(), 'f', amountDecs);
 
         reverso << QString(R"(<tr><td class="down">%1</td><td class="amount">%2</td><td class="amount">%3</td><\tr>)")
-                   .arg(DiffText(prevPrice, price))
-                   .arg(DiffText(prevAmount, amount))
-                   .arg(DiffText(prevTotAmount, totAmount));
+                   .arg(Utils::DiffText(prevPrice, price))
+                   .arg(Utils::DiffText(prevAmount, amount))
+                   .arg(Utils::DiffText(prevTotAmount, totAmount));
 
         prevPrice = price;
         prevAmount = amount;
@@ -194,9 +211,9 @@ td.amount span { color:grey; }
         QString totAmount = QString::number(tot.getAsDouble(), 'f', amountDecs);
 
         stream << "<tr>"
-               << "<td class=\"up\">" << DiffText(prevPrice, price) << "</td>"
-               << "<td class=\"amount\">" << DiffText(prevAmount, amount) << "</td>"
-               << "<td class=\"amount\">" << DiffText(prevTotAmount, totAmount) << "</td>"
+               << "<td class=\"up\">" << Utils::DiffText(prevPrice, price) << "</td>"
+               << "<td class=\"amount\">" << Utils::DiffText(prevAmount, amount) << "</td>"
+               << "<td class=\"amount\">" << Utils::DiffText(prevTotAmount, totAmount) << "</td>"
                << "<\tr>";
         prevPrice = price;
         prevAmount = amount;
@@ -209,9 +226,15 @@ td.amount span { color:grey; }
 
 void MainWindow::GenerateTradeList()
 {
+    auto & tradesWidget = *ui->trades;
+    if (tradesWidget.isHidden())
+    {
+        tradesWidget.document()->clear();
+        return;
+    }
+
     Flog::ScopeLog s(log, Flog::Level::Info, "GenerateTradeList");
 
-    auto & tradesWidget = *ui->trades;
     QFont font = tradesWidget.document()->defaultFont();
     QFontMetrics fm(font);
     int fontHeight = fm.height();
@@ -260,9 +283,9 @@ td.amount span { color:grey; }
             continue;
         }
 
-        stream << DiffText(prevPrice, price) << "</td>"
-               << "<td class=\"amount\">" << DiffText(prevAmount, amount) << "</td>"
-               << "<td class=\"amount\">" << DiffText(prevTime, time) << "</td>"
+        stream << Utils::DiffText(prevPrice, price) << "</td>"
+               << "<td class=\"amount\">" << Utils::DiffText(prevAmount, amount) << "</td>"
+               << "<td class=\"amount\">" << Utils::DiffText(prevTime, time) << "</td>"
                << "<\tr>";
 
         prevPrice = price;

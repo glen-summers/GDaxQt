@@ -35,6 +35,6 @@ int main(int argc, char *argv[])
     w.showMaximized();
 
     int ret = a.exec();
-    w.Wait();
+    w.Shutdown();
     return ret;
 }

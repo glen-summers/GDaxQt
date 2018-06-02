@@ -244,16 +244,16 @@ private slots:
 
     void Deltas()
     {
-        AssertEquals("", DiffText("", ""));
-        AssertEquals("", DiffText("abc", ""));
-        AssertEquals(R"(<span>abc</span>)", DiffText("abc", "abc"));
-        AssertEquals(R"(abc)", DiffText("", "abc"));
-        AssertEquals(R"(def)", DiffText("abc", "def"));
-        AssertEquals(R"(<span>a</span>xc)", DiffText("abc", "axc"));
-        AssertEquals(R"(xbc)", DiffText("abc", "xbc"));
-        AssertEquals(R"(<span>ab</span>x)", DiffText("abc", "abx"));
-        AssertEquals(R"(<span>abc</span>d)", DiffText("abc", "abcd"));
-        AssertEquals(R"(<span>a</span>BcDe)", DiffText("abcde", "aBcDe"));
+        AssertEquals("", Utils::DiffText("", ""));
+        AssertEquals("", Utils::DiffText("abc", ""));
+        AssertEquals(R"(<span>abc</span>)", Utils::DiffText("abc", "abc"));
+        AssertEquals(R"(abc)", Utils::DiffText("", "abc"));
+        AssertEquals(R"(def)", Utils::DiffText("abc", "def"));
+        AssertEquals(R"(<span>a</span>xc)", Utils::DiffText("abc", "axc"));
+        AssertEquals(R"(xbc)", Utils::DiffText("abc", "xbc"));
+        AssertEquals(R"(<span>ab</span>x)", Utils::DiffText("abc", "abx"));
+        AssertEquals(R"(<span>abc</span>d)", Utils::DiffText("abc", "abcd"));
+        AssertEquals(R"(<span>a</span>BcDe)", Utils::DiffText("abcde", "aBcDe"));
     }
 
     void BaadPrice()

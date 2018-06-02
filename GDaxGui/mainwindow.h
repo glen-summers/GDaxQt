@@ -7,11 +7,11 @@
 #include "ui_mainwindow.h"
 
 #include <QMainWindow>
-#include <QTimer>
-#include <QTextEdit>
-#include <QComboBox>
 
 #include <memory>
+
+class QTimer;
+class QSettings;
 
 class MainWindow : public QMainWindow
 {
@@ -19,9 +19,9 @@ class MainWindow : public QMainWindow
 
     Q_OBJECT
 
+    QSettings * const settings;
     std::unique_ptr<Ui::MainWindow> ui;
-    std::unique_ptr<QTimer> timer;
-
+    QTimer * const timer;
     GDaxLib * const gDaxLib;
     QThread * const workerThread;
     RestProvider restProvider;
@@ -32,8 +32,8 @@ class MainWindow : public QMainWindow
     Granularity granularity;
 
 public:
-    explicit MainWindow(QWidget *parent = 0);
-    void Wait() const;
+    explicit MainWindow(QWidget *parent = nullptr);
+    void Shutdown() const;
 
 public slots:
     void Update();
@@ -48,7 +48,7 @@ private slots:
     void GranularityChanged(QAction *);
 
 private:
-    void AttachExpander(QWidget * parent, QWidget * widget);
+    void AttachExpander(QWidget * parent, QWidget * widget, bool expanded);
     void Connected();
     void GenerateOrderBook();
     void GenerateTradeList();

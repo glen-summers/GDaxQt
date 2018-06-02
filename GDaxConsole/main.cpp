@@ -12,7 +12,7 @@
 
 int main(int argc, char *argv[])
 {
-    EnableAnsiConsole();
+    Utils::EnableAnsiConsole();
     std::cout << "GDax" << std::endl;
 
 //    wprintf(L"\x1b[31mThis text has a red foreground using SGR.31.\r\n");
