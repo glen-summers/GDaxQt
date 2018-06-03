@@ -20,10 +20,10 @@ class RestProvider : public QObject
 
     Q_OBJECT
 
-    QNetworkAccessManager * manager;
+    QNetworkAccessManager * const manager;
 
 public:
-    RestProvider(QObject * parent = nullptr);
+    RestProvider(QNetworkAccessManager * manager, QObject * parent = nullptr);
 
     void FetchTrades(unsigned int limit);
     void FetchAllCandles(Granularity granularity);

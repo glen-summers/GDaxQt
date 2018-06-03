@@ -16,8 +16,7 @@ namespace Ui
     class MainWindow;
 }
 struct Tick;
-class GDaxLib;
-class RestProvider;
+class GDaxProvider;
 class QTimer;
 class QSettings;
 
@@ -30,9 +29,7 @@ class MainWindow : public QMainWindow
     QSettings * const settings;
     std::unique_ptr<Ui::MainWindow> ui;
     QTimer * const timer;
-    GDaxLib * const gDaxLib;
-    QThread * const workerThread;
-    RestProvider * const restProvider;
+    GDaxProvider * const gDaxProvider;
     std::deque<Candle> candles;
     std::deque<Trade> trades;
 

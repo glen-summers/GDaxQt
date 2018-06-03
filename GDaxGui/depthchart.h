@@ -7,7 +7,7 @@
 
 #include <QOpenGLWidget>
 
-class GDaxLib;
+class GDaxProvider;
 
 class DepthChart : public QOpenGLWidget
 {
@@ -17,12 +17,12 @@ class DepthChart : public QOpenGLWidget
 
     QBrush background;
     Plot mutable depthPlot;
-    const GDaxLib * g;
+    const GDaxProvider * g;
 
 public:
     DepthChart(QWidget *parent = nullptr);
 
-    void SetGDaxLib(const GDaxLib * value)
+    void SetProvider(const GDaxProvider * value)
     {
         g = value;
     }

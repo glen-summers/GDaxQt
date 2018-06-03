@@ -4,6 +4,7 @@
 
 QT -= gui
 QT += websockets
+QT += concurrent
 
 TARGET = GDaxLib
 TEMPLATE = lib
@@ -17,7 +18,8 @@ SOURCES += \
     tick.cpp \
     restprovider.cpp \
     filelogger.cpp \
-    trade.cpp
+    trade.cpp \
+    gdaxprovider.cpp
 
 HEADERS += \
     gdaxlib.h \
@@ -31,7 +33,8 @@ HEADERS += \
     trade.h \
     candle.h \
     decimalwrap.h \
-    orderbook.h
+    orderbook.h \
+    gdaxprovider.h
 
 DISTFILES += \
     misc.pri \

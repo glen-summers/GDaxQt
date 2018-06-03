@@ -32,9 +32,9 @@ namespace
     }
 }
 
-RestProvider::RestProvider(QObject * parent)
+RestProvider::RestProvider(QNetworkAccessManager * manager, QObject * parent)
     : QObject(parent)
-    , manager(Utils::QMake<QNetworkAccessManager>("manager", this))
+    , manager(manager)
 {
 }
 

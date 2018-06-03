@@ -1,6 +1,7 @@
 #include "depthchart.h"
 
-#include "gdaxlib.h"
+#include "gdaxprovider.h"
+#include "orderbook.h"
 
 static constexpr QRgb BidFillColour = qRgb(0,100,0);
 static constexpr QRgb BidEdgeColour = qRgb(0,255,0);
@@ -10,6 +11,7 @@ static constexpr QRgb AskEdgeColour = qRgb(255,0,0);
 #include <QApplication>
 #include <QPainter>
 #include <QPaintEvent>
+#include <QMutex>
 
 DepthChart::DepthChart(QWidget *parent)
     : QOpenGLWidget(parent)

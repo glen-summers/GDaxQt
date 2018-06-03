@@ -3,8 +3,8 @@
 #include "tick.h"
 #include "depthchart.h"
 #include "candleoverlay.h"
-#include "restprovider.h"
-#include "gdaxlib.h"
+#include "gdaxprovider.h"
+#include "orderbook.h"
 
 #include "utils.h"
 #include "expandbutton.h"
@@ -17,6 +17,7 @@
 #include <QThread>
 #include <QSettings>
 #include <QTextStream>
+#include <QMutex>
 
 namespace
 {
@@ -40,9 +41,7 @@ MainWindow::MainWindow(QWidget *parent)
     , settings(Utils::QMake<QSettings>("settings", "Crapola", nullptr, this))
     , ui(std::make_unique<Ui::MainWindow>())
     , timer(Utils::QMake<QTimer>("timer", this))
-    , gDaxLib(Utils::QMake<GDaxLib>("gDaxLib")) // cannot have parent if sent to thread
-    , restProvider(Utils::QMake<RestProvider>("restProvider", this)) // has parent atm, until used on thread
-    , workerThread(Utils::QMake<QThread>("QThread", this))
+    , gDaxProvider(Utils::QMake<GDaxProvider>("gDaxProvider", this))
     , granularity()
 {
     ui->setupUi(this);
@@ -63,22 +62,18 @@ MainWindow::MainWindow(QWidget *parent)
     }, *ui->action1H);
     connect(ui->menuGranularity, &QMenu::triggered, this, &MainWindow::GranularityChanged);
 
-    ui->depthChart->SetGDaxLib(gDaxLib);
+    ui->depthChart->SetProvider(gDaxProvider);
 
     connect(timer, &QTimer::timeout, this, &MainWindow::Update);
-    connect(restProvider, &RestProvider::OnCandles, this, &MainWindow::Candles);
-    connect(restProvider, &RestProvider::OnTrades, this, &MainWindow::Trades);
-    connect(gDaxLib, &GDaxLib::OnTick, this, &MainWindow::Ticker);
-    connect(gDaxLib, &GDaxLib::OnHeartbeat, this, &MainWindow::Heartbeat);
-    connect(gDaxLib, &GDaxLib::OnStateChanged, this, &MainWindow::StateChanged);
+    connect(gDaxProvider, &GDaxProvider::OnCandles, this, &MainWindow::Candles);
+    connect(gDaxProvider, &GDaxProvider::OnTrades, this, &MainWindow::Trades);
+    connect(gDaxProvider, &GDaxProvider::OnTick, this, &MainWindow::Ticker);
+    connect(gDaxProvider, &GDaxProvider::OnHeartbeat, this, &MainWindow::Heartbeat);
+    connect(gDaxProvider, &GDaxProvider::OnStateChanged, this, &MainWindow::StateChanged);
 
     timer->start(5000);
 
     Utils::QMake<CandleOverlay>("CandleOverlay", *ui->candleChart);
-
-    gDaxLib->moveToThread(workerThread);
-    QObject::connect(workerThread, &QThread::finished, gDaxLib, &QObject::deleteLater);
-    workerThread->start();
 }
 
 MainWindow::~MainWindow() = default;
@@ -102,8 +97,7 @@ void MainWindow::Shutdown() const
     settings->setValue(OrdersVisibleSetting, !ui->orderBook->isHidden());
     settings->setValue(DepthVisibleSetting, !ui->depthChart->isHidden());
 
-    workerThread->quit();
-    workerThread->wait();
+    gDaxProvider->Shutdown();
 }
 
 void MainWindow::Update()
@@ -115,7 +109,7 @@ void MainWindow::Update()
     GenerateOrderBook();
     GenerateTradeList();
 
-    gDaxLib->Ping();
+    gDaxProvider->Ping();
 }
 
 void MainWindow::on_actionE_xit_triggered()
@@ -140,7 +134,7 @@ void MainWindow::GenerateOrderBook()
     int lines = orderBookUi.height()/2/fontHeight-1;
 
     // lock orderbook, move\improve impl
-    const auto & orderBook = gDaxLib->Orders();
+    const auto & orderBook = gDaxProvider->Orders();
     QMutexLocker lock(&const_cast<QMutex&>(orderBook.Mutex()));
 
     const auto & asks = orderBook.Asks();
@@ -392,7 +386,7 @@ void MainWindow::StateChanged(ConnectedState state)
 void MainWindow::GranularityChanged(QAction * action)
 {
     granularity = (Granularity)action->data().toUInt();
-    restProvider->FetchAllCandles(granularity);
+    gDaxProvider->FetchAllCandles(granularity);
 }
 
 void MainWindow::Connected()
@@ -408,6 +402,6 @@ void MainWindow::Connected()
     ui->depthChart->update();
 
     // calc value? want to be >= trade history window rows
-    restProvider->FetchTrades(100);
-    restProvider->FetchAllCandles(granularity);
+    gDaxProvider->FetchTrades(100);
+    gDaxProvider->FetchAllCandles(granularity);
 }
