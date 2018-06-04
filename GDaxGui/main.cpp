@@ -30,6 +30,7 @@ int main(int argc, char *argv[])
     QSurfaceFormat::setDefaultFormat(fmt);
 
     Flog::LogManager::SetLevel(Flog::Level::Spam);
+    Flog::LogManager::SetThreadName("Ui");
 
     MainWindow w;
     w.showMaximized();

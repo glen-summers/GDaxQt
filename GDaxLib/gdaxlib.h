@@ -12,6 +12,7 @@
 struct Tick;
 class QWebSocket;
 class QJsonObject;
+class QTimer;
 
 class GDaxLib : public QObject
 {
@@ -23,6 +24,7 @@ class GDaxLib : public QObject
     static FunctionMap functionMap;
 
     QWebSocket * const webSocket;
+    QTimer * const pingTimer;
     OrderBook orderBook;
     TradeId lastTradeId;
 
@@ -30,8 +32,6 @@ public:
     explicit GDaxLib(QObject * parent = nullptr);
 
     const OrderBook & Orders() const { return orderBook; }
-
-    void Ping();
 
 signals:
     void OnUpdate();
@@ -42,6 +42,7 @@ signals:
 private slots:
     void Connected();
     void TextMessageReceived(QString message);
+    void Ping();
     void Pong();
 
 private:

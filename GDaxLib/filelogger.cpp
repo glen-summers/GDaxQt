@@ -39,6 +39,7 @@ namespace
     static thread_local std::stack<Scope> scopes;
     static thread_local const char * pendingScope = nullptr;
     static thread_local int depth = 0;
+    static thread_local const char * threadName = nullptr;
 
     void TranslateLevel(std::ostream & stm, Flog::Level level)
     {
@@ -251,6 +252,12 @@ namespace Flog
         pendingScope = nullptr;
     }
 
+    void LogManager::SetThreadName(const char * name)
+    {
+        FileLogger::Write(Flog::Level::Info, "ThreadName", name ? name : "(null)");
+        threadName = name;
+    }
+
     void Log::Write(Level level, const char * message) const
     {
         if (pendingScope)
@@ -455,10 +462,19 @@ void FileLogger::InternalWrite(Flog::Level level, const char * prefix, const cha
 
             int ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()).count() % 1000;
 
-            streamInfo.Stream()
-                << std::left
+            auto & s = streamInfo.Stream();
+            s   << std::left
                 << std::put_time(&tm, "%d %b %Y, %H:%M:%S") << "." << std::setw(3) << std::setfill('0') << ms << std::setfill(' ')
-                << " : [ " << std::setw(THREAD_ID_WIDTH) << GetThreadId() << " ] : "
+                << " : [ " << std::setw(THREAD_ID_WIDTH);
+            if (threadName)
+            {
+                s << threadName;
+            }
+            else
+            {
+                s << GetThreadId();
+            }
+            s   << " ] : "
                 << std::setw(LEVEL_WIDTH) << Manip<Flog::Level>(TranslateLevel, level) << " : "
                 << std::setw(PREFIX_WIDTH) << prefix << " : "
                 << message << std::endl << std::flush;

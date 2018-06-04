@@ -21,6 +21,8 @@
 
 namespace
 {
+    static constexpr int UpdateTimerMs = 5000;
+
     void SetupActionGroup(QActionGroup & group, const std::initializer_list<std::pair<QAction &, Granularity>> & actions, QAction & selected)
     {
         for (const auto & action : actions)
@@ -40,7 +42,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , settings(Utils::QMake<QSettings>("settings", "Crapola", nullptr, this))
     , ui(std::make_unique<Ui::MainWindow>())
-    , timer(Utils::QMake<QTimer>("timer", this))
+    , updateTimer(Utils::QMake<QTimer>("updateTimer", this))
     , gDaxProvider(Utils::QMake<GDaxProvider>("gDaxProvider", this))
     , granularity()
 {
@@ -64,14 +66,14 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->depthChart->SetProvider(gDaxProvider);
 
-    connect(timer, &QTimer::timeout, this, &MainWindow::Update);
+    connect(updateTimer, &QTimer::timeout, this, &MainWindow::Update);
     connect(gDaxProvider, &GDaxProvider::OnCandles, this, &MainWindow::Candles);
     connect(gDaxProvider, &GDaxProvider::OnTrades, this, &MainWindow::Trades);
     connect(gDaxProvider, &GDaxProvider::OnTick, this, &MainWindow::Ticker);
     connect(gDaxProvider, &GDaxProvider::OnHeartbeat, this, &MainWindow::Heartbeat);
     connect(gDaxProvider, &GDaxProvider::OnStateChanged, this, &MainWindow::StateChanged);
 
-    timer->start(5000);
+    updateTimer->start(UpdateTimerMs);
 
     Utils::QMake<CandleOverlay>("CandleOverlay", *ui->candleChart);
 }
@@ -108,8 +110,6 @@ void MainWindow::Update()
     ui->candleChart->update();
     GenerateOrderBook();
     GenerateTradeList();
-
-    gDaxProvider->Ping();
 }
 
 void MainWindow::on_actionE_xit_triggered()

@@ -17,6 +17,7 @@ GDaxProvider::GDaxProvider(QObject * parent)
     , workerThread(Utils::QMake<QThread>("QThread", this))
 {
     gDaxLib->moveToThread(workerThread);
+    QObject::connect(workerThread, &QThread::started, [](){ Flog::LogManager::SetThreadName("GDax"); });
     QObject::connect(workerThread, &QThread::finished, gDaxLib, &QObject::deleteLater);
     workerThread->start();
 
@@ -34,11 +35,6 @@ GDaxProvider::GDaxProvider(QObject * parent)
 const OrderBook & GDaxProvider::Orders() const
 {
     return gDaxLib->Orders();
-}
-
-void GDaxProvider::Ping()
-{
-    gDaxLib->Ping();
 }
 
 void GDaxProvider::FetchTrades(unsigned int limit)

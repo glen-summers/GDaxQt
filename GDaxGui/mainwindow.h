@@ -28,7 +28,7 @@ class MainWindow : public QMainWindow
 
     QSettings * const settings;
     std::unique_ptr<Ui::MainWindow> ui;
-    QTimer * const timer;
+    QTimer * const updateTimer;
     GDaxProvider * const gDaxProvider;
     std::deque<Candle> candles;
     std::deque<Trade> trades;

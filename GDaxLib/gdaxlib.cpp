@@ -10,9 +10,12 @@
 #include <QThread>
 #include <QMetaEnum>
 #include <QNetworkReply>
+#include <QTimer>
 
 namespace
 {
+    static constexpr int PingTimerMs = 5000;
+
 // cfg. allow using sandbox
     static constexpr const char * url = "wss://ws-feed.gdax.com";
 
@@ -74,6 +77,7 @@ GDaxLib::FunctionMap GDaxLib::functionMap =
 GDaxLib::GDaxLib(QObject * parent)
     : QObject(parent)
     , webSocket(Utils::QMake<QWebSocket>("webSocket", QString(), QWebSocketProtocol::VersionLatest, this))
+    , pingTimer(Utils::QMake<QTimer>("pingTimer", this))
     , lastTradeId()
 {
     // proxy?
@@ -92,7 +96,10 @@ GDaxLib::GDaxLib(QObject * parent)
     connect(webSocket, QOverload<const QList<QSslError> &>::of(&QWebSocket::sslErrors), SslErrors);
 
     connect(webSocket, &QWebSocket::pong, this, &GDaxLib::Pong);
+    connect(pingTimer, &QTimer::timeout, this, &GDaxLib::Ping);
+    pingTimer->start(PingTimerMs);
 
+    qRegisterMetaType<QAbstractSocket::SocketState>("QAbstractSocket::SocketState>");
     qRegisterMetaType<ConnectedState>("ConnectedState");
     qRegisterMetaType<Tick>("Tick");
 

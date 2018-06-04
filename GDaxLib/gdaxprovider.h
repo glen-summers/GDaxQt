@@ -32,7 +32,6 @@ public:
     GDaxProvider(QObject * parent = nullptr);
 
     const OrderBook & Orders() const;
-    void Ping();
 
     void FetchTrades(unsigned int limit);
     void FetchAllCandles(Granularity granularity);

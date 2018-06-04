@@ -73,6 +73,7 @@ namespace Flog
         static std::string Unmangle(const char * name);
     public:
         static void SetLevel(Level level);
+        static void SetThreadName(const char *);
 
         static Log GetLog(const std::string & name)
         {
