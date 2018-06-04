@@ -83,9 +83,9 @@ void CandleChart::AddTick(const Tick & tick)
 
 void CandleChart::Heartbeat(const QDateTime & serverTime)
 {
-    if (!candles.empty())
+    if (!candles.empty() && CheckCandleRollover(serverTime, candles.front().closingPrice))
     {
-       CheckCandleRollover(serverTime, candles.front().closingPrice);
+        update();
     }
 }
 
@@ -125,6 +125,11 @@ bool CandleChart::CheckCandleRollover(const QDateTime & dateTime, const Decimal 
     {
         candles.push_front(Candle{endTime, price, price, price, price, {}}); // +amount
         AddMetric(endTime, price.getAsDouble());
+
+        // scoll by timeSeg, always or only if not manually scrolled?
+        auto view = candlePlot.View();
+        view.adjust(timeDelta, 0, timeDelta, 0);
+        candlePlot.SetView(view);
         updated = true;
     }
     return updated;

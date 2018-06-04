@@ -41,7 +41,7 @@ public:
 
     void SetView(const QRectF & value);
     void ApplyViewTransform(QPainter &painter);
-    QRectF View() const { return view; }
+    const QRectF & View() const { return view; }
     QPointF MapToView(const QPointF & p) const;
 
     QPointF ScaleToScreen(const QPointF & p) const
