@@ -9,8 +9,22 @@
 #include <QThread>
 #include <QtConcurrent>
 
-GDaxProvider::GDaxProvider(QObject * parent)
+namespace GDL
+{
+    InterfacePtr Create(Callback & callback)
+    {
+        return InterfacePtr(Utils::QMake<GDaxProvider>("GDaxProvider", callback));
+    }
+
+    void Deleter::operator ()(GDL::Interface * itf) const noexcept
+    {
+        static_cast<GDaxProvider*>(itf)->deleteLater(); // ?
+    }
+}
+
+GDaxProvider::GDaxProvider(GDL::Callback & callback, QObject * parent)
     : QObject(parent)
+    , callback(callback)
     , networkAccessManager(Utils::QMake<QNetworkAccessManager>("networkAccessManager", this))
     , gDaxLib(Utils::QMake<GDaxLib>("gDaxLib")) // no parent, move to thread
     , restProvider(Utils::QMake<RestProvider>("restProvider", networkAccessManager, this))
@@ -22,14 +36,13 @@ GDaxProvider::GDaxProvider(QObject * parent)
     workerThread->start();
 
     // todo, use c++ callack impl instead of qt signals
-    connect(gDaxLib, &GDaxLib::OnUpdate, [&]() { emit OnUpdate(); });
-    connect(gDaxLib, &GDaxLib::OnHeartbeat, [&](const QDateTime & serverTime) { emit OnHeartbeat(serverTime); });
-    connect(gDaxLib, &GDaxLib::OnTick, [&](const Tick & tick) { emit OnTick(tick); });
-    connect(gDaxLib, &GDaxLib::OnStateChanged, [&](ConnectedState state) { emit OnStateChanged(state); });
+    connect(gDaxLib, &GDaxLib::OnHeartbeat, [&](const QDateTime & serverTime) { callback.OnHeartbeat(serverTime); });
+    connect(gDaxLib, &GDaxLib::OnTick, [&](const Tick & tick) { callback.OnTick(tick); });
+    connect(gDaxLib, &GDaxLib::OnStateChanged, [&](GDL::ConnectedState state) { callback.OnStateChanged(state); });
 
-    connect(restProvider, &RestProvider::OnError, [&]() { emit OnError(); });
-    connect(restProvider, &RestProvider::OnCandles, [&](std::deque<Candle> values) { emit OnCandles(std::move(values)); });
-    connect(restProvider, &RestProvider::OnTrades, [&](std::deque<Trade> values) { emit OnTrades(std::move(values)); });
+    //connect(restProvider, &RestProvider::OnError, [&]() { callback.OnError(); });
+    connect(restProvider, &RestProvider::OnCandles, [&](std::deque<Candle> values) { callback.OnCandles(std::move(values)); });
+    connect(restProvider, &RestProvider::OnTrades, [&](std::deque<Trade> values) { callback.OnTrades(std::move(values)); });
 }
 
 const OrderBook & GDaxProvider::Orders() const

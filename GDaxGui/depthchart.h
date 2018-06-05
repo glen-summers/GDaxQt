@@ -2,6 +2,7 @@
 #define GRAPHICSWIDGET_H
 
 #include "plot.h"
+#include "gdl.h"
 
 #include "flogging.h"
 
@@ -17,14 +18,14 @@ class DepthChart : public QOpenGLWidget
 
     QBrush background;
     Plot mutable depthPlot;
-    const GDaxProvider * g;
+    const GDL::Interface * gdl;
 
 public:
     DepthChart(QWidget *parent = nullptr);
 
-    void SetProvider(const GDaxProvider * value)
+    void SetProvider(const GDL::Interface * value)
     {
-        g = value;
+        gdl = value;
     }
 
 private:

@@ -3,6 +3,7 @@
 
 #include "defs.h"
 #include "orderbook.h"
+#include "gdl.h" //fwd?
 
 #include "flogging.h"
 
@@ -34,10 +35,9 @@ public:
     const OrderBook & Orders() const { return orderBook; }
 
 signals:
-    void OnUpdate();
     void OnHeartbeat(const QDateTime & serverTime);
     void OnTick(const Tick & tick);
-    void OnStateChanged(ConnectedState state);
+    void OnStateChanged(GDL::ConnectedState state);
 
 private slots:
     void Connected();

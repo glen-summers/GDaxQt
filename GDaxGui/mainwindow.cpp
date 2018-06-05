@@ -3,7 +3,6 @@
 #include "tick.h"
 #include "depthchart.h"
 #include "candleoverlay.h"
-#include "gdaxprovider.h"
 #include "orderbook.h"
 
 #include "utils.h"
@@ -43,7 +42,7 @@ MainWindow::MainWindow(QWidget *parent)
     , settings(Utils::QMake<QSettings>("settings", "Crapola", nullptr, this))
     , ui(std::make_unique<Ui::MainWindow>())
     , updateTimer(Utils::QMake<QTimer>("updateTimer", this))
-    , gDaxProvider(Utils::QMake<GDaxProvider>("gDaxProvider", this))
+    , gdl(GDL::Create(*this))
     , granularity()
 {
     ui->setupUi(this);
@@ -64,15 +63,9 @@ MainWindow::MainWindow(QWidget *parent)
     }, *ui->action1H);
     connect(ui->menuGranularity, &QMenu::triggered, this, &MainWindow::GranularityChanged);
 
-    ui->depthChart->SetProvider(gDaxProvider);
+    ui->depthChart->SetProvider(gdl.get());
 
-    connect(updateTimer, &QTimer::timeout, this, &MainWindow::Update);
-    connect(gDaxProvider, &GDaxProvider::OnCandles, this, &MainWindow::Candles);
-    connect(gDaxProvider, &GDaxProvider::OnTrades, this, &MainWindow::Trades);
-    connect(gDaxProvider, &GDaxProvider::OnTick, this, &MainWindow::Ticker);
-    connect(gDaxProvider, &GDaxProvider::OnHeartbeat, this, &MainWindow::Heartbeat);
-    connect(gDaxProvider, &GDaxProvider::OnStateChanged, this, &MainWindow::StateChanged);
-
+    connect(updateTimer, &QTimer::timeout, this, &MainWindow::TimerUpdate);
     updateTimer->start(UpdateTimerMs);
 
     Utils::QMake<CandleOverlay>("CandleOverlay", *ui->candleChart);
@@ -99,12 +92,12 @@ void MainWindow::Shutdown() const
     settings->setValue(OrdersVisibleSetting, !ui->orderBook->isHidden());
     settings->setValue(DepthVisibleSetting, !ui->depthChart->isHidden());
 
-    gDaxProvider->Shutdown();
+    gdl->Shutdown();
 }
 
-void MainWindow::Update()
+void MainWindow::TimerUpdate()
 {
-    Flog::ScopeLog s(log, Flog::Level::Info, "Update");
+    Flog::ScopeLog s(log, Flog::Level::Info, "TimerUpdate");
 
     ui->depthChart->update();
     ui->candleChart->update();
@@ -134,7 +127,7 @@ void MainWindow::GenerateOrderBook()
     int lines = orderBookUi.height()/2/fontHeight-1;
 
     // lock orderbook, move\improve impl
-    const auto & orderBook = gDaxProvider->Orders();
+    const auto & orderBook = gdl->Orders();
     QMutexLocker lock(&const_cast<QMutex&>(orderBook.Mutex()));
 
     const auto & asks = orderBook.Asks();
@@ -361,21 +354,21 @@ void MainWindow::Heartbeat(const QDateTime & serverTime)
     ui->candleChart->Heartbeat(serverTime);
 }
 
-void MainWindow::StateChanged(ConnectedState state)
+void MainWindow::StateChanged(GDL::ConnectedState state)
 {
     switch (state)
     {
-    case ConnectedState::NotConnected:
+    case GDL::ConnectedState::NotConnected:
         ui->statusBar->setStyleSheet("background-color: red; color: white");
         ui->statusBar->showMessage("Not Connected");
         break;
 
-    case ConnectedState::Connecting:
+    case GDL::ConnectedState::Connecting:
         ui->statusBar->setStyleSheet("color: yellow");
         ui->statusBar->showMessage("Connecting...");
         break;
 
-    case ConnectedState::Connected:
+    case GDL::ConnectedState::Connected:
         ui->statusBar->setStyleSheet("color: limegreen");
         ui->statusBar->showMessage("Connected");
         Connected();
@@ -386,7 +379,7 @@ void MainWindow::StateChanged(ConnectedState state)
 void MainWindow::GranularityChanged(QAction * action)
 {
     granularity = (Granularity)action->data().toUInt();
-    gDaxProvider->FetchAllCandles(granularity);
+    gdl->FetchAllCandles(granularity);
 }
 
 void MainWindow::Connected()
@@ -402,6 +395,6 @@ void MainWindow::Connected()
     ui->depthChart->update();
 
     // calc value? want to be >= trade history window rows
-    gDaxProvider->FetchTrades(100);
-    gDaxProvider->FetchAllCandles(granularity);
+    gdl->FetchTrades(100);
+    gdl->FetchAllCandles(granularity);
 }

@@ -24,11 +24,4 @@ inline MakerSide TakerToMaker(TakerSide side)
     return MakerSide::None;
 }
 
-enum class ConnectedState
-{
-    NotConnected,
-    Connecting,
-    Connected,
-};
-
 #endif // DEFS_H

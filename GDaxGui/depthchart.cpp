@@ -1,6 +1,5 @@
 #include "depthchart.h"
 
-#include "gdaxprovider.h"
 #include "orderbook.h"
 
 static constexpr QRgb BidFillColour = qRgb(0,100,0);
@@ -17,7 +16,7 @@ DepthChart::DepthChart(QWidget *parent)
     : QOpenGLWidget(parent)
     , background(QApplication::palette().color(QPalette::Base))
     , depthPlot(10, false, true)
-    , g()
+    , gdl()
 {
     setAutoFillBackground(false);
 }
@@ -36,13 +35,13 @@ void DepthChart::paintEvent(QPaintEvent *event)
 
 void DepthChart::Paint(QPainter & painter) const
 {
-    if (!g)
+    if (!gdl)
     {
         return;
     }
 
     // lock orderbook, move\improve impl
-    const auto & orderBook = g->Orders();
+    const auto & orderBook = gdl->Orders();
     QMutexLocker lock(&const_cast<QMutex&>(orderBook.Mutex()));
 
     const auto & bids = orderBook.Bids();

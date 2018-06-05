@@ -48,18 +48,18 @@ namespace
         }
     }
 
-    ConnectedState ToState(QAbstractSocket::SocketState socketState)
+    GDL::ConnectedState ToState(QAbstractSocket::SocketState socketState)
     {
         switch (socketState)
         {
             case QAbstractSocket::ConnectingState:
-                return ConnectedState::Connecting;
+                return GDL::ConnectedState::Connecting;
 
             case QAbstractSocket::ConnectedState:
-                return ConnectedState::Connected;
+                return GDL::ConnectedState::Connected;
 
             default:
-                return ConnectedState::NotConnected;;
+                return GDL::ConnectedState::NotConnected;;
         };
     }
 }
@@ -100,7 +100,7 @@ GDaxLib::GDaxLib(QObject * parent)
     pingTimer->start(PingTimerMs);
 
     qRegisterMetaType<QAbstractSocket::SocketState>("QAbstractSocket::SocketState>");
-    qRegisterMetaType<ConnectedState>("ConnectedState");
+    qRegisterMetaType<GDL::ConnectedState>("GDL::ConnectedState");
     qRegisterMetaType<Tick>("Tick");
 
     log.Info(QString("Connecting to %1").arg(url));
@@ -227,14 +227,10 @@ void GDaxLib::ProcessSnapshot(const QJsonObject & object)
 
     Decimal target = (totBid + totAsk) / 1000; // .1% -- move to depths chart
     orderBook.SeekRange(target);
-
-    emit OnUpdate();
 }
 
 void GDaxLib::ProcessUpdate(const QJsonObject & object)
 {
-    Flog::ScopeLog s(log, Flog::Level::Spam, "Update");
-
     // lock orderbook, move\improve impl
     QMutexLocker lock(&const_cast<QMutex&>(orderBook.Mutex()));
 
@@ -257,8 +253,6 @@ void GDaxLib::ProcessUpdate(const QJsonObject & object)
         }
     }
     // adjust scales here?
-
-    emit OnUpdate();
 }
 
 void GDaxLib::ProcessHeartbeat(const QJsonObject & object)

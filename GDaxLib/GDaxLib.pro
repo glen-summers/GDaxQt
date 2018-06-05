@@ -34,7 +34,8 @@ HEADERS += \
     candle.h \
     decimalwrap.h \
     orderbook.h \
-    gdaxprovider.h
+    gdaxprovider.h \
+    gdl.h
 
 DISTFILES += \
     misc.pri \
