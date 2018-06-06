@@ -17,6 +17,7 @@ DepthChart::DepthChart(QWidget *parent)
     , background(QApplication::palette().color(QPalette::Base))
     , depthPlot(10, false, true)
     , gdl()
+    , orderbookFraction(orderbookFractionInitial)
 {
     setAutoFillBackground(false);
 }
@@ -31,6 +32,34 @@ void DepthChart::paintEvent(QPaintEvent *event)
     painter.setRenderHint(QPainter::Antialiasing);
     Paint(painter);
     painter.end();
+}
+
+void DepthChart::wheelEvent(QWheelEvent *event)
+{
+    QPointF pos = event->posF();
+    double delta = event->angleDelta().y()/1200.; // 120|15degs per click
+    auto old = orderbookFraction;
+    if (delta>0)
+    {
+        orderbookFraction /= 1+delta;
+    }
+    else if (delta<0)
+    {
+        orderbookFraction *= 1-delta;
+    }
+
+    if (orderbookFraction > orderbookFractionMax)
+    {
+        orderbookFraction =  orderbookFractionMax;
+    }
+    else if (orderbookFraction < orderbookFractionMin)
+    {
+        orderbookFraction =  orderbookFractionMin;
+    }
+    if (old!=orderbookFraction)
+    {
+        update();
+    }
 }
 
 void DepthChart::Paint(QPainter & painter) const
@@ -52,14 +81,11 @@ void DepthChart::Paint(QPainter & painter) const
         return;
     }
 
-    // try using a Path object and scaling after to fit?
-
-    const int perMille = 10;
+    // try using a Path object and scaling after to fit to avoid double scan
     auto mid = orderBook.MidPrice();
-    auto seekRange = mid * perMille / 1000;
+    auto seekRange = mid * DecNs::decimal_cast<4>(orderbookFraction);
     auto lo = mid - seekRange;
     auto hi = mid + seekRange;
-
     double xRange = orderBook.SeekAmount(lo, hi).getAsDouble();
     double yRange = seekRange.getAsDouble() * 2;
     double yOrg = mid.getAsDouble();
@@ -144,6 +170,10 @@ void DepthChart::Paint(QPainter & painter) const
             }
         }
     }
+
+    painter.setPen(qRgb(180,180,180));
+    auto text = QString("Span: %1%").arg(orderbookFraction*100, 0, 'f', 2);;
+    painter.drawText(depthPlot.Inner().topLeft()+QPointF{5,15}, text);
 
     depthPlot.EndInner(painter);
 
