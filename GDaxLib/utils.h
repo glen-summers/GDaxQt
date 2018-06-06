@@ -24,6 +24,8 @@ namespace Utils
         T* t= new T(types...);
 #ifdef QT_DEBUG
         QObject::connect(t, &QObject::destroyed, [=]() { Detail::OnDestroyed(name); });
+#else
+        (void)name;
 #endif
         return t;
     }

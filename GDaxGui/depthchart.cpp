@@ -43,6 +43,7 @@ void DepthChart::Paint(QPainter & painter) const
     // lock orderbook, move\improve impl
     const auto & orderBook = gdl->Orders();
     QMutexLocker lock(&const_cast<QMutex&>(orderBook.Mutex()));
+    orderBook.SeekRange(1);
 
     const auto & bids = orderBook.Bids();
     const auto & asks = orderBook.Asks();
@@ -52,13 +53,10 @@ void DepthChart::Paint(QPainter & painter) const
         return;
     }
 
-    double xrange = orderBook.AmountMax().getAsDouble();
-    double yrange = (orderBook.PriceMax()-orderBook.PriceMin()).getAsDouble();
-    //double yOrg = ((priceMax + priceMin)/2).getAsDouble();
     double yOrg = ((bids.rbegin()->first + asks.begin()->first) / 2).getAsDouble();
-
-    depthPlot.SetView(QRectF{QPointF{0, orderBook.PriceMin().getAsDouble()},
-                             QPointF{xrange, orderBook.PriceMax().getAsDouble()}});
+    double xRange = orderBook.AmountMax().getAsDouble();
+    double yRange = (orderBook.PriceMax()-orderBook.PriceMin()).getAsDouble();
+    depthPlot.SetView(QRectF{QPointF{0, yOrg - yRange/2}, QPointF{xRange, yOrg + yRange/2}});
 
     depthPlot.SetRect(rect()); // or on event?
     depthPlot.StartInner(painter);
@@ -83,9 +81,9 @@ void DepthChart::Paint(QPainter & painter) const
     {
         auto & bb = *bit;
         amount += bb.second;
-        double px = ox - (amount.getAsDouble() / xrange * width);
+        double px = ox - (amount.getAsDouble() / xRange * width);
         double price = bb.first.getAsDouble();
-        double py = oy +((yOrg - price) / yrange + 0.5) * height;
+        double py = oy +((yOrg - price) / yRange + 0.5) * height;
         if (first)
         {
             painter.fillRect(QRectF{ QPointF{px, py}, QPointF{x, oy + height} }, BidFillColour);
@@ -118,8 +116,8 @@ void DepthChart::Paint(QPainter & painter) const
     {
         amount += a.second;
 
-        double px = ox - (amount.getAsDouble()) / xrange * width;
-        double py = oy + ((yOrg - a.first.getAsDouble()) / yrange + 0.5) * height;
+        double px = ox - (amount.getAsDouble()) / xRange * width;
+        double py = oy + ((yOrg - a.first.getAsDouble()) / yRange + 0.5) * height;
 
         if (first)
         {

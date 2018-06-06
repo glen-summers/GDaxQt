@@ -11,9 +11,12 @@ class OrderBook
 {
     QMutex mutex;
     std::map<Decimal, Decimal> bids, asks;
-    Decimal priceMin;
-    Decimal priceMax;
-    Decimal amountMax;
+    Decimal totBid;
+    Decimal totAsk;
+
+    Decimal mutable priceMin; // move out
+    Decimal mutable priceMax; // move out
+    Decimal mutable amountMax;  // move out
 
 public:
     const QMutex & Mutex() const { return mutex; }
@@ -46,39 +49,62 @@ public:
     void AddBid(const Decimal & price, const Decimal & amount)
     {
         bids[price] += amount;
+        totBid += amount;
     }
 
     void UpdateBid(const Decimal & price, const Decimal & amount)
     {
+        auto it = bids.find(price);
+        if (it != bids.end())
+        {
+            totBid -= it->second;
+        }
         if (amount == Decimal())
         {
-            bids.erase(price);
+            bids.erase(it);
+        }
+        else if (it != bids.end())
+        {
+            it->second = amount;
         }
         else
         {
-            bids[price] = amount;
+            bids.insert({price, amount});
         }
+        totBid += amount;
     }
 
     void AddAsk(const Decimal & price, const Decimal & amount)
     {
         asks[price] += amount;
+        totAsk += amount;
     }
 
     void UpdateAsk(const Decimal & price, const Decimal & amount)
     {
+        auto it = asks.find(price);
+        if (it != asks.end())
+        {
+            totAsk -= it->second;
+        }
         if (amount == Decimal())
         {
-            asks.erase(price);
+            asks.erase(it);
+        }
+        else if (it != asks.end())
+        {
+            it->second = amount;
         }
         else
         {
-            asks[price] = amount;
+            asks.insert({price, amount});
         }
+        totAsk += amount;
     }
 
-    void SeekRange(const Decimal & target)
+    void SeekRange(const int permille) const
     {
+        Decimal target = (totBid + totAsk) * permille/1000;
         Decimal tot;
         auto bidIt = bids.rbegin();
         auto askIt = asks.begin();

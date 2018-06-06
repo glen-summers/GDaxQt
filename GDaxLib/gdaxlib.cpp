@@ -197,7 +197,6 @@ void GDaxLib::ProcessSnapshot(const QJsonObject & object)
     // lock orderbook, move\improve impl
     QMutexLocker lock(&const_cast<QMutex&>(orderBook.Mutex()));
 
-    Decimal totBid;
     for (QJsonValueRef bid : object["bids"].toArray())
     {
         QJsonArray bidArray = bid.toArray();
@@ -208,10 +207,8 @@ void GDaxLib::ProcessSnapshot(const QJsonObject & object)
         Decimal da(amount.toStdString());
 
         orderBook.AddBid(dp, da);
-        totBid += da;
     }
 
-    Decimal totAsk;
     for (QJsonValueRef ask : object["asks"].toArray())
     {
         QJsonArray askArray = ask.toArray();
@@ -222,11 +219,7 @@ void GDaxLib::ProcessSnapshot(const QJsonObject & object)
         Decimal da(amount.toStdString());
 
         orderBook.AddAsk(dp, da);
-        totAsk += da;
     }
-
-    Decimal target = (totBid + totAsk) / 1000; // .1% -- move to depths chart
-    orderBook.SeekRange(target);
 }
 
 void GDaxLib::ProcessUpdate(const QJsonObject & object)
