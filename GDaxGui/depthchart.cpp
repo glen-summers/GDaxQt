@@ -43,7 +43,6 @@ void DepthChart::Paint(QPainter & painter) const
     // lock orderbook, move\improve impl
     const auto & orderBook = gdl->Orders();
     QMutexLocker lock(&const_cast<QMutex&>(orderBook.Mutex()));
-    orderBook.SeekRange(1);
 
     const auto & bids = orderBook.Bids();
     const auto & asks = orderBook.Asks();
@@ -53,19 +52,23 @@ void DepthChart::Paint(QPainter & painter) const
         return;
     }
 
-    double yOrg = ((bids.rbegin()->first + asks.begin()->first) / 2).getAsDouble();
-    double xRange = orderBook.AmountMax().getAsDouble();
-    double yRange = (orderBook.PriceMax()-orderBook.PriceMin()).getAsDouble();
-    depthPlot.SetView(QRectF{QPointF{0, yOrg - yRange/2}, QPointF{xRange, yOrg + yRange/2}});
+    // try using a Path object and scaling after to fit?
+
+    const int perMille = 10;
+    auto mid = orderBook.MidPrice();
+    auto seekRange = mid * perMille / 1000;
+    auto lo = mid - seekRange;
+    auto hi = mid + seekRange;
+
+    double xRange = orderBook.SeekAmount(lo, hi).getAsDouble();
+    double yRange = seekRange.getAsDouble() * 2;
+    double yOrg = mid.getAsDouble();
+    depthPlot.SetView(QRectF{QPointF{0, lo.getAsDouble()}, QPointF{xRange, hi.getAsDouble()}});
 
     depthPlot.SetRect(rect()); // or on event?
     depthPlot.StartInner(painter);
 
-     // calc xy ranges
-    // use %age of values around mid price, binary find?
-
-    // need to recalc maxAmount periodically and also use the values at top\bottom of the view box
-    double const fillFactor = 1.0;
+    double const fillFactor = 0.75;
     Decimal amount;
     bool first = true;
 

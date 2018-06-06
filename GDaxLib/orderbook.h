@@ -14,10 +14,6 @@ class OrderBook
     Decimal totBid;
     Decimal totAsk;
 
-    Decimal mutable priceMin; // move out
-    Decimal mutable priceMax; // move out
-    Decimal mutable amountMax;  // move out
-
 public:
     const QMutex & Mutex() const { return mutex; }
 
@@ -29,21 +25,6 @@ public:
     const std::map<Decimal, Decimal> & Asks() const
     {
         return asks;
-    }
-
-    const Decimal & PriceMin() const
-    {
-        return priceMin;
-    }
-
-    const Decimal & PriceMax() const
-    {
-        return priceMax;
-    }
-
-    const Decimal & AmountMax() const
-    {
-        return amountMax;
     }
 
     void AddBid(const Decimal & price, const Decimal & amount)
@@ -102,36 +83,34 @@ public:
         totAsk += amount;
     }
 
-    void SeekRange(const int permille) const
+    Decimal SeekAmount(const Decimal & priceLow, const Decimal & priceHigh) const
     {
-        Decimal target = (totBid + totAsk) * permille/1000;
-        Decimal tot;
+        Decimal bidAmount, askAmount;
+        for (auto bit = bids.rbegin(); bit!=bids.rend() && bit->first >= priceLow; ++bit)
+        {
+            bidAmount += bit->second;
+        }
+        for (auto ait = asks.begin(); ait!=asks.end() && ait->first <= priceHigh; ++ait)
+        {
+            askAmount += ait->second;
+        }
+        return std::max(bidAmount, askAmount);
+    }
+
+    Decimal MidPrice() const
+    {
         auto bidIt = bids.rbegin();
         auto askIt = asks.begin();
-        for(; tot<target;++bidIt,++askIt)
-        {
-            if (bidIt!=bids.rend())
-            {
-                tot += bidIt->second;
-            }
-            if (askIt!=asks.end())
-            {
-                tot += askIt->second;
-            }
-        }
-        // check for end
-        priceMin = bidIt->first;
-        priceMax = askIt->first;
-        amountMax = tot;
+
+        return bidIt != bids.rend() && askIt != asks.end()
+            ? (bidIt->first + askIt->first)/2
+            : Decimal{};
     }
 
     void Clear()
     {
         bids.clear();
         asks.clear();
-        priceMin = Decimal();
-        priceMax = Decimal();
-        amountMax = Decimal();
     }
 };
 
