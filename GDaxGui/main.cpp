@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
     Flog::LogManager::SetLevel(Flog::Level::Spam);
     Flog::LogManager::SetThreadName("Ui");
 
-    if (argc>1 && _stricmp(argv[1], "-sandbox")==0)
+    if (argc>1 && strcmp(argv[1], "-sandbox")==0)
     {
         GDL::SetFactory([](GDL::Callback & callback)
         {

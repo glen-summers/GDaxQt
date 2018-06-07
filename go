@@ -1,6 +1,6 @@
 #!/bin/bash
 
-qt=~/Qt/5.10.0
+qt=~/Qt/5.11.0
 compiler=gcc_64
 project=GDaxQt
 kit=Desktop_Qt_5_10_0_GCC_64bit
