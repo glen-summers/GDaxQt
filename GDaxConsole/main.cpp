@@ -1,5 +1,5 @@
 
-#include "gdaxlib.h"
+#include "websocketstream.h"
 #include "restprovider.h"
 #include "utils.h"
 
@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
     exitTimer.start();
 
     QThread *workerThread = new QThread();
-    GDaxLib * g = new GDaxLib(GDL::defaultStreamUrl);
+    WebSocketStream * g = new WebSocketStream(GDL::defaultStreamUrl);
     g->moveToThread(workerThread);
     QObject::connect(workerThread, &QThread::finished, workerThread, &QObject::deleteLater);
     QObject::connect(workerThread, &QThread::finished, g, &QObject::deleteLater);

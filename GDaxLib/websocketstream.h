@@ -1,5 +1,5 @@
-#ifndef GDAXLIB_H
-#define GDAXLIB_H
+#ifndef WEBSOCKETSTREAM_H
+#define WEBSOCKETSTREAM_H
 
 #include "defs.h"
 #include "orderbook.h"
@@ -15,13 +15,13 @@ class QWebSocket;
 class QJsonObject;
 class QTimer;
 
-class GDaxLib : public QObject
+class WebSocketStream : public QObject
 {
-    inline static const Flog::Log log = Flog::LogManager::GetLog<GDaxLib>();
+    inline static const Flog::Log log = Flog::LogManager::GetLog<WebSocketStream>();
 
     Q_OBJECT
 
-    typedef std::unordered_map<std::string, void(GDaxLib::*)(const QJsonObject & object)> FunctionMap;
+    typedef std::unordered_map<std::string, void(WebSocketStream::*)(const QJsonObject & object)> FunctionMap;
     static FunctionMap functionMap;
 
     QString const url;
@@ -31,7 +31,7 @@ class GDaxLib : public QObject
     TradeId lastTradeId;
 
 public:
-    explicit GDaxLib(const char * url, QObject * parent = nullptr);
+    explicit WebSocketStream(const char * url, QObject * parent = nullptr);
 
     const OrderBook & Orders() const { return orderBook; }
 
@@ -56,4 +56,4 @@ private:
     void ProcessTicker(const QJsonObject & object);
 };
 
-#endif // GDAXLIB_H
+#endif // WEBSOCKETSTREAM_H

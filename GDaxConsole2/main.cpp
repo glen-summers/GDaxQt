@@ -1,10 +1,10 @@
 #include <iostream>
 
-#include "gdaxlib.h"
+#include "websocketstream.h"
 
 int main()
 {
     std::cout << "GDax" << std::endl;
-    GDaxLib g(GDL::defaultStreamUrl);
+    WebSocketStream g(GDL::defaultStreamUrl);
     return 0;
 }

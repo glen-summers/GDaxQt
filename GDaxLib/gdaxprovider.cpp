@@ -1,6 +1,6 @@
 #include "gdaxprovider.h"
 
-#include "gdaxlib.h"
+#include "websocketstream.h"
 #include "orderbook.h"
 #include "restprovider.h"
 #include "utils.h"
@@ -38,19 +38,19 @@ GDaxProvider::GDaxProvider(const char * streamUrl, const char * restUrl,
     : QObject(parent)
     , callback(callback)
     , networkAccessManager(Utils::QMake<QNetworkAccessManager>("networkAccessManager", this))
-    , gDaxLib(Utils::QMake<GDaxLib>("gDaxLib", streamUrl)) // no parent, move to thread
+    , webSocketStream(Utils::QMake<WebSocketStream>("webSocketStream", streamUrl)) // no parent, move to thread
     , restProvider(Utils::QMake<RestProvider>("restProvider", restUrl, networkAccessManager, this))
     , workerThread(Utils::QMake<QThread>("QThread", this))
 {
-    gDaxLib->moveToThread(workerThread);
+    webSocketStream->moveToThread(workerThread);
     QObject::connect(workerThread, &QThread::started, [](){ Flog::LogManager::SetThreadName("GDax"); });
-    QObject::connect(workerThread, &QThread::finished, gDaxLib, &QObject::deleteLater);
+    QObject::connect(workerThread, &QThread::finished, webSocketStream, &QObject::deleteLater);
     workerThread->start();
 
     // todo, use c++ callack impl instead of qt signals
-    connect(gDaxLib, &GDaxLib::OnHeartbeat, [&](const QDateTime & serverTime) { callback.OnHeartbeat(serverTime); });
-    connect(gDaxLib, &GDaxLib::OnTick, [&](const Tick & tick) { callback.OnTick(tick); });
-    connect(gDaxLib, &GDaxLib::OnStateChanged, [&](GDL::ConnectedState state) { callback.OnStateChanged(state); });
+    connect(webSocketStream, &WebSocketStream::OnHeartbeat, [&](const QDateTime & serverTime) { callback.OnHeartbeat(serverTime); });
+    connect(webSocketStream, &WebSocketStream::OnTick, [&](const Tick & tick) { callback.OnTick(tick); });
+    connect(webSocketStream, &WebSocketStream::OnStateChanged, [&](GDL::ConnectedState state) { callback.OnStateChanged(state); });
 
     //connect(restProvider, &RestProvider::OnError, [&]() { callback.OnError(); });
     connect(restProvider, &RestProvider::OnCandles, [&](std::deque<Candle> values) { callback.OnCandles(std::move(values)); });
@@ -59,7 +59,7 @@ GDaxProvider::GDaxProvider(const char * streamUrl, const char * restUrl,
 
 const OrderBook & GDaxProvider::Orders() const
 {
-    return gDaxLib->Orders();
+    return webSocketStream->Orders();
 }
 
 void GDaxProvider::FetchTrades(unsigned int limit)

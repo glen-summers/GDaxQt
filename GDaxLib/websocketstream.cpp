@@ -1,4 +1,4 @@
-#include "gdaxlib.h"
+#include "websocketstream.h"
 
 #include "tick.h"
 #include "utils.h"
@@ -30,7 +30,7 @@ namespace
 ]
 })";
 
-    const Flog::Log log = Flog::LogManager::GetLog<GDaxLib>();
+    const Flog::Log log = Flog::LogManager::GetLog<WebSocketStream>();
 
     // informational atm
     void Error(QAbstractSocket::SocketError error)
@@ -62,17 +62,17 @@ namespace
     }
 }
 
-GDaxLib::FunctionMap GDaxLib::functionMap =
+WebSocketStream::FunctionMap WebSocketStream::functionMap =
 {
-    { "subscriptions", &GDaxLib::ProcessSubscriptions },
-    { "snapshot", &GDaxLib::ProcessSnapshot },
-    { "l2update", &GDaxLib::ProcessUpdate },
-    { "heartbeat", &GDaxLib::ProcessHeartbeat },
-    { "ticker", &GDaxLib::ProcessTicker},
-    { "error", &GDaxLib::ProcessError }
+    { "subscriptions", &WebSocketStream::ProcessSubscriptions },
+    { "snapshot", &WebSocketStream::ProcessSnapshot },
+    { "l2update", &WebSocketStream::ProcessUpdate },
+    { "heartbeat", &WebSocketStream::ProcessHeartbeat },
+    { "ticker", &WebSocketStream::ProcessTicker},
+    { "error", &WebSocketStream::ProcessError }
 };
 
-GDaxLib::GDaxLib(const char * url, QObject * parent)
+WebSocketStream::WebSocketStream(const char * url, QObject * parent)
     : QObject(parent)
     , url(url)
     , webSocket(Utils::QMake<QWebSocket>("webSocket", QString(), QWebSocketProtocol::VersionLatest, this))
@@ -82,8 +82,8 @@ GDaxLib::GDaxLib(const char * url, QObject * parent)
     // proxy?
     // QList<QNetworkProxy> QNetworkProxyFactory::systemProxyForQuery(const QNetworkProxyQuery &query = QNetworkProxyQuery())
 
-    connect(webSocket, &QWebSocket::connected, this, &GDaxLib::Connected);
-    connect(webSocket, &QWebSocket::textMessageReceived, this, &GDaxLib::TextMessageReceived);
+    connect(webSocket, &QWebSocket::connected, this, &WebSocketStream::Connected);
+    connect(webSocket, &QWebSocket::textMessageReceived, this, &WebSocketStream::TextMessageReceived);
 
     connect(webSocket, &QWebSocket::stateChanged, [&](QAbstractSocket::SocketState socketState)
     {
@@ -94,8 +94,8 @@ GDaxLib::GDaxLib(const char * url, QObject * parent)
     connect(webSocket, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error), Error);
     connect(webSocket, QOverload<const QList<QSslError> &>::of(&QWebSocket::sslErrors), SslErrors);
 
-    connect(webSocket, &QWebSocket::pong, this, &GDaxLib::Pong);
-    connect(pingTimer, &QTimer::timeout, this, &GDaxLib::Ping);
+    connect(webSocket, &QWebSocket::pong, this, &WebSocketStream::Pong);
+    connect(pingTimer, &QTimer::timeout, this, &WebSocketStream::Ping);
     pingTimer->start(PingTimerMs);
 
     qRegisterMetaType<QAbstractSocket::SocketState>("QAbstractSocket::SocketState>");
@@ -106,7 +106,7 @@ GDaxLib::GDaxLib(const char * url, QObject * parent)
     webSocket->open(QUrl(url));
 }
 
-void GDaxLib::Ping()
+void WebSocketStream::Ping()
 {
     switch (webSocket->state())
     {
@@ -127,7 +127,7 @@ void GDaxLib::Ping()
     }
 }
 
-void GDaxLib::Connected()
+void WebSocketStream::Connected()
 {
     // need qInstallMessageHandler(SyslogMessageHandler);? and handle ourselves?
     // https://stackoverflow.com/questions/28540571/how-to-enable-and-disable-qdebug-messages
@@ -137,7 +137,7 @@ void GDaxLib::Connected()
     webSocket->sendTextMessage(subscribeMessage);
 }
 
-void GDaxLib::TextMessageReceived(QString message)
+void WebSocketStream::TextMessageReceived(QString message)
 {
     try
     {
@@ -162,12 +162,12 @@ void GDaxLib::TextMessageReceived(QString message)
     }
 }
 
-void GDaxLib::Pong()
+void WebSocketStream::Pong()
 {
     log.Spam("Pong");
 }
 
-void GDaxLib::Clear()
+void WebSocketStream::Clear()
 {
     // lock orderbook, move\improve impl
     QMutexLocker lock(&const_cast<QMutex&>(orderBook.Mutex()));
@@ -175,13 +175,13 @@ void GDaxLib::Clear()
     lastTradeId = 0;
 }
 
-void GDaxLib::ProcessSubscriptions(const QJsonObject & object)
+void WebSocketStream::ProcessSubscriptions(const QJsonObject & object)
 {
     (void)object;
     log.Info("Subscription response");
 }
 
-void GDaxLib::ProcessError(const QJsonObject & object)
+void WebSocketStream::ProcessError(const QJsonObject & object)
 {
     // will be in the message pump, so cannot throw? need to notify ui
     QString errorMessage = object["message"].toString();
@@ -189,7 +189,7 @@ void GDaxLib::ProcessError(const QJsonObject & object)
     throw std::runtime_error(errorMessage.toStdString());
 }
 
-void GDaxLib::ProcessSnapshot(const QJsonObject & object)
+void WebSocketStream::ProcessSnapshot(const QJsonObject & object)
 {
     Flog::ScopeLog s(log, Flog::Level::Info, "Snapshot");
 
@@ -221,7 +221,7 @@ void GDaxLib::ProcessSnapshot(const QJsonObject & object)
     }
 }
 
-void GDaxLib::ProcessUpdate(const QJsonObject & object)
+void WebSocketStream::ProcessUpdate(const QJsonObject & object)
 {
     // lock orderbook, move\improve impl
     QMutexLocker lock(&const_cast<QMutex&>(orderBook.Mutex()));
@@ -247,7 +247,7 @@ void GDaxLib::ProcessUpdate(const QJsonObject & object)
     // adjust scales here?
 }
 
-void GDaxLib::ProcessHeartbeat(const QJsonObject & object)
+void WebSocketStream::ProcessHeartbeat(const QJsonObject & object)
 {
     Flog::ScopeLog s(log, Flog::Level::Spam, "Heartbeat");
 
@@ -268,7 +268,7 @@ void GDaxLib::ProcessHeartbeat(const QJsonObject & object)
     emit OnHeartbeat(serverTime);
 }
 
-void GDaxLib::ProcessTicker(const QJsonObject & object)
+void WebSocketStream::ProcessTicker(const QJsonObject & object)
 {
     Flog::ScopeLog s(log, Flog::Level::Info, "Tick");
 

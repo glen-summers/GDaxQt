@@ -11,7 +11,7 @@
 #include <functional>
 
 struct Tick;
-class GDaxLib;
+class WebSocketStream;
 class RestProvider;
 
 class QWebSocket;
@@ -24,7 +24,7 @@ class GDaxProvider : public QObject, public GDL::Interface
 {
     GDL::Callback & callback;
     QNetworkAccessManager * const networkAccessManager;
-    GDaxLib * const gDaxLib;
+    WebSocketStream * const webSocketStream;
     RestProvider * const restProvider;
     QThread * const workerThread;
 

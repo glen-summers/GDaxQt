@@ -13,16 +13,15 @@ CONFIG += staticlib
 DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
-    gdaxlib.cpp \
     utils.cpp \
     tick.cpp \
     restprovider.cpp \
     filelogger.cpp \
     trade.cpp \
-    gdaxprovider.cpp
+    gdaxprovider.cpp \
+    websocketstream.cpp
 
 HEADERS += \
-    gdaxlib.h \
     utils.h \
     tick.h \
     defs.h \
@@ -35,7 +34,8 @@ HEADERS += \
     decimalwrap.h \
     orderbook.h \
     gdaxprovider.h \
-    gdl.h
+    gdl.h \
+    websocketstream.h
 
 DISTFILES += \
     misc.pri \
