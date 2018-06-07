@@ -13,27 +13,35 @@
 #include <QNetworkCookieJar>
 #include <QUrlQuery>
 
+#define log ExLog
+
 namespace
 {
-    inline static const Flog::Log flog = Flog::LogManager::GetLog<RestProvider>(); // log ambiguous
+    const Flog::Log log = Flog::LogManager::GetLog<RestProvider>();
+
+    // parm
+    constexpr const char Product[] = "BTC-EUR";
+    constexpr const char Candles[] = "candles";
+    constexpr const char Trades[] = "trades";
 
     // informational atm
     void Error(QNetworkReply::NetworkError error)
     {
-        flog.Error(QString("SocketError: %1").arg(QMetaEnum::fromType<QNetworkReply::NetworkError>().valueToKey(error)));
+        log.Error(QString("SocketError: %1").arg(QMetaEnum::fromType<QNetworkReply::NetworkError>().valueToKey(error)));
     }
 
     void SslErrors(QList<QSslError> errors)
     {
         for(auto & e : errors)
         {
-            flog.Error(QString("SslError: %1, %2").arg(e.error()).arg(e.errorString()));
+            log.Error(QString("SslError: %1, %2").arg(e.error()).arg(e.errorString()));
         }
     }
 }
 
-RestProvider::RestProvider(QNetworkAccessManager * manager, QObject * parent)
+RestProvider::RestProvider(const char * baseUrl, QNetworkAccessManager * manager, QObject * parent)
     : QObject(parent)
+    , productUrl(QString(baseUrl).append("/products/%1/%2"))
     , manager(manager)
 {
 }
@@ -43,10 +51,10 @@ void RestProvider::FetchAllCandles(Granularity granularity)
     QUrlQuery query;
     query.addQueryItem("granularity", QString::number(static_cast<unsigned int>(granularity)));
 
-    QUrl url(QString(Url).arg(Product, Candles));
+    QUrl url(productUrl.arg(Product, Candles));
     url.setQuery(query);
 
-    flog.Info(QString("Requesting %1").arg(url.toString()));
+    log.Info(QString("Requesting %1").arg(url.toString()));
     QNetworkRequest request(url);
     QNetworkReply * reply = manager->get(request);
     // reply->ignoreSslErrors();// allows fidler, set in cfg
@@ -65,10 +73,10 @@ void RestProvider::FetchCandles(const QDateTime & start, const QDateTime & end, 
     query.addQueryItem("end", end.toString(Qt::ISODate));
     query.addQueryItem("granularity", QString::number(static_cast<unsigned int>(granularity)));
 
-    QUrl url(QString(Url).arg(Product, Candles));
+    QUrl url(productUrl.arg(Product, Candles));
     url.setQuery(query);
 
-    flog.Info(QString("Requesting %1").arg(url.toString()));
+    log.Info(QString("Requesting %1").arg(url.toString()));
     QNetworkRequest request(url);
     QNetworkReply * reply = manager->get(request);
     // reply->ignoreSslErrors();// allows fidler, set in cfg
@@ -82,7 +90,7 @@ void RestProvider::FetchTrades(unsigned int limit)
     QUrlQuery query;
     query.addQueryItem("limit", QString::number(limit));
 
-    QUrl url(QString(Url).arg(Product, Trades));
+    QUrl url(productUrl.arg(Product, Trades));
     url.setQuery(query);
 
     QNetworkRequest request(url);
@@ -117,7 +125,7 @@ void RestProvider::CandlesFinished(QNetworkReply *reply)
     }
     reply->deleteLater();
 
-    flog.Info(QString("candles %1").arg(candles.size()));
+    log.Info(QString("candles %1").arg(candles.size()));
 
     emit OnCandles(std::move(candles));
 }

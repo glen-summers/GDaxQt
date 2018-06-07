@@ -2,10 +2,13 @@
 
 #include "orderbook.h"
 
-static constexpr QRgb BidFillColour = qRgb(0,100,0);
-static constexpr QRgb BidEdgeColour = qRgb(0,255,0);
-static constexpr QRgb AskFillColour = qRgb(139,0,0);
-static constexpr QRgb AskEdgeColour = qRgb(255,0,0);
+namespace
+{
+    constexpr QRgb BidFillColour = qRgb(0,100,0);
+    constexpr QRgb BidEdgeColour = qRgb(0,255,0);
+    constexpr QRgb AskFillColour = qRgb(139,0,0);
+    constexpr QRgb AskEdgeColour = qRgb(255,0,0);
+}
 
 #include <QApplication>
 #include <QPainter>

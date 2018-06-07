@@ -24,13 +24,14 @@ class GDaxLib : public QObject
     typedef std::unordered_map<std::string, void(GDaxLib::*)(const QJsonObject & object)> FunctionMap;
     static FunctionMap functionMap;
 
+    QString const url;
     QWebSocket * const webSocket;
     QTimer * const pingTimer;
     OrderBook orderBook;
     TradeId lastTradeId;
 
 public:
-    explicit GDaxLib(QObject * parent = nullptr);
+    explicit GDaxLib(const char * url, QObject * parent = nullptr);
 
     const OrderBook & Orders() const { return orderBook; }
 

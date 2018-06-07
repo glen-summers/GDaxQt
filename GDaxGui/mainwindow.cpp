@@ -20,7 +20,7 @@
 
 namespace
 {
-    static constexpr int UpdateTimerMs = 5000;
+    constexpr int UpdateTimerMs = 5000;
 
     void SetupActionGroup(QActionGroup & group, const std::initializer_list<std::pair<QAction &, Granularity>> & actions, QAction & selected)
     {
@@ -32,9 +32,9 @@ namespace
         selected.setChecked(true);
     }
 
-    static constexpr const char * TradesVisibleSetting = "TradesVisible";
-    static constexpr const char * OrdersVisibleSetting = "OrdersVisible";
-    static constexpr const char * DepthVisibleSetting = "DepthVisible";
+    constexpr const char * TradesVisibleSetting = "TradesVisible";
+    constexpr const char * OrdersVisibleSetting = "OrdersVisible";
+    constexpr const char * DepthVisibleSetting = "DepthVisible";
 }
 
 MainWindow::MainWindow(QWidget *parent)

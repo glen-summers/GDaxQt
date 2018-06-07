@@ -30,7 +30,8 @@ class GDaxProvider : public QObject, public GDL::Interface
 
     Q_OBJECT
 public:
-    GDaxProvider(GDL::Callback & callback, QObject * parent = nullptr);
+    GDaxProvider(const char * streamUrl, const char * restUrl,
+            GDL::Callback & callback, QObject * parent = nullptr);
 
     const OrderBook & Orders() const;
 

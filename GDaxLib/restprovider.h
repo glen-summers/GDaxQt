@@ -13,17 +13,13 @@ class QNetworkReply;
 
 class RestProvider : public QObject
 {
-    static constexpr const char Url[] = "https://api.gdax.com/products/%1/%2";
-    static constexpr const char Product[] = "BTC-EUR";
-    static constexpr const char Candles[] = "candles";
-    static constexpr const char Trades[] = "trades";
-
     Q_OBJECT
 
+    QString const productUrl;
     QNetworkAccessManager * const manager;
 
 public:
-    RestProvider(QNetworkAccessManager * manager, QObject * parent = nullptr);
+    RestProvider(const char * baseUrl, QNetworkAccessManager * manager, QObject * parent = nullptr);
 
     void FetchTrades(unsigned int limit);
     void FetchAllCandles(Granularity granularity);

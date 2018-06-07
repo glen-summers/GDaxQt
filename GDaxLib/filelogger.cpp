@@ -18,15 +18,15 @@ namespace fs = std::experimental::filesystem;
 
 namespace
 {
-    static constexpr const char * HeaderFooterSeparator = "------------------------------------------------";
-    static constexpr const char * Delimiter = " : ";
-    static constexpr int THREAD_ID_WIDTH = 5;
-    static constexpr int LEVEL_WIDTH = 8;
-    static constexpr int PREFIX_WIDTH = 12;
-    static constexpr size_t maxFileSize = 5*1024*1024;
-    static constexpr size_t ReserveDiskSpace = 10*1024*1024;
+    constexpr const char * HeaderFooterSeparator = "------------------------------------------------";
+    constexpr const char * Delimiter = " : ";
+    constexpr int THREAD_ID_WIDTH = 5;
+    constexpr int LEVEL_WIDTH = 8;
+    constexpr int PREFIX_WIDTH = 12;
+    constexpr size_t maxFileSize = 5*1024*1024;
+    constexpr size_t ReserveDiskSpace = 10*1024*1024;
 
-    static Flog::Level logLevel = Flog::Level::Info;
+    Flog::Level logLevel = Flog::Level::Info;
 
     struct Scope
     {
@@ -36,10 +36,10 @@ namespace
         std::chrono::high_resolution_clock::time_point start;
     };
 
-    static thread_local std::stack<Scope> scopes;
-    static thread_local const char * pendingScope = nullptr;
-    static thread_local int depth = 0;
-    static thread_local const char * threadName = nullptr;
+    thread_local std::stack<Scope> scopes;
+    thread_local const char * pendingScope = nullptr;
+    thread_local int depth = 0;
+    thread_local const char * threadName = nullptr;
 
     void TranslateLevel(std::ostream & stm, Flog::Level level)
     {

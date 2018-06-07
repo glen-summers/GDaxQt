@@ -11,23 +11,35 @@
 
 namespace GDL
 {
+    const char defaultStreamUrl[] ="wss://ws-feed.gdax.com";
+    const char defaultRestUrl[] = "https://api.gdax.com";
+
+    Factory factory = [](Callback & callback)
+    {
+        return InterfacePtr(Utils::QMake<GDaxProvider>("GDaxProvider",
+            defaultStreamUrl, defaultRestUrl, callback));
+    };
+
     InterfacePtr Create(Callback & callback)
     {
-        return InterfacePtr(Utils::QMake<GDaxProvider>("GDaxProvider", callback));
+        return factory(callback);
     }
 
-    void Deleter::operator ()(GDL::Interface * itf) const noexcept
+    void Deleter::operator()(GDL::Interface * itf) const noexcept
     {
-        static_cast<GDaxProvider*>(itf)->deleteLater(); // ?
+        delete static_cast<GDaxProvider*>(itf);
     }
+
+    void SetFactory(const Factory & f) { factory = f; }
 }
 
-GDaxProvider::GDaxProvider(GDL::Callback & callback, QObject * parent)
+GDaxProvider::GDaxProvider(const char * streamUrl, const char * restUrl,
+                           GDL::Callback & callback, QObject * parent)
     : QObject(parent)
     , callback(callback)
     , networkAccessManager(Utils::QMake<QNetworkAccessManager>("networkAccessManager", this))
-    , gDaxLib(Utils::QMake<GDaxLib>("gDaxLib")) // no parent, move to thread
-    , restProvider(Utils::QMake<RestProvider>("restProvider", networkAccessManager, this))
+    , gDaxLib(Utils::QMake<GDaxLib>("gDaxLib", streamUrl)) // no parent, move to thread
+    , restProvider(Utils::QMake<RestProvider>("restProvider", restUrl, networkAccessManager, this))
     , workerThread(Utils::QMake<QThread>("QThread", this))
 {
     gDaxLib->moveToThread(workerThread);

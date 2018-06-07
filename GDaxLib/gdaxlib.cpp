@@ -14,12 +14,10 @@
 
 namespace
 {
-    static constexpr int PingTimerMs = 5000;
+    constexpr int PingTimerMs = 5000;
 
-// cfg. allow using sandbox
-    static constexpr const char * url = "wss://ws-feed.gdax.com";
-
-    static constexpr const char * subscribeMessage = R"(
+    // param for product
+    constexpr const char * subscribeMessage = R"(
 {
 "type": "subscribe",
 "product_ids": [
@@ -32,19 +30,19 @@ namespace
 ]
 })";
 
-    inline static const Flog::Log flog = Flog::LogManager::GetLog<GDaxLib>(); // log ambiguous
+    const Flog::Log log = Flog::LogManager::GetLog<GDaxLib>();
 
     // informational atm
     void Error(QAbstractSocket::SocketError error)
     {
-        flog.Error(QString("SocketError: %1").arg(QMetaEnum::fromType<QNetworkReply::NetworkError>().valueToKey(error)));
+        log.Error(QString("SocketError: %1").arg(QMetaEnum::fromType<QNetworkReply::NetworkError>().valueToKey(error)));
     }
 
     void SslErrors(QList<QSslError> errors)
     {
         for(auto & e : errors)
         {
-            flog.Error(QString("SslError: %1, %2").arg(e.error()).arg(e.errorString()));
+            log.Error(QString("SslError: %1, %2").arg(e.error()).arg(e.errorString()));
         }
     }
 
@@ -74,8 +72,9 @@ GDaxLib::FunctionMap GDaxLib::functionMap =
     { "error", &GDaxLib::ProcessError }
 };
 
-GDaxLib::GDaxLib(QObject * parent)
+GDaxLib::GDaxLib(const char * url, QObject * parent)
     : QObject(parent)
+    , url(url)
     , webSocket(Utils::QMake<QWebSocket>("webSocket", QString(), QWebSocketProtocol::VersionLatest, this))
     , pingTimer(Utils::QMake<QTimer>("pingTimer", this))
     , lastTradeId()

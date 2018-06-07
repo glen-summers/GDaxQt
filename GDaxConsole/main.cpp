@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
     exitTimer.start();
 
     QThread *workerThread = new QThread();
-    GDaxLib * g = new GDaxLib();
+    GDaxLib * g = new GDaxLib(GDL::defaultStreamUrl);
     g->moveToThread(workerThread);
     QObject::connect(workerThread, &QThread::finished, workerThread, &QObject::deleteLater);
     QObject::connect(workerThread, &QThread::finished, g, &QObject::deleteLater);
