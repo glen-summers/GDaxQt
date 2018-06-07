@@ -39,7 +39,6 @@ void DepthChart::paintEvent(QPaintEvent *event)
 
 void DepthChart::wheelEvent(QWheelEvent *event)
 {
-    QPointF pos = event->posF();
     double delta = event->angleDelta().y()/1200.; // 120|15degs per click
     auto old = orderbookFraction;
     if (delta>0)
