@@ -1,5 +1,9 @@
 #include "mainwindow.h"
 
+#include "gdaxprovider.h"
+#include "gdl.h"
+#include "utils.h"
+
 #include <QApplication>
 #include <QSurfaceFormat>
 
@@ -31,6 +35,17 @@ int main(int argc, char *argv[])
 
     Flog::LogManager::SetLevel(Flog::Level::Spam);
     Flog::LogManager::SetThreadName("Ui");
+
+    if (argc>1 && _stricmp(argv[1], "-sandbox")==0)
+    {
+        GDL::SetFactory([](GDL::Callback & callback)
+        {
+            return GDL::InterfacePtr(Utils::QMake<GDaxProvider>("GDaxProvider",
+                "wss://ws-feed-public.sandbox.gdax.com",
+                "https://api-public.sandbox.gdax.com",
+                callback));
+        });
+    }
 
     MainWindow w;
     w.showMaximized();

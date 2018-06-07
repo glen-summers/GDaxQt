@@ -57,6 +57,10 @@
 	<Target Name="Gui" DependsOnTargets="Compile">
 		<Exec command="$(BuildTarget)\$(GuiProject)\$(Config)\$(GuiProject).exe"/>
 	</Target>
+	
+	<Target Name="Sandbox" DependsOnTargets="Compile">
+		<Exec command="$(BuildTarget)\$(GuiProject)\$(Config)\$(GuiProject).exe -sandbox"/>
+	</Target>
 
 	<Target Name="Build" DependsOnTargets="Compile;Test"/>
 
