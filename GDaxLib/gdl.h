@@ -37,6 +37,7 @@ namespace GDL
 
     struct Callback
     {
+        virtual void OnSnapshot() = 0;
         virtual void OnHeartbeat(const QDateTime & serverTime) = 0;
         virtual void OnTick(const Tick & tick) = 0;
         virtual void OnStateChanged(ConnectedState state) = 0;

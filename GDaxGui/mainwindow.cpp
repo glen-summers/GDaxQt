@@ -110,6 +110,13 @@ void MainWindow::on_actionE_xit_triggered()
     QApplication::quit();
 }
 
+void MainWindow::Snapshot()
+{
+    Flog::ScopeLog s(log, Flog::Level::Info, "Snapshot");
+    ui->depthChart->update();
+    GenerateOrderBook();
+}
+
 void MainWindow::GenerateOrderBook()
 {
     auto & orderBookUi = *ui->orderBook;

@@ -36,6 +36,7 @@ public:
     const OrderBook & Orders() const { return orderBook; }
 
 signals:
+    void OnSnapshot();
     void OnHeartbeat(const QDateTime & serverTime);
     void OnTick(const Tick & tick);
     void OnStateChanged(GDL::ConnectedState state);

@@ -48,6 +48,7 @@ GDaxProvider::GDaxProvider(const char * streamUrl, const char * restUrl,
     workerThread->start();
 
     // todo, use c++ callack impl instead of qt signals
+    connect(webSocketStream, &WebSocketStream::OnSnapshot, [&]() { callback.OnSnapshot(); });
     connect(webSocketStream, &WebSocketStream::OnHeartbeat, [&](const QDateTime & serverTime) { callback.OnHeartbeat(serverTime); });
     connect(webSocketStream, &WebSocketStream::OnTick, [&](const Tick & tick) { callback.OnTick(tick); });
     connect(webSocketStream, &WebSocketStream::OnStateChanged, [&](GDL::ConnectedState state) { callback.OnStateChanged(state); });

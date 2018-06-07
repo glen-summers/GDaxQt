@@ -219,6 +219,7 @@ void WebSocketStream::ProcessSnapshot(const QJsonObject & object)
 
         orderBook.AddAsk(dp, da);
     }
+    emit OnSnapshot();
 }
 
 void WebSocketStream::ProcessUpdate(const QJsonObject & object)

@@ -43,6 +43,7 @@ public:
 
 private slots: // On...?
     void on_actionE_xit_triggered();
+    void Snapshot();
     void Candles(std::deque<Candle> values);
     void Trades(std::deque<Trade> values);
     void Ticker(const Tick & tick);
@@ -61,6 +62,11 @@ private:
     // Now using interface\callback to allow abstraction instead of emiting QT signals from provider
     // if a callback is not in the UI thread it will need invoking\emiting, currently WebSocket callbacks are on
     // a worker thread
+    void OnSnapshot() override
+    {
+        QMetaObject::invokeMethod(this, "Snapshot");
+    }
+
     void OnHeartbeat(const QDateTime & serverTime) override
     {
         QMetaObject::invokeMethod( this, "Heartbeat", Q_ARG( const QDateTime &, serverTime) );
@@ -84,6 +90,7 @@ private:
     void OnTrades(std::deque<Trade> values) override
     {
         Trades(std::move(values));
+        GenerateTradeList();
     }
     // Callbacks
 };
