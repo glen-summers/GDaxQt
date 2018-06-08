@@ -150,14 +150,15 @@ void MainWindow::GenerateOrderBook()
     QString html;
     QTextStream stream(&html); // perf test?
 
-    // subset of html - http://doc.qt.io/qt-5/richtext-html-subset.html
+    // rework, split into 3 sections, asklist(align bottom), mid(align mid), bidlist(align top)
+    // qt only has subset of html - http://doc.qt.io/qt-5/richtext-html-subset.html
     stream << R"(<style>
 td { text-align:right; }
 td.down { color:red; }
 td.down span { color:darkred; }
 td.up { color:limegreen; }
 td.up span { color:darkgreen; }
-td.mid { color:white; padding: 10px; }
+td.mid { color:white; text-align: center; font-size: large; padding: 4px 0px 4px 0px; }
 td.amount { color:white; }
 td.amount span { color:grey; }
 </style>
@@ -191,10 +192,11 @@ td.amount span { color:grey; }
     }
     stream << "</table>";
 
-    // add mid\last trade\spread?
+    // show mid or last trade here??
     stream << R"(<table width="100%" cellspacing="0" cellpadding="0">
-<tr><td class="mid"></td></tr>
-</table>)";
+              <tr><td class="mid">)"
+           << QString::number(orderBook.MidPrice().getAsDouble(), 'f', priceDecs)
+           << R"(</td></tr></table>)";
 
     stream << R"(<table width="100%" cellspacing="0" cellpadding="0">)";
 
