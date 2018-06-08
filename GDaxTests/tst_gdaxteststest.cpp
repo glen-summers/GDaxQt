@@ -1,6 +1,7 @@
 
 #include "defs.h"
 #include "decimalwrap.h"
+#include "flogging.h"
 
 #include "rapidjson/document.h"
 using namespace rapidjson;
@@ -312,6 +313,30 @@ private slots:
         AssertEquals("4.16667", QString::number(ema.Add(3, 5)));
         double newValue = ema.SetCurrentValue(3, 4);
         AssertEquals("3.5", QString::number(newValue));
+    }
+
+    void FormatterTest1()
+    {
+        std::string s = Formatter::Format("Fmt {0} {1} {2} {3:%#.8x}", 1, 1.2, "3", 1234);
+        AssertEquals("Fmt 1 1.2 3 0x000004d2", s.c_str());
+    }
+
+    void FormatterTest2()
+    {
+        std::ostringstream s;
+        Formatter::Format(s, "Fmt {0} {1} {2} {3:%#.8X}", 1, 1.2, "3", 1234);
+        AssertEquals("Fmt 1 1.2 3 0X000004D2", s.str().c_str());
+    }
+
+    void FlogTest()
+    {
+        // no file name...
+        // QCoreApplication::applicationFilePath: Please instantiate the QApplication object first
+        Flog::Log log = Flog::LogManager::GetLog("Test");
+        log.Info("info");
+        log.Info("info {0}", 1234);
+        log.Info("info {0:%x}", 1234);
+        // load log, check...
     }
 };
 

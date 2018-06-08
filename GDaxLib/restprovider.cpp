@@ -27,14 +27,14 @@ namespace
     // informational atm
     void Error(QNetworkReply::NetworkError error)
     {
-        log.Error(QString("SocketError: %1").arg(QMetaEnum::fromType<QNetworkReply::NetworkError>().valueToKey(error)));
+        log.Error("SocketError: {0}", QMetaEnum::fromType<QNetworkReply::NetworkError>().valueToKey(error));
     }
 
     void SslErrors(QList<QSslError> errors)
     {
-        for(auto & e : errors)
+        for (auto & e : errors)
         {
-            log.Error(QString("SslError: %1, %2").arg(e.error()).arg(e.errorString()));
+            log.Error("SslError: {0}, {1}", e.error(), e.errorString().toStdString());
         }
     }
 }
@@ -54,7 +54,7 @@ void RestProvider::FetchAllCandles(Granularity granularity)
     QUrl url(productUrl.arg(Product, Candles));
     url.setQuery(query);
 
-    log.Info(QString("Requesting %1").arg(url.toString()));
+    log.Info("Requesting {0}", url.toString());
     QNetworkRequest request(url);
     QNetworkReply * reply = manager->get(request);
     // reply->ignoreSslErrors();// allows fidler, set in cfg
@@ -76,7 +76,7 @@ void RestProvider::FetchCandles(const QDateTime & start, const QDateTime & end, 
     QUrl url(productUrl.arg(Product, Candles));
     url.setQuery(query);
 
-    log.Info(QString("Requesting %1").arg(url.toString()));
+    log.Info("Requesting {0}", url.toString());
     QNetworkRequest request(url);
     QNetworkReply * reply = manager->get(request);
     // reply->ignoreSslErrors();// allows fidler, set in cfg
@@ -125,7 +125,7 @@ void RestProvider::CandlesFinished(QNetworkReply *reply)
     }
     reply->deleteLater();
 
-    log.Info(QString("candles %1").arg(candles.size()));
+    log.Info("candles {0}", candles.size());
 
     emit OnCandles(std::move(candles));
 }

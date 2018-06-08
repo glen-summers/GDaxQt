@@ -1,8 +1,13 @@
 #ifndef FLOGGING_H
 #define FLOGGING_H
 
-#include <QString>
+#include "formatter.h"
+
 #include <string>
+
+// move
+#include <QString>
+std::ostream & operator << (std::ostream & stm, const QString & s);
 
 namespace Flog
 {
@@ -18,19 +23,23 @@ namespace Flog
     public:
         void Spam(const char * message) const { Write(Level::Spam, message); }
         void Spam(const std::string & message) const { Write(Level::Spam, message.c_str()); }
-        void Spam(const QString & message) const { Write(Level::Spam, message.toStdString().c_str()); }
+        template <typename... Ts>
+        void Spam(const char * format, Ts&&... ts) const { Write(Level::Spam, format, std::forward<Ts>(ts)...); }
 
         void Info(const char * message) const { Write(Level::Info, message); }
         void Info(const std::string & message) const { Write(Level::Info, message.c_str()); }
-        void Info(const QString & message) const { Write(Level::Info, message.toStdString().c_str()); }
+        template <typename... Ts>
+        void Info(const char * format, Ts&&... ts) const { Write(Level::Info, format, std::forward<Ts>(ts)...); }
 
         void Warning(const char * message) const { Write(Level::Warning, message); }
         void Warning(const std::string & message) const { Write(Level::Warning, message.c_str()); }
-        void Warning(const QString & message) const { Write(Level::Warning, message.toStdString().c_str()); }
+        template <typename... Ts>
+        void Warning(const char * format, Ts&&... ts) const { Write(Level::Warning, format, std::forward<Ts>(ts)...); }
 
         void Error(const char * message) const { Write(Level::Error, message); }
         void Error(const std::string & message) const { Write(Level::Error, message.c_str()); }
-        void Error(const QString & message) const { Write(Level::Error, message.toStdString().c_str()); }
+        template <typename... Ts>
+        void Error(const char * format, Ts&&... ts) const { Write(Level::Error, format, std::forward<Ts>(ts)...); }
 
         friend class LogManager;
         friend class ScopeLog;
@@ -41,6 +50,14 @@ namespace Flog
         void Write(Level level, const char * message) const;
         void ScopeStart(Level level, const char * scope, const char * stem) const;
         void ScopeEnd() const;
+        std::ostream & Stream() const;
+        void CommitStream(Level level) const;
+
+        template <typename... Ts> void Write(Level level, const char * format, Ts... ts) const
+        {
+            Formatter::Format(Stream(), format, std::forward<Ts>(ts)...);
+            CommitStream(level);
+        }
     };
 
     class ScopeLog

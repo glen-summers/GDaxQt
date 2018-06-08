@@ -35,7 +35,11 @@ HEADERS += \
     orderbook.h \
     gdaxprovider.h \
     gdl.h \
-    websocketstream.h
+    websocketstream.h \
+    formatter.h \
+    printfformatpolicy.h \
+    stackorheap.h \
+    flogstream.h
 
 DISTFILES += \
     misc.pri \

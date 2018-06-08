@@ -35,14 +35,14 @@ namespace
     // informational atm
     void Error(QAbstractSocket::SocketError error)
     {
-        log.Error(QString("SocketError: %1").arg(QMetaEnum::fromType<QNetworkReply::NetworkError>().valueToKey(error)));
+        log.Error("SocketError: {0}", QMetaEnum::fromType<QNetworkReply::NetworkError>().valueToKey(error));
     }
 
     void SslErrors(QList<QSslError> errors)
     {
         for(auto & e : errors)
         {
-            log.Error(QString("SslError: %1, %2").arg(e.error()).arg(e.errorString()));
+            log.Error("SslError: {0}, {1}", e.error(), e.errorString());
         }
     }
 
@@ -87,7 +87,7 @@ WebSocketStream::WebSocketStream(const char * url, QObject * parent)
 
     connect(webSocket, &QWebSocket::stateChanged, [&](QAbstractSocket::SocketState socketState)
     {
-        log.Info(QString("WebSocket state: %1").arg(QMetaEnum::fromType<QAbstractSocket::SocketState>().valueToKey(socketState)));
+        log.Info("WebSocket state: {0}", QMetaEnum::fromType<QAbstractSocket::SocketState>().valueToKey(socketState));
         emit OnStateChanged(ToState(socketState));
     });
 
@@ -102,7 +102,7 @@ WebSocketStream::WebSocketStream(const char * url, QObject * parent)
     qRegisterMetaType<GDL::ConnectedState>("GDL::ConnectedState");
     qRegisterMetaType<Tick>("Tick");
 
-    log.Info(QString("Connecting to %1").arg(url));
+    log.Info("Connecting to {0}", url);
     webSocket->open(QUrl(url));
 }
 
@@ -120,9 +120,8 @@ void WebSocketStream::Ping()
             break;
 
         default:
-            log.Warning(QString("Ping, WebSocket state: %1").arg(
-                            QMetaEnum::fromType<QAbstractSocket::SocketState>()
-                            .valueToKey(webSocket->state())));
+            log.Warning("Ping, WebSocket state: {0}", QMetaEnum::fromType<QAbstractSocket::SocketState>()
+                        .valueToKey(webSocket->state()));
             break;
     }
 }
@@ -153,12 +152,12 @@ void WebSocketStream::TextMessageReceived(QString message)
         }
         else
         {
-            log.Warning(QString("Unprocessed message: %1").arg(type));
+            log.Warning("Unprocessed message: {0}", type);
         }
     }
     catch (const std::exception & e)
     {
-        log.Error(QString("Error: %1 , %2").arg(e.what()).arg(message));
+        log.Error("Error: {0}, {1}", e.what(), message);
     }
 }
 
@@ -185,7 +184,7 @@ void WebSocketStream::ProcessError(const QJsonObject & object)
 {
     // will be in the message pump, so cannot throw? need to notify ui
     QString errorMessage = object["message"].toString();
-    log.Error(QString("Error message: %1").arg(errorMessage));
+    log.Error("Error message: {0}", errorMessage);
     throw std::runtime_error(errorMessage.toStdString());
 }
 
@@ -258,11 +257,8 @@ void WebSocketStream::ProcessHeartbeat(const QJsonObject & object)
 
     if (lastTradeId!=0 && lastTradeId+1 != tradeId)
     {
-        log.Info(QString("[%1] [%2] MissedTrade(s): %3 - %4")
-                 .arg(serverTimeString)
-                 .arg(seq)
-                 .arg(lastTradeId+1)
-                 .arg(tradeId-1));
+        log.Info("[{0}] [{1}] MissedTrade(s): {2} - {3}",
+                 serverTimeString, seq, lastTradeId+1, tradeId-1);
     }
 
     QDateTime serverTime = QDateTime::fromString(serverTimeString, Qt::ISODateWithMs);

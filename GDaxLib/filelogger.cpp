@@ -1,6 +1,6 @@
 
-#include "filelogger.h"
 #include "flogging.h"
+#include "filelogger.h"
 
 #include <QCoreApplication>
 #include <QProcess>
@@ -16,6 +16,14 @@
 
 namespace fs = std::experimental::filesystem;
 
+// move
+std::ostream & operator << (std::ostream & stm, const QString & s)
+{
+    return stm << s.toStdString();
+}
+
+
+// split this out to a lib and multiple files
 namespace
 {
     constexpr const char * HeaderFooterSeparator = "------------------------------------------------";
@@ -36,10 +44,65 @@ namespace
         std::chrono::high_resolution_clock::time_point start;
     };
 
+    class Buffer : public std::basic_streambuf<char>
+    {
+        static constexpr int bufsize = 256;
+        typedef std::vector<char> buffer;
+        typedef basic_streambuf<char> base;
+        mutable buffer buf;
+
+        int_type overflow(int_type c) override
+        {
+            if (traits_type::eq_int_type(c, traits_type::eof()))
+            {
+                return traits_type::not_eof(c);
+            }
+            buf.push_back(traits_type::to_char_type(c));
+            return c;
+        }
+    public:
+        Buffer()
+        {
+            buf.reserve(bufsize);
+        }
+
+        const char * Get() const
+        {
+            buf.push_back(0);
+            return buf.data();
+        }
+
+        void Reset() const
+        {
+            // todo decay size if large and not often used
+            // poss use list of chunks that can be shared\gced?
+            buf.clear();
+        }
+    };
+
+    template <typename T, class BufferType> // BufferType : basic_streambuf<_Elem, _Traits>
+    class GenericOutStream : public std::basic_ostream<T>
+    {
+        typedef std::basic_ostream<T> base;
+
+        BufferType m_buf;
+
+    public:
+        GenericOutStream(std::ios_base::fmtflags f = std::ios_base::fmtflags()) : base(&m_buf)
+        {
+            base::setf(f);
+        }
+
+        const BufferType & rdbuf() { return m_buf; }
+    };
+
+    using Stream = GenericOutStream<char, Buffer>;
+
     thread_local std::stack<Scope> scopes;
     thread_local const char * pendingScope = nullptr;
     thread_local int depth = 0;
     thread_local const char * threadName = nullptr;
+    thread_local Stream stream(std::ios_base::boolalpha);
 
     void TranslateLevel(std::ostream & stm, Flog::Level level)
     {
@@ -138,58 +201,6 @@ namespace
         (*manip.p)(str, manip.arg);
         return str;
     }
-
-    class FloggerBuf : public std::basic_streambuf<char>
-    {
-        static constexpr int bufsize = 256;
-        typedef std::vector<char> buffer;
-        typedef basic_streambuf<char> base;
-        mutable buffer buf;
-
-        int_type overflow(int_type c) override
-        {
-            if (traits_type::eq_int_type(c, traits_type::eof()))
-            {
-                return traits_type::not_eof(c);
-            }
-            buf.push_back(traits_type::to_char_type(c));
-            return c;
-        }
-    public:
-        FloggerBuf()
-        {
-            buf.reserve(bufsize);
-        }
-
-        const char * Get() const
-        {
-            buf.push_back(0);
-            return buf.data();
-        }
-
-        void Reset() const
-        {
-            buf.clear();
-        }
-    };
-
-    template <typename T, class BufferType> // BufferType : basic_streambuf<_Elem, _Traits>
-    class GenericOutStream : public std::basic_ostream<T>
-    {
-        typedef std::basic_ostream<T> base;
-
-        BufferType m_buf;
-
-    public:
-        GenericOutStream(std::ios_base::fmtflags f = std::ios_base::fmtflags()) : base(&m_buf)
-        {
-            base::setf(f);
-        }
-
-        const BufferType & rdbuf() { return m_buf; }
-    };
-
-    using FlogStream = GenericOutStream<char, FloggerBuf>;
 }
 
 namespace Flog
@@ -245,7 +256,7 @@ namespace Flog
     {
         const Scope & scope = scopes.top();
 
-        std::ostringstream s;
+        std::ostringstream s; // use thread stream
         s << std::setw(depth) << "" << scope.stem << "> " << scope.scope;
         FileLogger::Write(scope.level, name, s.str().c_str());
         ++depth;
@@ -289,7 +300,7 @@ namespace Flog
             --depth;
         }
 
-        std::ostringstream s;
+        std::ostringstream s; // use thread stream
         s << std::setw(depth) << "" << "<" << scope.stem;
 
         if (pendingScope)
@@ -338,6 +349,17 @@ namespace Flog
         }
 
         FileLogger::Write(scope.level, name.c_str(), s.str().c_str());
+    }
+
+    std::ostream & Log::Stream() const
+    {
+        return stream;
+    }
+
+    void Log::CommitStream(Level level) const
+    {
+        FileLogger::Write(level, name.c_str(), stream.rdbuf().Get());
+        stream.rdbuf().Reset(); // had an AV here investigate
     }
 }
 
