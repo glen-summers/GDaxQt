@@ -193,10 +193,14 @@ td.amount span { color:grey; }
     stream << "</table>";
 
     // show mid or last trade here??
-    stream << R"(<table width="100%" cellspacing="0" cellpadding="0">
-              <tr><td class="mid">)"
-           << QString::number(orderBook.MidPrice().getAsDouble(), 'f', priceDecs)
-           << R"(</td></tr></table>)";
+    auto mid = orderBook.MidPrice();
+    if (mid != Decimal{})
+    {
+        stream << R"(<table width="100%" cellspacing="0" cellpadding="0">
+                  <tr><td class="mid">)"
+               << QString::number(mid.getAsDouble(), 'f', priceDecs)
+               << R"(</td></tr></table>)";
+    }
 
     stream << R"(<table width="100%" cellspacing="0" cellpadding="0">)";
 
