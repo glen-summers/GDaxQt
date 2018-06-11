@@ -6,10 +6,27 @@
 
 #include <QApplication>
 #include <QSurfaceFormat>
+#include <QLibrary>
 
 int main(int argc, char *argv[])
 {
     QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    //QApplication::setAttribute(Qt::AA_SynthesizeTouchForUnhandledMouseEvents, false);
+    //QApplication::setAttribute(Qt::AA_SynthesizeMouseForUnhandledTouchEvents, false);
+
+// cld set dpi aware and set scales appropriately to fix win32 rouch dpi bug...
+//#ifdef _WIN32
+//  {
+//    typedef unsigned short (*SetProcessDpiAwarenessT)(int value);
+//    QLibrary user32("user32.dll", NULL);
+//    SetProcessDpiAwarenessT SetProcessDpiAwarenessD = (SetProcessDpiAwarenessT)user32.resolve("SetProcessDpiAwarenessInternal");
+//    if (SetProcessDpiAwarenessD)
+//    {
+//        SetProcessDpiAwarenessD(1); //PROCESS_PER_MONITOR_DPI_AWARE
+//    }
+//  }
+//#endif
+
     QApplication a(argc, argv);
 
     QApplication::setStyle("Fusion");

@@ -16,13 +16,6 @@
 
 namespace fs = std::experimental::filesystem;
 
-// move
-std::ostream & operator << (std::ostream & stm, const QString & s)
-{
-    return stm << s.toStdString();
-}
-
-
 // split this out to a lib and multiple files
 namespace
 {

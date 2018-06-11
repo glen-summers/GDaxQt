@@ -19,7 +19,8 @@ SOURCES += \
     filelogger.cpp \
     trade.cpp \
     gdaxprovider.cpp \
-    websocketstream.cpp
+    websocketstream.cpp \
+    qfmt.cpp
 
 HEADERS += \
     utils.h \
@@ -39,7 +40,7 @@ HEADERS += \
     formatter.h \
     printfformatpolicy.h \
     stackorheap.h \
-    flogstream.h
+    qfmt.h
 
 DISTFILES += \
     misc.pri \
