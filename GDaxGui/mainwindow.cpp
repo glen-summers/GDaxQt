@@ -17,6 +17,7 @@
 #include <QSettings>
 #include <QTextStream>
 #include <QMutex>
+#include <QScreen>
 
 namespace
 {
@@ -45,6 +46,11 @@ MainWindow::MainWindow(QWidget *parent)
     , gdl(GDL::Create(*this))
     , granularity()
 {
+    for (const QScreen * s : QApplication::screens())
+    {
+        log.Info("Screen: {0} = {1}dpi{2}", s->name(), s->logicalDotsPerInch(), s==QApplication::primaryScreen()? " Primary" : "");
+    }
+
     ui->setupUi(this);
 
     AttachExpander(ui->centralWidget, ui->trades, settings->value(TradesVisibleSetting, true).toBool());
@@ -69,6 +75,8 @@ MainWindow::MainWindow(QWidget *parent)
     updateTimer->start(UpdateTimerMs);
 
     Utils::QMake<CandleOverlay>("CandleOverlay", *ui->candleChart);
+
+    ui->candleChart->setAttribute(Qt::WA_AcceptTouchEvents, true);
 }
 
 MainWindow::~MainWindow() = default;

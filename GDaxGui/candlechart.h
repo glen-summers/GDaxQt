@@ -28,6 +28,14 @@ class CandleChart : public QOpenGLWidget
     time_t baseTime, timeDelta;
     QPoint lastDrag;
 
+    // wrap trackHandler
+    bool isMouseTracking;
+    bool isTouchTracking;
+    int tp0Id;
+    int tp1Id;
+    QRectF originalRect;
+    QRectF originalView;
+
     // wrap
     Sma sma;
     Ema ema;
@@ -60,6 +68,7 @@ private:
     void mousePressEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void mouseReleaseEvent(QMouseEvent *) override;
+    bool event(QEvent *event) override;
 
     void Paint(QPainter & painter) const;
 };

@@ -9,6 +9,7 @@
 #include <algorithm>
 
 #include <math.h>
+#include <cassert>
 
 Plot::Plot(double edge, bool xAxisLabels, bool yAxisLabels)
     : font(QApplication::font())
@@ -229,14 +230,20 @@ QPointF Plot::MapToView(const QPointF & p) const
 
 void Plot::ZoomY(const QPointF &at, double scale)
 {
+    assert(scale!=0);
     double mappedY = MapToView(at).y();
-    view.adjust(0,(mappedY - view.top())*scale, 0, (mappedY - view.bottom())*scale);
+    view.setHeight(view.height()/scale);
+    view.translate(0, mappedY - MapToView(at).y());
+    assert(view.height()>0);
 }
 
 void Plot::ZoomX(const QPointF &at, double scale)
 {
+    assert(scale!=0);
     double mappedX = MapToView(at).x();
-    view.adjust((mappedX - view.left())*scale, 0, (mappedX - view.right())*scale, 0);
+    view.setWidth(view.width()/scale);
+    view.translate(mappedX - MapToView(at).x(), 0);
+    assert(view.width()>0);
 }
 
 void Plot::Pan(double dx, double dy)
@@ -246,6 +253,7 @@ void Plot::Pan(double dx, double dy)
 
 double Plot::GetScale(double range, double scale)
 {
+    assert(range / scale > 0);
     static constexpr int lookup1[] = { 1,1,2,5,5,5,10,10,10,10,10 };
     double powx = pow(10.0, floor(log10(range / scale)))*scale;
     int ix = 1 + static_cast<int>(floor(range / powx - 1e-10));
@@ -254,6 +262,7 @@ double Plot::GetScale(double range, double scale)
 
 std::pair<double, int> Plot::GetScaleAndDivisions(double range)
 {
+    assert(range > 0);
     static constexpr int lookup1[] = { 1,1,2,5,5,5,10,10,10,10,10 };
     static constexpr int lookup2[] = { 5,5,4,5,5,5,5,5,5,5,5 };
     double powx = pow(10.0, floor(log10(range)));
@@ -263,6 +272,7 @@ std::pair<double, int> Plot::GetScaleAndDivisions(double range)
 
 std::pair<double, int> Plot::GetTimeScale(double min, double max, int maxGaps)
 {
+    assert(max > min);
     double r = static_cast<double>(max - min) / maxGaps;
 
     if (r < 1)

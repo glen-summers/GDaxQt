@@ -1,10 +1,13 @@
 #include "candlechart.h"
 
 #include "tick.h"
+#include "qfmt.h"
 
 #include <QApplication>
 #include <QPainter>
 #include <QPaintEvent>
+
+#include <cassert>
 
 CandleChart::CandleChart(QWidget *parent)
     : QOpenGLWidget(parent)
@@ -13,6 +16,10 @@ CandleChart::CandleChart(QWidget *parent)
     , baseTime()
     , timeDelta()
     , lastDrag()
+    , isMouseTracking()
+    , isTouchTracking()
+    , tp0Id()
+    , tp1Id()
     , sma(15)
     , ema(15)
 {
@@ -151,16 +158,18 @@ void CandleChart::paintEvent(QPaintEvent *event)
 void CandleChart::wheelEvent(QWheelEvent * event)
 {
     QPointF pos = event->posF();
-    double delta = event->angleDelta().y()/1200.; // 120|15degs per click
-    double candleWidth = candlePlot.ScaleToScreen({(double)timeDelta, 0}).x();
+    double delta = event->angleDelta().y()/1200.; // 120|15degs per click = +-0.1 per wheel tick
+    double candleWidth = candlePlot.ScaleToScreen({(double)timeDelta, 0}).x(); // cache
+
+    auto scale = delta>=0 ? 1+delta : 1 / (1-delta);
 
     if (pos.x() > candlePlot.Inner().right())
     {
-        candlePlot.ZoomY(pos, delta);
+        candlePlot.ZoomY(pos, scale);
     }
     else if ((delta<0 && candleWidth > MinCandleWidth) || (delta>0 && candleWidth < MaxCandleWidth))
     {
-        candlePlot.ZoomX(pos, delta);
+        candlePlot.ZoomX(pos, scale);
     }
     event->accept();
     update();
@@ -170,21 +179,128 @@ void CandleChart::mousePressEvent(QMouseEvent *event)
 {
     lastDrag = event->pos();
     qApp->setOverrideCursor(Qt::ClosedHandCursor);
-    setMouseTracking(true);
+    isMouseTracking = true;
+    event->accept();
 }
 
 void CandleChart::mouseMoveEvent(QMouseEvent *event)
 {
-    auto delta = (event->pos() - lastDrag);
+    if (isTouchTracking)
+    {
+        // avoid double pan
+        return;
+    }
+
+    auto delta = event->pos() - lastDrag;
+    log.Info("MouseMove {0}, [{1}]", event->pos(), delta);
     lastDrag = event->pos();
     candlePlot.Pan(delta.x(), delta.y());
     update();
+    event->accept();
 }
 
-void CandleChart::mouseReleaseEvent(QMouseEvent *)
+void CandleChart::mouseReleaseEvent(QMouseEvent * event)
 {
     qApp->restoreOverrideCursor();
-    setMouseTracking(false);
+    event->accept();
+    isMouseTracking = false;
+}
+
+bool CandleChart::event(QEvent * event)
+{
+    // ignore size() ==1 as is covered by mouse, but what it isnt?
+    // AA_SynthesizeTouchForUnhandledMouseEvents
+    // if have mouse -> touch then just do touch?
+    // when go to 2 pointers, mouse is still getting one of them!
+    // use aaflag and just use touch? - has bug mouse->touch events dont have dpi scaling applied
+
+    switch (event->type())
+    {
+        case QEvent::TouchBegin:
+        {
+            event->accept();
+            return true; // same as accept?
+        }
+
+        case QEvent::TouchCancel:
+            log.Info("TouchCancel");
+            // set to ignore
+            break;
+
+        case QEvent::TouchEnd:
+        {
+            log.Info("TouchEnd");
+            isTouchTracking  = false;
+            event->accept();
+            break;
+        }
+
+        case QEvent::TouchUpdate:
+        {
+            QTouchEvent * touchEvent = (QTouchEvent *)event;
+            auto tps = touchEvent->touchPoints();
+
+            // AA_SynthesizeTouchForUnhandledMouseEvents
+            // if (tps.size()==1 && !isMouseTracking)...
+
+            if (tps.size() == 2)
+            {
+                auto & tp0 = tps[0];
+                auto & tp1 = tps[1];
+
+                if (isTouchTracking && (tp0Id != tp0.id() || tp1Id != tp1.id()))
+                {
+                    isTouchTracking  = false;
+                    log.Info("new touchPoint ids");
+                }
+
+                auto rc = QRectF(tp0.pos(), tp1.pos()).normalized();
+                if (!isTouchTracking)
+                {
+                    tp0Id = tp0.id();
+                    tp1Id = tp1.id();
+
+                    originalRect = rc;
+                    originalView = candlePlot.View();
+                    event->accept();
+                    log.Info("start touchTracking rect:{0} view:{1}, id0:{2}, id1:{3}", rc, candlePlot.View(), tp0Id, tp1Id);
+                    return isTouchTracking = true;
+                }
+
+                candlePlot.SetView(originalView);
+                auto delta = rc.center() - originalRect.center();
+                candlePlot.Pan(delta.x(), delta.y());
+
+                auto origLength = QLineF(originalRect.topLeft(), originalRect.bottomRight()).length(); //0? cache?
+                auto length = QLineF(rc.topLeft(), rc.bottomRight()).length();
+                auto scale = length/origLength - 1;
+                auto t2 = atan2(rc.height(), rc.width());
+                auto scaleX = 1 + scale * cos(t2);
+                auto scaleY = 1 + scale * sin(t2);
+                auto minScale = MinCandleWidth * candlePlot.View().width() / timeDelta / candlePlot.Inner().width();
+                auto maxScale = MaxCandleWidth * candlePlot.View().width() / timeDelta / candlePlot.Inner().width();
+                if (scaleX < minScale) scaleX = minScale;
+                if (scaleX > maxScale) scaleX = maxScale;
+                candlePlot.ZoomX(rc.center(), scaleX);
+                candlePlot.ZoomY(rc.center(), scaleY);
+                update();
+
+                log.Info("touchTrack rect:{0} view:{1}, sx:{2}, sy:{3}, id0:{4}, id1:{5}", rc, candlePlot.View(), scaleX, scaleY,
+                         tps[0].id(), tps[1].id());
+            }
+
+            if (isTouchTracking && tps.size() != 2)
+            {
+                isTouchTracking  = false;
+                log.Info("touchTracking  = false;");
+            }
+            event->accept();
+            return true;
+        }
+
+        default:;
+    }
+    return QOpenGLWidget::event(event);
 }
 
 void CandleChart::Paint(QPainter & painter) const
