@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
     fmt.setSamples(4);
     QSurfaceFormat::setDefaultFormat(fmt);
 
-    Flog::LogManager::SetLevel(Flog::Level::Spam);
+    Flog::LogManager::SetLevel(Flog::Level::Info);
     Flog::LogManager::SetThreadName("Ui");
 
     if (argc>1 && strcmp(argv[1], "-sandbox")==0)

@@ -57,10 +57,6 @@ private:
     bool CheckCandleRollover(const QDateTime & time, const Decimal & price);
 
     void paintEvent(QPaintEvent *event) override;
-    void wheelEvent(QWheelEvent *event) override;
-    void mousePressEvent(QMouseEvent *event) override;
-    void mouseMoveEvent(QMouseEvent *event) override;
-    void mouseReleaseEvent(QMouseEvent *) override;
     bool event(QEvent *event) override;
 
     void Paint(QPainter & painter) const;
@@ -70,6 +66,7 @@ private:
     void SetView(const QRectF & view) const override { candlePlot.SetView(view);}
     void Pan(double, double) override;
     void Scale(const QPointF & p, double xScale, double yScale) override;
+    void ContextScale(const QPointF & p, double scale) override;
 };
 
 #endif // CANDLECHART_H

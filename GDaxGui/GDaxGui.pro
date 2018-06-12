@@ -19,7 +19,8 @@ SOURCES += \
     depthchart.cpp \
     plot.cpp \
     candleoverlay.cpp \
-    expandbutton.cpp
+    expandbutton.cpp \
+    touchhandler.cpp
 
 HEADERS += \
     mainwindow.h \

@@ -26,6 +26,11 @@ namespace Flog
         template <typename... Ts>
         void Spam(const char * format, Ts&&... ts) const { Write(Level::Spam, format, std::forward<Ts>(ts)...); }
 
+        void Debug(const char * message) const { Write(Level::Debug, message); }
+        void Debug(const std::string & message) const { Write(Level::Debug, message.c_str()); }
+        template <typename... Ts>
+        void Debug(const char * format, Ts&&... ts) const { Write(Level::Debug, format, std::forward<Ts>(ts)...); }
+
         void Info(const char * message) const { Write(Level::Info, message); }
         void Info(const std::string & message) const { Write(Level::Info, message.c_str()); }
         template <typename... Ts>

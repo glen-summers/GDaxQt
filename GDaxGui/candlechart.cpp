@@ -151,41 +151,6 @@ void CandleChart::paintEvent(QPaintEvent *event)
     painter.end();
 }
 
-void CandleChart::wheelEvent(QWheelEvent * event)
-{
-    QPointF pos = event->posF();
-    double delta = event->angleDelta().y()/1200.; // 120|15degs per click = +-0.1 per wheel tick
-    double candleWidth = candlePlot.ScaleToScreen({(double)timeDelta, 0}).x(); // cache
-
-    auto scale = delta>=0 ? 1+delta : 1 / (1-delta);
-
-    if (pos.x() > candlePlot.Inner().right())
-    {
-        candlePlot.ZoomY(pos, scale);
-    }
-    else if ((delta<0 && candleWidth > MinCandleWidth) || (delta>0 && candleWidth < MaxCandleWidth))
-    {
-        candlePlot.ZoomX(pos, scale);
-    }
-    event->accept();
-    update();
-}
-
-void CandleChart::mousePressEvent(QMouseEvent *event)
-{
-    touchHandler.MousePress(event);
-}
-
-void CandleChart::mouseMoveEvent(QMouseEvent *event)
-{
-    touchHandler.MouseMove(event);
-}
-
-void CandleChart::mouseReleaseEvent(QMouseEvent * event)
-{
-    touchHandler.MouseRelease(event);
-}
-
 bool CandleChart::event(QEvent * event)
 {
     if (touchHandler.Event(event))
@@ -277,5 +242,21 @@ void CandleChart::Scale(const QPointF &p, double xScale, double yScale)
     candlePlot.ZoomX(p, xScale);
     candlePlot.ZoomY(p, yScale);
     update();
+}
+
+void CandleChart::ContextScale(const QPointF & p, double scale)
+{
+    double candleWidth = candlePlot.ScaleToScreen({(double)timeDelta, 0}).x();
+
+    if (p.x() > candlePlot.Inner().right())
+    {
+        candlePlot.ZoomY(p, scale);
+        update();
+    }
+    else if ((scale < 1 && candleWidth > MinCandleWidth) || (scale > 1 && candleWidth < MaxCandleWidth))
+    {
+        candlePlot.ZoomX(p, scale);
+        update();
+    }
 }
 
