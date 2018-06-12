@@ -30,7 +30,8 @@ HEADERS += \
     ema.h \
     overlaywidget.h \
     candleoverlay.h \
-    expandbutton.h
+    expandbutton.h \
+    touchhandler.h
 
 FORMS += \
         mainwindow.ui

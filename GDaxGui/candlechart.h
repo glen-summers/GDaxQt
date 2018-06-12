@@ -5,6 +5,7 @@
 #include "sma.h"
 #include "ema.h"
 #include "candle.h"
+#include "touchhandler.h"
 
 #include "flogging.h"
 
@@ -15,7 +16,7 @@
 struct Tick;
 class QPaintEvent;
 
-class CandleChart : public QOpenGLWidget
+class CandleChart : public QOpenGLWidget, public Touchee
 {
     inline static const Flog::Log log = Flog::LogManager::GetLog<CandleChart>();
 
@@ -26,15 +27,7 @@ class CandleChart : public QOpenGLWidget
     Plot mutable candlePlot;
     std::deque<Candle> candles;
     time_t baseTime, timeDelta;
-    QPoint lastDrag;
-
-    // wrap trackHandler
-    bool isMouseTracking;
-    bool isTouchTracking;
-    int tp0Id;
-    int tp1Id;
-    QRectF originalRect;
-    QRectF originalView;
+    TouchHandler touchHandler;
 
     // wrap
     Sma sma;
@@ -71,6 +64,12 @@ private:
     bool event(QEvent *event) override;
 
     void Paint(QPainter & painter) const;
+
+    // touchee
+    const QRectF & View() const override { return candlePlot.View(); }
+    void SetView(const QRectF & view) const override { candlePlot.SetView(view);}
+    void Pan(double, double) override;
+    void Scale(const QPointF & p, double xScale, double yScale) override;
 };
 
 #endif // CANDLECHART_H
