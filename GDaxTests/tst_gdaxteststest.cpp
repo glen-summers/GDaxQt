@@ -243,6 +243,29 @@ private slots:
         }
     }
 
+    void CreateOrder()
+    {
+        QJsonDocument doc(QJsonObject
+        {
+            {"price", "1.0"},
+            {"size", "1.0"},
+            {"side", "buy"},
+            {"product_id", "BTC-EUR"},
+        });
+        auto s = QString::fromUtf8(doc.toJson());
+
+        // qt is adding to map and causes ordering change
+        auto expected = QString(R"({
+    "price": "1.0",
+    "product_id": "BTC-EUR",
+    "side": "buy",
+    "size": "1.0"
+}
+)");
+
+        AssertEquals(expected, s);
+    }
+
     void Deltas()
     {
         AssertEquals("", Utils::DiffText("", ""));

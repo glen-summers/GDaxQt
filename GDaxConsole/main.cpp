@@ -1,14 +1,21 @@
 
 #include "websocketstream.h"
 #include "restprovider.h"
+#include "authenticator.h"
 #include "utils.h"
 
 #include <QCoreApplication>
 #include <QTimer>
 #include <QThread>
+#include <QJsonObject>
+#include <QJsonDocument>
+#include <QStringBuilder>
+#include <QMessageAuthenticationCode>
 
 #include <iostream>
 #include <future>
+
+using namespace std::chrono_literals;
 
 int main(int argc, char *argv[])
 {
@@ -56,16 +63,32 @@ int main(int argc, char *argv[])
     });
     exitTimer.start();
 
-    QThread *workerThread = new QThread();
-    WebSocketStream * g = new WebSocketStream(GDL::defaultStreamUrl);
-    g->moveToThread(workerThread);
-    QObject::connect(workerThread, &QThread::finished, workerThread, &QObject::deleteLater);
-    QObject::connect(workerThread, &QThread::finished, g, &QObject::deleteLater);
-    workerThread->start();
+    // sandbox test key
+    auto apiKey = QByteArray("86feb99f0b2244a1b756c9aca9c8eb0c");
+    auto secret = QByteArray("T9e1Aw7BFB0PJPKqd8VtMDH6agezkEBESWYrJHEoReS2KTgV7zIhDSSnnl5Bc5AqlswSz1rKam080937FTIQWA==");
+    auto passphrase = QByteArray("eoxq18akv3u");
+
+    // place order
+    RestProvider provider("https://api-public.sandbox.gdax.com", new QNetworkAccessManager());
+    provider.SetAuthenticator(new Authenticator(std::move(apiKey), QByteArray::fromBase64(std::move(secret)), std::move(passphrase)));
+
+    auto size = DecNs::fromString<Decimal>("0.01");
+    auto price = DecNs::fromString<Decimal>("0.1");
+    auto side = MakerSide::Buy;
+    provider.PlaceOrder(size, price, side);
+
+    // listen for update
+    //...
+    f.wait_for(5s);
+
+    // list orders
+    QObject::connect(&provider, &RestProvider::OnOrders, [&](std::vector<Order> orders)
+    {
+        qInfo()<< "Orders : " << orders.size();
+    });
+    provider.FetchOrders();
 
     int ret = a.exec();
     f.wait();
-    workerThread->quit();
-    workerThread->wait();
     return ret;
 }

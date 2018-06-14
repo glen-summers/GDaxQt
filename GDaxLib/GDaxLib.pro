@@ -20,7 +20,9 @@ SOURCES += \
     trade.cpp \
     gdaxprovider.cpp \
     websocketstream.cpp \
-    qfmt.cpp
+    qfmt.cpp \
+    order.cpp \
+    authenticator.cpp
 
 HEADERS += \
     utils.h \
@@ -40,7 +42,9 @@ HEADERS += \
     formatter.h \
     printfformatpolicy.h \
     stackorheap.h \
-    qfmt.h
+    qfmt.h \
+    order.h \
+    authenticator.h
 
 DISTFILES += \
     misc.pri \

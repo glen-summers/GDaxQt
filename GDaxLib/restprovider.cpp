@@ -1,6 +1,7 @@
 #include "restprovider.h"
 
 #include "utils.h"
+#include "authenticator.h"
 
 #include "flogging.h"
 
@@ -11,39 +12,55 @@
 #include <QJsonValueRef>
 #include <QMetaEnum>
 #include <QNetworkCookieJar>
+#include <QStringBuilder>
 #include <QUrlQuery>
+#include <QMessageAuthenticationCode>
 
-#define log ExLog
+#include <cassert>
 
 namespace
 {
-    const Flog::Log log = Flog::LogManager::GetLog<RestProvider>();
+    const Flog::Log flog = Flog::LogManager::GetLog<RestProvider>();
 
     // parm
     constexpr const char Product[] = "BTC-EUR";
-    constexpr const char Candles[] = "candles";
-    constexpr const char Trades[] = "trades";
+
+    constexpr const char Products[] = "/products/";
+    constexpr const char Candles[] = "/candles";
+    constexpr const char Trades[] = "/trades";
+    constexpr const char Orders[] = "/orders";
+
+    constexpr const char CbAccessKey[]= "CB-ACCESS-KEY";
+    constexpr const char CbAccessSign[] = "CB-ACCESS-SIGN";
+    constexpr const char CbAccessTimestamp[] = "CB-ACCESS-TIMESTAMP";
+    constexpr const char CbAccessPassphrase[] = "CB-ACCESS-PASSPHRASE";
 
     // informational atm
     void Error(QNetworkReply::NetworkError error)
     {
-        log.Error("SocketError: {0}", QMetaEnum::fromType<QNetworkReply::NetworkError>().valueToKey(error));
+        flog.Error("SocketError: {0}", QMetaEnum::fromType<QNetworkReply::NetworkError>().valueToKey(error));
     }
 
     void SslErrors(QList<QSslError> errors)
     {
         for (auto & e : errors)
         {
-            log.Error("SslError: {0}, {1}", e.error(), e.errorString().toStdString());
+            flog.Error("SslError: {0}, {1}", e.error(), e.errorString().toStdString());
         }
     }
 }
 
 RestProvider::RestProvider(const char * baseUrl, QNetworkAccessManager * manager, QObject * parent)
     : QObject(parent)
-    , productUrl(QString(baseUrl).append("/products/%1/%2"))
+    , baseUrl(baseUrl)
     , manager(manager)
+    , authenticator()
 {
+}
+
+void RestProvider::SetAuthenticator(Authenticator * newAuthenticator)
+{
+    authenticator = newAuthenticator;
 }
 
 void RestProvider::FetchAllCandles(Granularity granularity)
@@ -51,10 +68,10 @@ void RestProvider::FetchAllCandles(Granularity granularity)
     QUrlQuery query;
     query.addQueryItem("granularity", QString::number(static_cast<unsigned int>(granularity)));
 
-    QUrl url(productUrl.arg(Product, Candles));
+    QUrl url(baseUrl % Products % Product % Candles);
     url.setQuery(query);
 
-    log.Info("Requesting {0}", url.toString());
+    flog.Info("Requesting {0}", url.toString());
     QNetworkRequest request(url);
     QNetworkReply * reply = manager->get(request);
     // reply->ignoreSslErrors();// allows fidler, set in cfg
@@ -73,10 +90,10 @@ void RestProvider::FetchCandles(const QDateTime & start, const QDateTime & end, 
     query.addQueryItem("end", end.toString(Qt::ISODate));
     query.addQueryItem("granularity", QString::number(static_cast<unsigned int>(granularity)));
 
-    QUrl url(productUrl.arg(Product, Candles));
+    QUrl url(baseUrl % Products % Product % Candles);
     url.setQuery(query);
 
-    log.Info("Requesting {0}", url.toString());
+    flog.Info("Requesting {0}", url.toString());
     QNetworkRequest request(url);
     QNetworkReply * reply = manager->get(request);
     // reply->ignoreSslErrors();// allows fidler, set in cfg
@@ -85,12 +102,63 @@ void RestProvider::FetchCandles(const QDateTime & start, const QDateTime & end, 
     connect(reply, &QNetworkReply::finished, [this, reply]() { RestProvider::CandlesFinished(reply); });
 }
 
+void RestProvider::FetchOrders()
+{
+    if (!authenticator)
+    {
+        throw std::runtime_error("Method requires authentication");
+    }
+
+    QNetworkRequest request = CreateAuthenticatedRequest("GET", Orders);
+    QNetworkReply * reply = manager->get(request);
+    reply->ignoreSslErrors();// allows fidler, set in cfg
+    connect(reply, &QNetworkReply::sslErrors, &SslErrors);
+    connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), &Error);
+    connect(reply, &QNetworkReply::finished, [this, reply]() { RestProvider::OrdersFinished(reply); });
+}
+
+void RestProvider::PlaceOrder(const Decimal & size, const Decimal & price, MakerSide side)
+{
+    if (!authenticator)
+    {
+        throw std::runtime_error("Method requires authentication");
+    }
+    assert(side != MakerSide::None);
+    QString siderian = side == MakerSide::Buy ? "buy":"sell";
+
+    QString sz = DecNs::toString(size).c_str();
+    QString pr = DecNs::toString(price).c_str();
+
+    QJsonDocument doc(QJsonObject
+    {
+        {"price", pr},
+        {"size", sz},
+        {"side", siderian },
+        {"product_id", Product}
+    });
+    auto data = doc.toJson();
+    auto body = QString::fromUtf8(data);
+
+    QNetworkRequest request = CreateAuthenticatedRequest("POST", Orders, {}, body);
+    // agent?
+    request.setRawHeader("Content-Type", "application/json");
+
+    QNetworkReply * reply = manager->post(request, data);
+    reply->ignoreSslErrors();// allows fidler, set in cfg
+    connect(reply, &QNetworkReply::sslErrors, &SslErrors);
+    connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), &Error);
+    connect(reply, &QNetworkReply::finished, [&]()
+    {
+        flog.Info("OrderFinished");
+    });
+}
+
 void RestProvider::FetchTrades(unsigned int limit)
 {
     QUrlQuery query;
     query.addQueryItem("limit", QString::number(limit));
 
-    QUrl url(productUrl.arg(Product, Trades));
+    QUrl url(baseUrl % Products % Product % Trades);
     url.setQuery(query);
 
     QNetworkRequest request(url);
@@ -125,7 +193,7 @@ void RestProvider::CandlesFinished(QNetworkReply *reply)
     }
     reply->deleteLater();
 
-    log.Info("candles {0}", candles.size());
+    flog.Info("candles {0}", candles.size());
 
     emit OnCandles(std::move(candles));
 }
@@ -148,4 +216,43 @@ void RestProvider::TradesFinished(QNetworkReply *reply)
     reply->deleteLater();
 
     emit OnTrades(std::move(trades));
+}
+
+void RestProvider::OrdersFinished(QNetworkReply *reply)
+{
+    if (reply->error())
+    {
+        emit OnError();
+        return;
+    }
+
+    QJsonDocument document = QJsonDocument::fromJson(reply->readAll());
+    std::vector<Order> orders;
+    const auto & array  = document.array();
+    for (const QJsonValue & t : array)
+    {
+        orders.push_back(Order::FromJson(t.toObject()));
+    }
+    reply->deleteLater();
+
+    emit OnOrders(std::move(orders));
+}
+
+QNetworkRequest RestProvider::CreateAuthenticatedRequest(const QString & httpMethod, const QString & requestPath, const QUrlQuery & query,
+                                                         const QString & body) const
+{
+    time_t timestamp = QDateTime::currentSecsSinceEpoch(); // nees to get from server if time drift +-30s!
+    QByteArray signature = authenticator->ComputeSignature(httpMethod, timestamp, requestPath, body);
+
+    QUrl url(baseUrl % requestPath);
+    url.setQuery(query);
+
+    flog.Info("Authenticated Request {0}", url.toString());
+    QNetworkRequest request(url);
+    request.setRawHeader(QByteArray(CbAccessKey), authenticator->ApiKey());
+    request.setRawHeader(QByteArray(CbAccessSign), signature);
+    request.setRawHeader(QByteArray(CbAccessTimestamp), QString::number(timestamp).toUtf8());
+    request.setRawHeader(QByteArray(CbAccessPassphrase), authenticator->Passphrase());
+
+    return request;
 }
