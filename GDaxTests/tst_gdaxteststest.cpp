@@ -254,7 +254,7 @@ private slots:
         });
         auto s = QString::fromUtf8(doc.toJson());
 
-        // qt is adding to map and causes ordering change
+        // qt is adding to map and causes cosmetic ordering change
         auto expected = QString(R"({
     "price": "1.0",
     "product_id": "BTC-EUR",

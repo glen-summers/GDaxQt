@@ -64,9 +64,9 @@ int main(int argc, char *argv[])
     exitTimer.start();
 
     // sandbox test key
-    auto apiKey = QByteArray("86feb99f0b2244a1b756c9aca9c8eb0c");
-    auto secret = QByteArray("T9e1Aw7BFB0PJPKqd8VtMDH6agezkEBESWYrJHEoReS2KTgV7zIhDSSnnl5Bc5AqlswSz1rKam080937FTIQWA==");
-    auto passphrase = QByteArray("eoxq18akv3u");
+    auto apiKey = QByteArrayLiteral("86feb99f0b2244a1b756c9aca9c8eb0c");
+    auto secret = QByteArrayLiteral("T9e1Aw7BFB0PJPKqd8VtMDH6agezkEBESWYrJHEoReS2KTgV7zIhDSSnnl5Bc5AqlswSz1rKam080937FTIQWA==");
+    auto passphrase = QByteArrayLiteral("eoxq18akv3u");
 
     // place order
     RestProvider provider("https://api-public.sandbox.gdax.com", new QNetworkAccessManager());
@@ -77,16 +77,21 @@ int main(int argc, char *argv[])
     auto side = MakerSide::Buy;
     provider.PlaceOrder(size, price, side);
 
-    // listen for update
-    //...
-    f.wait_for(5s);
+    // todo listen for web socket update
+    QTime endTime = QTime::currentTime().addSecs(5);
+    while (QTime::currentTime() < endTime)
+    {
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+    }
 
-    // list orders
     QObject::connect(&provider, &RestProvider::OnOrders, [&](std::vector<Order> orders)
     {
         qInfo()<< "Orders : " << orders.size();
     });
     provider.FetchOrders();
+    provider.FetchOrders(1);
+
+    // cancel orders...
 
     int ret = a.exec();
     f.wait();

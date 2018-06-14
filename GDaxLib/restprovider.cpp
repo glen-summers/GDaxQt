@@ -102,14 +102,20 @@ void RestProvider::FetchCandles(const QDateTime & start, const QDateTime & end, 
     connect(reply, &QNetworkReply::finished, [this, reply]() { RestProvider::CandlesFinished(reply); });
 }
 
-void RestProvider::FetchOrders()
+void RestProvider::FetchOrders(unsigned int limit)
 {
     if (!authenticator)
     {
         throw std::runtime_error("Method requires authentication");
     }
 
-    QNetworkRequest request = CreateAuthenticatedRequest("GET", Orders);
+    QUrlQuery query;
+    if (limit!=0)
+    {
+        query.addQueryItem("limit", QString::number(limit));
+    }
+
+    QNetworkRequest request = CreateAuthenticatedRequest("GET", Orders, query, {});
     QNetworkReply * reply = manager->get(request);
     reply->ignoreSslErrors();// allows fidler, set in cfg
     connect(reply, &QNetworkReply::sslErrors, &SslErrors);
@@ -137,9 +143,8 @@ void RestProvider::PlaceOrder(const Decimal & size, const Decimal & price, Maker
         {"product_id", Product}
     });
     auto data = doc.toJson();
-    auto body = QString::fromUtf8(data);
 
-    QNetworkRequest request = CreateAuthenticatedRequest("POST", Orders, {}, body);
+    QNetworkRequest request = CreateAuthenticatedRequest("POST", Orders, {}, data);
     // agent?
     request.setRawHeader("Content-Type", "application/json");
 
@@ -239,19 +244,20 @@ void RestProvider::OrdersFinished(QNetworkReply *reply)
 }
 
 QNetworkRequest RestProvider::CreateAuthenticatedRequest(const QString & httpMethod, const QString & requestPath, const QUrlQuery & query,
-                                                         const QString & body) const
+                                                         const QByteArray & body) const
 {
-    time_t timestamp = QDateTime::currentSecsSinceEpoch(); // nees to get from server if time drift +-30s!
-    QByteArray signature = authenticator->ComputeSignature(httpMethod, timestamp, requestPath, body);
-
     QUrl url(baseUrl % requestPath);
     url.setQuery(query);
 
-    flog.Info("Authenticated Request {0}", url.toString());
+    auto timestamp = QString::number(QDateTime::currentSecsSinceEpoch()); // needs to get from server if time drift +-30s!
+    auto pathForSignature = url.toString(QUrl::RemoveScheme | QUrl::RemoveAuthority);
+    QByteArray signature = authenticator->ComputeSignature(httpMethod, timestamp, pathForSignature, body);
+
+    flog.Info("Authenticated Request {0} : {1}", httpMethod, url.toString());
     QNetworkRequest request(url);
     request.setRawHeader(QByteArray(CbAccessKey), authenticator->ApiKey());
     request.setRawHeader(QByteArray(CbAccessSign), signature);
-    request.setRawHeader(QByteArray(CbAccessTimestamp), QString::number(timestamp).toUtf8());
+    request.setRawHeader(QByteArray(CbAccessTimestamp), timestamp.toUtf8());
     request.setRawHeader(QByteArray(CbAccessPassphrase), authenticator->Passphrase());
 
     return request;

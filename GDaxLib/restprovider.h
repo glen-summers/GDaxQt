@@ -6,13 +6,13 @@
 #include "order.h"
 
 #include <QObject>
-#include <QString>
-#include <QUrlQuery>
 #include <QNetworkRequest>
 
 #include <deque>
 
 class Authenticator;
+
+class QString;
 class QNetworkAccessManager;
 class QNetworkReply;
 class QUrlQuery;
@@ -34,7 +34,7 @@ public:
     void FetchAllCandles(Granularity granularity);
     void FetchCandles(const QDateTime & start, const QDateTime & end, Granularity granularity);
 
-    void FetchOrders();
+    void FetchOrders(unsigned int limit = 0);
     void PlaceOrder(const Decimal & size, const Decimal & price, MakerSide side);
 
 signals:
@@ -51,8 +51,8 @@ private slots:
     void OrdersFinished(QNetworkReply *reply);
 
 private:
-    QNetworkRequest CreateAuthenticatedRequest(const QString & httpMethod, const QString & requestPath, const QUrlQuery & query={},
-                                               const QString & body={}) const;
+    QNetworkRequest CreateAuthenticatedRequest(const QString & httpMethod, const QString & requestPath, const QUrlQuery & query,
+                                               const QByteArray & body) const;
 };
 
 #endif // RESTPROVIDER_H
