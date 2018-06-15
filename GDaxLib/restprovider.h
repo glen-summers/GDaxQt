@@ -36,6 +36,7 @@ public:
 
     void FetchOrders(unsigned int limit = 0);
     void PlaceOrder(const Decimal & size, const Decimal & price, MakerSide side);
+    void CancelOrders();
 
 signals:
     void OnError(); // make more specific

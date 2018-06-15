@@ -158,6 +158,25 @@ void RestProvider::PlaceOrder(const Decimal & size, const Decimal & price, Maker
     });
 }
 
+void RestProvider::CancelOrders()
+{
+    if (!authenticator)
+    {
+        throw std::runtime_error("Method requires authentication");
+    }
+
+    // + product_id
+    QNetworkRequest request = CreateAuthenticatedRequest("DELETE", Orders, {}, {});
+    QNetworkReply * reply = manager->deleteResource(request);
+    reply->ignoreSslErrors();// allows fidler, set in cfg
+    connect(reply, &QNetworkReply::sslErrors, &SslErrors);
+    connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), &Error);
+    connect(reply, &QNetworkReply::finished, [&]()
+    {
+        flog.Info("Delete Orders Finished");
+    });
+}
+
 void RestProvider::FetchTrades(unsigned int limit)
 {
     QUrlQuery query;

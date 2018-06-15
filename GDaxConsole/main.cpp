@@ -92,6 +92,7 @@ int main(int argc, char *argv[])
     provider.FetchOrders(1);
 
     // cancel orders...
+    provider.CancelOrders();
 
     int ret = a.exec();
     f.wait();
