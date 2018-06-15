@@ -133,9 +133,7 @@ void RestProvider::PlaceOrder(const Decimal & size, const Decimal & price, Maker
     {
         throw std::runtime_error("Method requires authentication");
     }
-    assert(side != MakerSide::None);
-    QString siderian = side == MakerSide::Buy ? "buy":"sell";
-
+    QString siderian = MakerSideToString(side);
     QString sz = DecNs::toString(size).c_str();
     QString pr = DecNs::toString(price).c_str();
 

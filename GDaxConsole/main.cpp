@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
         {
             for(Order order : result.orders)
             {
-                std::cout << order.id << std::endl;
+                std::cout << order << std::endl;
             }
         }
     });

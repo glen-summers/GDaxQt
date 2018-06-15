@@ -3,7 +3,7 @@
 
 #include "decimalwrap.h"
 
-enum class Granularity : unsigned int
+enum class Granularity : unsigned
 {
     Minutes=60,
     FiveMinutes=300,

@@ -15,6 +15,8 @@ using namespace rapidjson;
 #include "../GDaxGui/sma.h"
 #include "../GDaxGui/ema.h"
 
+#include "order.h"
+
 #include <QtTest>
 #include <QAbstractSocket>
 
@@ -101,6 +103,55 @@ private slots:
 
         AssertTrue(object.contains("last_trade_id"), "contains tradeId");
         AssertEquals(object["last_trade_id"].type(), QJsonValue::Type::Double);
+    }
+
+    void ParsingOrder()
+    {
+        QString data(R"({
+        "id": "d0c5340b-6d6c-49d9-b567-48c4bfca13d2",
+        "price": "0.10000000",
+        "size": "0.01000000",
+        "product_id": "BTC-USD",
+        "side": "buy",
+        "stp": "dc",
+        "type": "limit",
+        "time_in_force": "GTC",
+        "post_only": false,
+        "created_at": "2016-12-08T20:02:28.53864Z",
+        "fill_fees": "0.0000000000000000",
+        "filled_size": "0.00000000",
+        "executed_value": "0.0000000000000000",
+        "status": "open",
+        "settled": false
+})");
+
+        QJsonDocument document(QJsonDocument::fromJson(data.toUtf8()));
+        QJsonObject object = document.object();
+
+        Order order;
+        try
+        {
+            order = Order::FromJson(object);
+        }
+        catch (const std::exception & e)
+        {
+            QFAIL(e.what());
+        }
+
+        AssertEquals("d0c5340b-6d6c-49d9-b567-48c4bfca13d2", order.id);
+        AssertEquals("0.10000000", DecNs::toString(order.price));
+        AssertEquals("0.01000000", DecNs::toString(order.size));
+        AssertEquals("BTC-USD", order.productId);
+        AssertEquals(MakerSide::Buy, order.side);
+        AssertEquals(OrderType::Limit, order.type);
+        //"time_in_force": "GTC",
+        AssertFalse(order.PostOnly, "postOnly");
+        AssertEquals(QDateTime::fromString("2016-12-08T20:02:28.53864Z", Qt::ISODateWithMs), order.createdAt);
+        //"fill_fees": "0.0000000000000000",
+        //"filled_size": "0.00000000",
+        //"executed_value": "0.0000000000000000",
+        AssertEquals(OrderStatus::Open, order.status);
+        AssertEquals(false, order.settled);
     }
 
     void UsingRapidJsonL2Update()

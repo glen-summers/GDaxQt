@@ -9,17 +9,8 @@ Tick Tick::FromJson(const QJsonObject & object)
 
     // truncates us? try chrono
     QDateTime time = QDateTime::fromString(object["time"].toString(), Qt::ISODateWithMs);
-
     Decimal price(object["price"].toString().toStdString());
-    QString sideValue = object["side"].toString();
-    TakerSide side = sideValue.isEmpty()
-            ? TakerSide::None
-            : sideValue == "buy"
-                ? TakerSide::Buy
-                : sideValue == "sell"
-                    ? TakerSide::Sell
-                    : throw std::runtime_error("Unexpected side");
-
+    TakerSide side = TakerSideFromString(object["side"].toString().toStdString());
     Decimal lastSize(object["last_size"].toString().toStdString());
     Decimal bestBid(object["best_bid"].toString().toStdString());
     Decimal bestAsk(object["best_ask"].toString().toStdString());

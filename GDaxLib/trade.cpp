@@ -14,15 +14,6 @@ Trade Trade::FromJson(const QJsonObject & object)
     // The trade side indicates the maker order side. The maker order is the order that was open on the order book.
     // buy side indicates a down-tick because the maker was a buy order and their order was removed.
     // Conversely, sell side indicates an up-tick
-    // rework as MakerSide -> Up\Down, and TakerSide - > Down\Up
-    QString sideValue = object["side"].toString();
-    MakerSide side = sideValue.isEmpty()
-            ? MakerSide::None
-            : sideValue == "buy"
-                ? MakerSide::Buy
-                : sideValue == "sell"
-                    ? MakerSide::Sell
-                    : throw std::runtime_error("Unexpected side");
-
+    MakerSide side = MakerSideFromString(object["side"].toString().toStdString());
     return { time, tradeId, price, size, side };
 }

@@ -19,7 +19,7 @@ namespace GDL
     extern const char defaultStreamUrl[];
     extern const char defaultRestUrl[];
 
-    enum class ConnectedState : int
+    enum class ConnectedState : unsigned
     {
         NotConnected,
         Connecting,
