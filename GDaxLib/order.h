@@ -1,11 +1,15 @@
 #ifndef ORDER_H
 #define ORDER_H
 
+#include <QString>
+
 class QJsonObject;
 
 struct Order
 {
     static Order FromJson(const QJsonObject &);
+
+    QString id;
 
     // todo
 /*

@@ -22,7 +22,8 @@ SOURCES += \
     websocketstream.cpp \
     qfmt.cpp \
     order.cpp \
-    authenticator.cpp
+    authenticator.cpp \
+    orderresult.cpp
 
 HEADERS += \
     utils.h \
@@ -44,7 +45,8 @@ HEADERS += \
     stackorheap.h \
     qfmt.h \
     order.h \
-    authenticator.h
+    authenticator.h \
+    orderresult.h
 
 DISTFILES += \
     misc.pri \

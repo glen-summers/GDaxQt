@@ -13,7 +13,6 @@
 #include <QMessageAuthenticationCode>
 
 #include <iostream>
-#include <future>
 
 using namespace std::chrono_literals;
 
@@ -68,31 +67,46 @@ int main(int argc, char *argv[])
     auto secret = QByteArrayLiteral("T9e1Aw7BFB0PJPKqd8VtMDH6agezkEBESWYrJHEoReS2KTgV7zIhDSSnnl5Bc5AqlswSz1rKam080937FTIQWA==");
     auto passphrase = QByteArrayLiteral("eoxq18akv3u");
 
-    // place order
     RestProvider provider("https://api-public.sandbox.gdax.com", new QNetworkAccessManager());
     provider.SetAuthenticator(new Authenticator(std::move(apiKey), QByteArray::fromBase64(std::move(secret)), std::move(passphrase)));
 
-    auto size = DecNs::fromString<Decimal>("0.01");
-    auto price = DecNs::fromString<Decimal>("0.1");
-    auto side = MakerSide::Buy;
-    provider.PlaceOrder(size, price, side);
+// place order
+//    auto size = DecNs::fromString<Decimal>("0.01");
+//    auto price = DecNs::fromString<Decimal>("0.1");
+//    auto side = MakerSide::Buy;
+//    provider.PlaceOrder(size, price, side);
 
-    // todo listen for web socket update
-    QTime endTime = QTime::currentTime().addSecs(5);
-    while (QTime::currentTime() < endTime)
-    {
-        QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
-    }
+// todo listen for web socket update
+//    QTime endTime = QTime::currentTime().addSecs(5);
+//    while (QTime::currentTime() < endTime)
+//    {
+//        QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+//    }
 
-    QObject::connect(&provider, &RestProvider::OnOrders, [&](std::vector<Order> orders)
+    provider.FetchOrders(0, [](OrderResult result)
     {
-        qInfo()<< "Orders : " << orders.size();
+        if (result.error != QNetworkReply::NoError)
+        {
+            std::cout << "Error fetching orders : " << result.errorString << std::endl;;
+        }
+        else
+        {
+            for(Order order : result.orders)
+            {
+                std::cout << order.id << std::endl;
+            }
+        }
     });
-    provider.FetchOrders();
-    provider.FetchOrders(1);
+
+//    QObject::connect(&provider, &RestProvider::OnOrders, [&](std::vector<Order> orders)
+//    {
+//        qInfo()<< "Orders : " << orders.size();
+//    });
+    //provider.FetchOrders();
+    //provider.FetchOrders(1);
 
     // cancel orders...
-    provider.CancelOrders();
+    //provider.CancelOrders();
 
     int ret = a.exec();
     f.wait();

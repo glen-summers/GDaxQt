@@ -1,7 +1,9 @@
 #include "order.h"
 
-Order Order::FromJson(const QJsonObject &)
+#include <QJsonObject>
+
+Order Order::FromJson(const QJsonObject & object)
 {
-    // todo
-    return {};
+    return { object["id"].toString() };
+    // ...
 }

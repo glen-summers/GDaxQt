@@ -4,11 +4,13 @@
 #include "trade.h"
 #include "candle.h"
 #include "order.h"
+#include "orderresult.h"
 
 #include <QObject>
 #include <QNetworkRequest>
 
 #include <deque>
+#include <functional>
 
 class Authenticator;
 
@@ -34,7 +36,8 @@ public:
     void FetchAllCandles(Granularity granularity);
     void FetchCandles(const QDateTime & start, const QDateTime & end, Granularity granularity);
 
-    void FetchOrders(unsigned int limit = 0);
+    void FetchOrders(unsigned int limit, std::function<void(OrderResult)> func);
+
     void PlaceOrder(const Decimal & size, const Decimal & price, MakerSide side);
     void CancelOrders();
 
@@ -49,7 +52,6 @@ signals:
 private slots:
     void CandlesFinished(QNetworkReply * reply);
     void TradesFinished(QNetworkReply * reply);
-    void OrdersFinished(QNetworkReply *reply);
 
 private:
     QNetworkRequest CreateAuthenticatedRequest(const QString & httpMethod, const QString & requestPath, const QUrlQuery & query,

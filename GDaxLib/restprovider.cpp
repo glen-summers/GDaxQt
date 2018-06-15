@@ -102,7 +102,7 @@ void RestProvider::FetchCandles(const QDateTime & start, const QDateTime & end, 
     connect(reply, &QNetworkReply::finished, [this, reply]() { RestProvider::CandlesFinished(reply); });
 }
 
-void RestProvider::FetchOrders(unsigned int limit)
+void RestProvider::FetchOrders(unsigned int limit, std::function<void (OrderResult)> func)
 {
     if (!authenticator)
     {
@@ -110,17 +110,21 @@ void RestProvider::FetchOrders(unsigned int limit)
     }
 
     QUrlQuery query;
-    if (limit!=0)
+    if (limit != 0)
     {
         query.addQueryItem("limit", QString::number(limit));
     }
 
     QNetworkRequest request = CreateAuthenticatedRequest("GET", Orders, query, {});
-    QNetworkReply * reply = manager->get(request);
+    QNetworkReply * reply = manager->get(request); // reply always deleted? finished may not get called, always hook error?
     reply->ignoreSslErrors();// allows fidler, set in cfg
-    connect(reply, &QNetworkReply::sslErrors, &SslErrors);
-    connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), &Error);
-    connect(reply, &QNetworkReply::finished, [this, reply]() { RestProvider::OrdersFinished(reply); });
+    //connect(reply, &QNetworkReply::sslErrors, &SslErrors);
+    //connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), &Error);
+    connect(reply, &QNetworkReply::finished, [func{std::move(func)}, reply]()
+    {
+        func(OrderResult::FromReply(reply));
+        reply->deleteLater();
+    });
 }
 
 void RestProvider::PlaceOrder(const Decimal & size, const Decimal & price, MakerSide side)
@@ -155,6 +159,7 @@ void RestProvider::PlaceOrder(const Decimal & size, const Decimal & price, Maker
     connect(reply, &QNetworkReply::finished, [&]()
     {
         flog.Info("OrderFinished");
+        // return order via lambda
     });
 }
 
@@ -174,6 +179,7 @@ void RestProvider::CancelOrders()
     connect(reply, &QNetworkReply::finished, [&]()
     {
         flog.Info("Delete Orders Finished");
+        // return result via lambda
     });
 }
 
@@ -242,26 +248,6 @@ void RestProvider::TradesFinished(QNetworkReply *reply)
     emit OnTrades(std::move(trades));
 }
 
-void RestProvider::OrdersFinished(QNetworkReply *reply)
-{
-    if (reply->error())
-    {
-        emit OnError();
-        return;
-    }
-
-    QJsonDocument document = QJsonDocument::fromJson(reply->readAll());
-    std::vector<Order> orders;
-    const auto & array  = document.array();
-    for (const QJsonValue & t : array)
-    {
-        orders.push_back(Order::FromJson(t.toObject()));
-    }
-    reply->deleteLater();
-
-    emit OnOrders(std::move(orders));
-}
-
 QNetworkRequest RestProvider::CreateAuthenticatedRequest(const QString & httpMethod, const QString & requestPath, const QUrlQuery & query,
                                                          const QByteArray & body) const
 {
@@ -279,5 +265,6 @@ QNetworkRequest RestProvider::CreateAuthenticatedRequest(const QString & httpMet
     request.setRawHeader(QByteArray(CbAccessTimestamp), timestamp.toUtf8());
     request.setRawHeader(QByteArray(CbAccessPassphrase), authenticator->Passphrase());
 
+    // just return manager->get(request);
     return request;
 }
