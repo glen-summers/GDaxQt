@@ -2,7 +2,6 @@
 #define JSONARRAYITERATOR_H
 
 #include <QJsonArray>
-#include <QJsonObject>
 
 #include <iterator>
 
@@ -25,7 +24,7 @@ public:
     {
         if (index!=array.size())
         {
-            value = T::FromJson(array[index].toObject());
+            value = T::FromJson(array[index]);
         }
     }
 
@@ -37,7 +36,7 @@ public:
         ++index;
         if (index!=array.size())
         {
-            value = T::FromJson(array[index].toObject());
+            value = T::FromJson(array[index]);
         }
         else
         {

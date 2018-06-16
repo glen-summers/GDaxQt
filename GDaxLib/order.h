@@ -7,7 +7,7 @@
 #include <QString>
 #include <QDateTime>
 
-class QJsonObject;
+class QJsonValue;
 
 enum class OrderType : unsigned { Limit, Market };
 enum class OrderStatus : unsigned { Pending, Active, Rejected, Open, Done, Settled };
@@ -15,7 +15,7 @@ enum class SelfTradeProtection  : unsigned { None, DecrementAndCancel, CancelOld
 
 struct Order
 {
-    static Order FromJson(const QJsonObject &);
+    static Order FromJson(const QJsonValue &value);
 
     QString id;
     Decimal price;

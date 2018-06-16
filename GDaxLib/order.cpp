@@ -88,8 +88,9 @@ std::ostream & operator << (std::ostream & s, OrderStatus status)
     }
 }
 
-Order Order::FromJson(const QJsonObject & object)
+Order Order::FromJson(const QJsonValue & value)
 {
+    auto object = value.toObject();
     return Order
     {
         object["id"].toString(),

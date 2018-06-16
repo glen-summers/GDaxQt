@@ -6,14 +6,14 @@
 
 #include <QDateTime>
 
-class QJsonObject;
+class QJsonValue;
 
 class Trade
 {
 public:
     typedef unsigned long long TradeId;
 
-    static Trade FromJson(const QJsonObject & object);
+    static Trade FromJson(const QJsonValue & object);
 
     QDateTime time;
     TradeId tradeId;

@@ -3,8 +3,9 @@
 #include <QDateTime>
 #include <QJsonObject>
 
-Trade Trade::FromJson(const QJsonObject & object)
+Trade Trade::FromJson(const QJsonValue & value)
 {
+    auto object = value.toObject();
     // truncates us? try chrono
     QDateTime time = QDateTime::fromString(object["time"].toString(), Qt::ISODateWithMs);
     auto tradeId = static_cast<TradeId>(object["trade_id"].toDouble());

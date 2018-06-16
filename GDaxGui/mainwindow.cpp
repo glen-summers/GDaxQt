@@ -5,6 +5,7 @@
 #include "candleoverlay.h"
 #include "orderbook.h"
 #include "tradesresult.h"
+#include "candlesresult.h"
 
 #include "utils.h"
 #include "expandbutton.h"
@@ -315,23 +316,30 @@ td.amount span { color:grey; }
    tradesWidget.document()->setHtml(*stream.string());
 }
 
-void MainWindow::OnTrades(const TradesResult & tradesResult)
+void MainWindow::OnCandles(const CandlesResult & result)
 {
-    if (tradesResult.HasError())
+    if (result.HasError())
     {
-        log.Error("OnTrades error : {0}", tradesResult.ErrorString());
+        log.Error("OnTrades error : {0}", result.ErrorString());
+        // trigger retry?
+        return;
+    }
+
+    this->ui->candleChart->SetCandles(std::deque<Candle>(result.begin(), result.end()), granularity);
+}
+
+void MainWindow::OnTrades(const TradesResult & result)
+{
+    if (result.HasError())
+    {
+        log.Error("OnTrades error : {0}", result.ErrorString());
         // trigger retry?
         return;
     }
 
     // todo keep any trades that have come in as ticks while trade reqest in flight
-    trades = std::move(std::deque<Trade>(tradesResult.begin(), tradesResult.end()));
+    trades = std::move(std::deque<Trade>(result.begin(), result.end()));
     GenerateTradeList();
-}
-
-void MainWindow::Candles(std::deque<Candle> values)
-{
-    this->ui->candleChart->SetCandles(std::move(values), granularity); // prevents elision?
 }
 
 void MainWindow::Ticker(const Tick &tick)

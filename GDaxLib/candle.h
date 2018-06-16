@@ -3,6 +3,8 @@
 
 #include "decimalwrap.h"
 
+class QJsonValue;
+
 enum class Granularity : unsigned
 {
     Minutes=60,
@@ -15,6 +17,8 @@ enum class Granularity : unsigned
 
 struct Candle
 {
+    static Candle FromJson(const QJsonValue & value);
+
     time_t startTime;
     Decimal lowestPrice;
     Decimal highestPrice;

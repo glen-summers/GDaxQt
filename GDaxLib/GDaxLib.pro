@@ -26,7 +26,9 @@ SOURCES += \
     orderresult.cpp \
     servertimeresult.cpp \
     tradesresult.cpp \
-    result.cpp
+    result.cpp \
+    candlesresult.cpp \
+    candle.cpp
 
 HEADERS += \
     utils.h \
@@ -53,7 +55,8 @@ HEADERS += \
     result.h \
     servertimeresult.h \
     tradesresult.h \
-    jsonarrayiterator.h
+    jsonarrayiterator.h \
+    candlesresult.h
 
 DISTFILES += \
     misc.pri \

@@ -6,7 +6,6 @@
 
 #include <QNetworkReply>
 
-#include <deque>
 #include <memory>
 #include <functional>
 
@@ -14,6 +13,7 @@ struct Tick;
 class QDateTime;
 class OrderBook;
 class TradesResult;
+class CandlesResult;
 
 namespace GDL
 {
@@ -42,7 +42,7 @@ namespace GDL
         virtual void OnHeartbeat(const QDateTime & serverTime) = 0;
         virtual void OnTick(const Tick & tick) = 0;
         virtual void OnStateChanged(ConnectedState state) = 0;
-        virtual void OnCandles(std::deque<Candle> values) = 0;
+        virtual void OnCandles(const CandlesResult & values) = 0;
         virtual void OnTrades(const TradesResult & values) = 0;
     };
 

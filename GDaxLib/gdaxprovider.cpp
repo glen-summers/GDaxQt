@@ -52,9 +52,6 @@ GDaxProvider::GDaxProvider(const char * streamUrl, const char * restUrl,
     connect(webSocketStream, &WebSocketStream::OnHeartbeat, [&](const QDateTime & serverTime) { callback.OnHeartbeat(serverTime); });
     connect(webSocketStream, &WebSocketStream::OnTick, [&](const Tick & tick) { callback.OnTick(tick); });
     connect(webSocketStream, &WebSocketStream::OnStateChanged, [&](GDL::ConnectedState state) { callback.OnStateChanged(state); });
-
-    //connect(restProvider, &RestProvider::OnError, [&]() { callback.OnError(); });
-    connect(restProvider, &RestProvider::OnCandles, [&](std::deque<Candle> values) { callback.OnCandles(std::move(values)); });
 }
 
 const OrderBook & GDaxProvider::Orders() const
@@ -64,20 +61,26 @@ const OrderBook & GDaxProvider::Orders() const
 
 void GDaxProvider::FetchTrades(unsigned int limit)
 {
-    restProvider->FetchTrades([this](const TradesResult & tradesResult)
+    restProvider->FetchTrades([this](const TradesResult & result)
     {
-        callback.OnTrades(tradesResult);
+        callback.OnTrades(result);
     }, limit);
 }
 
 void GDaxProvider::FetchAllCandles(Granularity granularity)
 {
-    restProvider->FetchAllCandles(granularity);
+    restProvider->FetchAllCandles([this](const CandlesResult & result)
+    {
+        callback.OnCandles(result);
+    }, granularity);
 }
 
 void GDaxProvider::FetchCandles(const QDateTime &start, const QDateTime &end, Granularity granularity)
 {
-    return restProvider->FetchCandles(start, end, granularity);
+    return restProvider->FetchCandles([this](const CandlesResult & result)
+    {
+        callback.OnCandles(result);
+    }, start, end, granularity);
 }
 
 void GDaxProvider::Shutdown()

@@ -4,14 +4,14 @@
 #include "trade.h"
 #include "candle.h"
 #include "order.h"
-#include "orderresult.h"
 #include "tradesresult.h"
+#include "candlesresult.h"
+#include "orderresult.h"
 #include "servertimeresult.h"
 
 #include <QObject>
 #include <QNetworkRequest>
 
-#include <deque>
 #include <functional>
 
 class Authenticator;
@@ -38,20 +38,16 @@ public:
 
     void FetchTrades(std::function<void(TradesResult)> func, unsigned int limit);
 
-    void FetchAllCandles(Granularity granularity);
-    void FetchCandles(const QDateTime & start, const QDateTime & end, Granularity granularity);
+    void FetchAllCandles(std::function<void(CandlesResult)> func, Granularity granularity);
+
+    void FetchCandles(std::function<void(CandlesResult)> func, const QDateTime & start,
+                      const QDateTime & end, Granularity granularity);
 
     void FetchOrders(std::function<void(OrdersResult)> func, unsigned int limit = 0);
 
     void PlaceOrder(const Decimal & size, const Decimal & price, MakerSide side);
+
     void CancelOrders();
-
-signals:
-    // cld try passing a deserializer\iterators to avoid forcing container types
-    void OnCandles(std::deque<Candle> values);
-
-private slots:
-    void CandlesFinished(QNetworkReply * reply);
 
 private:
     QNetworkRequest CreateAuthenticatedRequest(const QString & httpMethod, const QString & requestPath, const QUrlQuery & query,

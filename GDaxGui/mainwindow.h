@@ -44,7 +44,6 @@ public:
 private slots: // On...?
     void on_actionE_xit_triggered();
     void Snapshot();
-    void Candles(std::deque<Candle> values);
     void Ticker(const Tick & tick);
     void Heartbeat(const QDateTime & serverTime);
     void StateChanged(GDL::ConnectedState state);
@@ -81,10 +80,7 @@ private:
         QMetaObject::invokeMethod( this, "StateChanged", Q_ARG( GDL::ConnectedState, state) );
     }
 
-    void OnCandles(std::deque<Candle> values) override
-    {
-        Candles(std::move(values));
-    }
+    void OnCandles(const CandlesResult & values) override;
 
     void OnTrades(const TradesResult & tradesResult) override;
     // Callbacks

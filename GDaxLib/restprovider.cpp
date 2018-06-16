@@ -70,18 +70,16 @@ void RestProvider::FetchTime(std::function<void (ServerTimeResult)> func)
 
 // FetchCandles seems flakey on the server, if we request with an endtime > server UTC time then
 // both parameters are ignored and the last 300 candles are returned
-// convert to ladmbda mechanism
-void RestProvider::FetchAllCandles(Granularity granularity)
+void RestProvider::FetchAllCandles(std::function<void(CandlesResult)> func, Granularity granularity)
 {
     QUrlQuery query;
     query.addQueryItem("granularity", QString::number(static_cast<unsigned int>(granularity)));
     QNetworkRequest request = CreateRequest(baseUrl % Products % Product % Candles, query);
     QNetworkReply * reply = manager->get(request);
-    WhenFinished(reply, [this](QNetworkReply * reply) { RestProvider::CandlesFinished(reply); });
+    WhenFinished(reply, std::move(func));
 }
 
-// convert to ladmbda mechanism
-void RestProvider::FetchCandles(const QDateTime & start, const QDateTime & end, Granularity granularity)
+void RestProvider::FetchCandles(std::function<void(CandlesResult)> func, const QDateTime & start, const QDateTime & end, Granularity granularity)
 {
     QUrlQuery query;
     query.addQueryItem("start", start.toString(Qt::ISODate));
@@ -89,7 +87,7 @@ void RestProvider::FetchCandles(const QDateTime & start, const QDateTime & end, 
     query.addQueryItem("granularity", QString::number(static_cast<unsigned int>(granularity)));
     QNetworkRequest request = CreateRequest(baseUrl % Products % Product % Candles, query);
     QNetworkReply * reply = manager->get(request);
-    WhenFinished(reply, [this](QNetworkReply * reply) { RestProvider::CandlesFinished(reply); });
+    WhenFinished(reply, std::move(func));
 }
 
 void RestProvider::FetchOrders(std::function<void (OrdersResult)> func, unsigned int limit)
@@ -168,36 +166,6 @@ void RestProvider::FetchTrades(std::function<void(TradesResult)> func, unsigned 
     QNetworkRequest request(url);
     QNetworkReply * reply = manager->get(request);
     WhenFinished(reply, func);
-}
-
-// convert to ladmbda mechanism
-void RestProvider::CandlesFinished(QNetworkReply *reply)
-{
-    if (reply->error())
-    {
-        //emit OnError();
-        return;
-    }
-
-    std::deque<Candle> candles;
-    QJsonDocument document = QJsonDocument::fromJson(reply->readAll());
-    for (const auto & a1: document.array())
-    {
-        const auto & ar = a1.toArray();
-        time_t startTime = (time_t)ar[0].toDouble();
-        Decimal lowestPrice(ar[1].toDouble());
-        Decimal highestPrice(ar[2].toDouble());
-        Decimal openingPrice(ar[3].toDouble());
-        Decimal closingPrice(ar[4].toDouble());
-        Decimal volume(ar[5].toDouble());
-
-      candles.push_back({startTime, lowestPrice, highestPrice, openingPrice, closingPrice, volume});
-    }
-    reply->deleteLater();
-
-    flog.Info("candles {0}", candles.size());
-
-    emit OnCandles(std::move(candles));
 }
 
 QNetworkRequest RestProvider::CreateAuthenticatedRequest(const QString & httpMethod, const QString & requestPath, const QUrlQuery & query,
