@@ -1,22 +1,20 @@
-#include "orderresult.h"
+#include "tradesresult.h"
 
 #include <QJsonDocument>
 #include <QJsonArray>
-#include <QJsonObject>
-#include <QNetworkReply>
 
-OrdersResult::OrdersResult(QNetworkReply *reply)
+TradesResult::TradesResult(QNetworkReply * reply)
     : Result(reply)
     , array(HasError() ? QJsonArray() : QJsonDocument::fromJson(reply->readAll()).array())
 {
 }
 
-OrdersResult::iterator OrdersResult::begin() const
+TradesResult::iterator TradesResult::begin() const
 {
     return {array, 0};
 }
 
-const OrdersResult::iterator OrdersResult::end() const
+const TradesResult::iterator TradesResult::end() const
 {
     return {array, array.size()};
 }

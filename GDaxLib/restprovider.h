@@ -5,6 +5,7 @@
 #include "candle.h"
 #include "order.h"
 #include "orderresult.h"
+#include "tradesresult.h"
 #include "servertimeresult.h"
 
 #include <QObject>
@@ -34,11 +35,13 @@ public:
     void SetAuthenticator(Authenticator * authenticator);
 
     void FetchTime(std::function<void(ServerTimeResult)> func);
-    void FetchTrades(unsigned int limit);
+
+    void FetchTrades(std::function<void(TradesResult)> func, unsigned int limit);
+
     void FetchAllCandles(Granularity granularity);
     void FetchCandles(const QDateTime & start, const QDateTime & end, Granularity granularity);
 
-    void FetchOrders(unsigned int limit, std::function<void(OrderResult)> func);
+    void FetchOrders(std::function<void(OrdersResult)> func, unsigned int limit = 0);
 
     void PlaceOrder(const Decimal & size, const Decimal & price, MakerSide side);
     void CancelOrders();

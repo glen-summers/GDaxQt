@@ -45,7 +45,6 @@ private slots: // On...?
     void on_actionE_xit_triggered();
     void Snapshot();
     void Candles(std::deque<Candle> values);
-    void Trades(std::deque<Trade> values);
     void Ticker(const Tick & tick);
     void Heartbeat(const QDateTime & serverTime);
     void StateChanged(GDL::ConnectedState state);
@@ -87,11 +86,7 @@ private:
         Candles(std::move(values));
     }
 
-    void OnTrades(std::deque<Trade> values) override
-    {
-        Trades(std::move(values));
-        GenerateTradeList();
-    }
+    void OnTrades(const TradesResult & tradesResult) override;
     // Callbacks
 };
 

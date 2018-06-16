@@ -4,6 +4,7 @@
 #include "depthchart.h"
 #include "candleoverlay.h"
 #include "orderbook.h"
+#include "tradesresult.h"
 
 #include "utils.h"
 #include "expandbutton.h"
@@ -314,14 +315,15 @@ td.amount span { color:grey; }
    tradesWidget.document()->setHtml(*stream.string());
 }
 
+void MainWindow::OnTrades(const TradesResult & tradesResult)
+{
+    trades = std::move(std::deque<Trade>(tradesResult.begin(), tradesResult.end()));
+    GenerateTradeList();
+}
+
 void MainWindow::Candles(std::deque<Candle> values)
 {
     this->ui->candleChart->SetCandles(std::move(values), granularity); // prevents elision?
-}
-
-void MainWindow::Trades(std::deque<Trade> values)
-{
-    this->trades = std::move(values); // prevents elision?
 }
 
 void MainWindow::Ticker(const Tick &tick)

@@ -13,6 +13,7 @@
 struct Tick;
 class QDateTime;
 class OrderBook;
+class TradesResult;
 
 namespace GDL
 {
@@ -42,7 +43,7 @@ namespace GDL
         virtual void OnTick(const Tick & tick) = 0;
         virtual void OnStateChanged(ConnectedState state) = 0;
         virtual void OnCandles(std::deque<Candle> values) = 0;
-        virtual void OnTrades(std::deque<Trade> values) = 0;
+        virtual void OnTrades(const TradesResult & values) = 0;
     };
 
     struct Deleter { void operator()(Interface*) const noexcept; };

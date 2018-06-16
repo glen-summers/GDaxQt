@@ -55,7 +55,6 @@ GDaxProvider::GDaxProvider(const char * streamUrl, const char * restUrl,
 
     //connect(restProvider, &RestProvider::OnError, [&]() { callback.OnError(); });
     connect(restProvider, &RestProvider::OnCandles, [&](std::deque<Candle> values) { callback.OnCandles(std::move(values)); });
-    connect(restProvider, &RestProvider::OnTrades, [&](std::deque<Trade> values) { callback.OnTrades(std::move(values)); });
 }
 
 const OrderBook & GDaxProvider::Orders() const
@@ -65,7 +64,10 @@ const OrderBook & GDaxProvider::Orders() const
 
 void GDaxProvider::FetchTrades(unsigned int limit)
 {
-    restProvider->FetchTrades(limit);
+    restProvider->FetchTrades([this](const TradesResult & tradesResult)
+    {
+        callback.OnTrades(tradesResult);
+    }, limit);
 }
 
 void GDaxProvider::FetchAllCandles(Granularity granularity)

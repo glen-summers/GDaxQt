@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
 // todo listen for web socket update
 //    ConsoleKeyListener::WaitFor(5);
 
-    provider.FetchOrders(0, [](OrderResult result)
+    auto ordersFn = [](OrdersResult result)
     {
         if (result.HasError())
         {
@@ -74,7 +74,8 @@ int main(int argc, char *argv[])
         {
             std::cout << SGR::Yellow << order << SGR::Rst << std::endl;
         }
-    });
+    };
+    provider.FetchOrders(ordersFn, 0);
 
     // cancel orders...
     //provider.CancelOrders();

@@ -120,7 +120,7 @@ void RestProvider::FetchCandles(const QDateTime & start, const QDateTime & end, 
     connect(reply, &QNetworkReply::finished, [this, reply]() { RestProvider::CandlesFinished(reply); });
 }
 
-void RestProvider::FetchOrders(unsigned int limit, std::function<void (OrderResult)> func)
+void RestProvider::FetchOrders(std::function<void (OrdersResult)> func, unsigned int limit)
 {
     if (!authenticator)
     {
@@ -140,7 +140,7 @@ void RestProvider::FetchOrders(unsigned int limit, std::function<void (OrderResu
     //connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), &Error);
     connect(reply, &QNetworkReply::finished, [func{std::move(func)}, reply]()
     {
-        func(OrderResult(reply));
+        func(OrdersResult(reply));
         reply->deleteLater();
     });
 }
@@ -199,7 +199,7 @@ void RestProvider::CancelOrders()
     });
 }
 
-void RestProvider::FetchTrades(unsigned int limit)
+void RestProvider::FetchTrades(std::function<void(TradesResult)> func, unsigned int limit)
 {
     QUrlQuery query;
     query.addQueryItem("limit", QString::number(limit));
@@ -209,10 +209,15 @@ void RestProvider::FetchTrades(unsigned int limit)
 
     QNetworkRequest request(url);
     QNetworkReply * reply = manager->get(request);
+    reply->ignoreSslErrors();// allows fidler, set in cfg
 
-    connect(reply, &QNetworkReply::sslErrors, &SslErrors);
-    connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), &Error);
-    connect(reply, &QNetworkReply::finished, [this, reply]() { RestProvider::TradesFinished(reply); });
+    //connect(reply, &QNetworkReply::sslErrors, &SslErrors);
+    //connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), &Error);
+    connect(reply, &QNetworkReply::finished, [func{std::move(func)}, reply]()
+    {
+        func(TradesResult(reply));
+        reply->deleteLater();
+    });
 }
 
 void RestProvider::CandlesFinished(QNetworkReply *reply)

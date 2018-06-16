@@ -24,7 +24,8 @@ SOURCES += \
     order.cpp \
     authenticator.cpp \
     orderresult.cpp \
-    servertimeresult.cpp
+    servertimeresult.cpp \
+    tradesresult.cpp
 
 HEADERS += \
     utils.h \
@@ -49,7 +50,9 @@ HEADERS += \
     authenticator.h \
     orderresult.h \
     result.h \
-    servertimeresult.h
+    servertimeresult.h \
+    tradesresult.h \
+    jsonarrayiterator.h
 
 DISTFILES += \
     misc.pri \
