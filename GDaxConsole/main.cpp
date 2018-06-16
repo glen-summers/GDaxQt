@@ -85,25 +85,18 @@ int main(int argc, char *argv[])
 
     provider.FetchOrders(0, [](OrderResult result)
     {
-        if (result.error != QNetworkReply::NoError)
+        if (result.Error() != QNetworkReply::NoError)
         {
-            std::cout << "Error fetching orders : " << result.errorString << std::endl;;
+            std::cout << "Error fetching orders : " << result.ErrorString() << std::endl;
         }
         else
         {
-            for(Order order : result.orders)
+            for (Order order : result)
             {
                 std::cout << order << std::endl;
             }
         }
     });
-
-//    QObject::connect(&provider, &RestProvider::OnOrders, [&](std::vector<Order> orders)
-//    {
-//        qInfo()<< "Orders : " << orders.size();
-//    });
-    //provider.FetchOrders();
-    //provider.FetchOrders(1);
 
     // cancel orders...
     //provider.CancelOrders();

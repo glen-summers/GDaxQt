@@ -9,7 +9,7 @@ OrderResult OrderResult::FromReply(QNetworkReply *reply)
 {
     auto error = reply->error();
     QString errorString;
-    std::vector<Order> orders;
+    QJsonArray array;
 
     if (error != QNetworkReply::NoError)
     {
@@ -17,14 +17,56 @@ OrderResult OrderResult::FromReply(QNetworkReply *reply)
     }
     else
     {
-        // todo keep and expose iterator to data
-        QJsonDocument document = QJsonDocument::fromJson(reply->readAll());
-        const auto & array  = document.array();
-        for (const QJsonValue & t : array)
-        {
-            orders.push_back(Order::FromJson(t.toObject()));
-        }
+        array = QJsonDocument::fromJson(reply->readAll()).array();
     }
 
-    return {error, errorString, orders};
+    return {error, errorString, array};
+}
+
+OrderResult::OrderResult(QNetworkReply::NetworkError error, QString errorString, QJsonArray array)
+    : error(error), errorString(errorString), array(array)
+{
+}
+
+QNetworkReply::NetworkError OrderResult::Error() const
+{
+    return error;
+}
+
+const QString &OrderResult::ErrorString() const
+{
+    return errorString;
+}
+
+OrderResult::Iterator OrderResult::begin() const
+{
+    return {array, 0};
+}
+
+const OrderResult::Iterator OrderResult::end() const
+{
+    return {array, array.size()};
+}
+
+OrderResult::Iterator::Iterator(const QJsonArray &array, int index)
+    : array(array), index(index), order()
+{
+    if (index!=array.size())
+    {
+        order = Order::FromJson(array[index].toObject());
+    }
+}
+
+OrderResult::Iterator &OrderResult::Iterator::operator++()
+{
+    ++index;
+    if (index!=array.size())
+    {
+        order = Order::FromJson(array[index].toObject());
+    }
+    else
+    {
+        order = {};
+    }
+    return *this;
 }
