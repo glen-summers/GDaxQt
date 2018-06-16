@@ -122,7 +122,7 @@ void RestProvider::FetchOrders(unsigned int limit, std::function<void (OrderResu
     //connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), &Error);
     connect(reply, &QNetworkReply::finished, [func{std::move(func)}, reply]()
     {
-        func(OrderResult::FromReply(reply));
+        func(OrderResult(reply));
         reply->deleteLater();
     });
 }

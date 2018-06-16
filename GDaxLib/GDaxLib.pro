@@ -46,7 +46,8 @@ HEADERS += \
     qfmt.h \
     order.h \
     authenticator.h \
-    orderresult.h
+    orderresult.h \
+    result.h
 
 DISTFILES += \
     misc.pri \

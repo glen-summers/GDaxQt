@@ -1,25 +1,19 @@
 #ifndef ORDERRESULT_H
 #define ORDERRESULT_H
 
+#include "result.h"
 #include "order.h"
 
 #include <QString>
 #include <QNetworkReply>
 #include <QJsonArray>
 
-class OrderResult
+class OrderResult : public Result
 {
-    QNetworkReply::NetworkError error;
-    QString errorString;
-    QJsonArray array;
-
-    OrderResult(QNetworkReply::NetworkError error, QString errorString, QJsonArray array);
+    QJsonArray const array;
 
 public:
-    static OrderResult FromReply(QNetworkReply * reply);
-
-    QNetworkReply::NetworkError Error() const;
-    const QString & ErrorString() const;
+    OrderResult(QNetworkReply * reply);
 
     class Iterator : public std::iterator<std::input_iterator_tag, Order>
     {

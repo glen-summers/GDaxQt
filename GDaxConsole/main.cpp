@@ -49,9 +49,12 @@ int main(int argc, char *argv[])
 // todo listen for web socket update
 //    ConsoleKeyListener::WaitFor(5);
 
+//    provider.FetchTime(0, [](TimeResult result)
+//    {}
+
     provider.FetchOrders(0, [](OrderResult result)
     {
-        if (result.Error() != QNetworkReply::NoError)
+        if (result.HasError())
         {
             std::cout << SGR::Red << SGR::Bold << "Error fetching orders : " << result.ErrorString() << SGR::Rst << std::endl;
         }

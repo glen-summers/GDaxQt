@@ -5,37 +5,10 @@
 #include <QJsonObject>
 #include <QNetworkReply>
 
-OrderResult OrderResult::FromReply(QNetworkReply *reply)
+OrderResult::OrderResult(QNetworkReply *reply)
+    : Result(reply)
+    , array(HasError() ? QJsonArray() : QJsonDocument::fromJson(reply->readAll()).array())
 {
-    auto error = reply->error();
-    QString errorString;
-    QJsonArray array;
-
-    if (error != QNetworkReply::NoError)
-    {
-        errorString = reply->errorString();
-    }
-    else
-    {
-        array = QJsonDocument::fromJson(reply->readAll()).array();
-    }
-
-    return {error, errorString, array};
-}
-
-OrderResult::OrderResult(QNetworkReply::NetworkError error, QString errorString, QJsonArray array)
-    : error(error), errorString(errorString), array(array)
-{
-}
-
-QNetworkReply::NetworkError OrderResult::Error() const
-{
-    return error;
-}
-
-const QString &OrderResult::ErrorString() const
-{
-    return errorString;
 }
 
 OrderResult::Iterator OrderResult::begin() const
