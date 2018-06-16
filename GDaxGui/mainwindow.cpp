@@ -317,6 +317,14 @@ td.amount span { color:grey; }
 
 void MainWindow::OnTrades(const TradesResult & tradesResult)
 {
+    if (tradesResult.HasError())
+    {
+        log.Error("OnTrades error : {0}", tradesResult.ErrorString());
+        // trigger retry?
+        return;
+    }
+
+    // todo keep any trades that have come in as ticks while trade reqest in flight
     trades = std::move(std::deque<Trade>(tradesResult.begin(), tradesResult.end()));
     GenerateTradeList();
 }

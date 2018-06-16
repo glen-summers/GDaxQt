@@ -25,12 +25,6 @@ int main(int argc, char *argv[])
     QCoreApplication a(argc, argv);
     ConsoleKeyListener con;
 
-    // avoid future time with...
-    // can call GET /time
-    // {
-    // "iso": "2015-01-07T23:47:25.201Z",
-    // "epoch": 1420674445.201
-    // }
 //    RestProvider restProvider;
 //    QDateTime start = QDateTime::currentDateTimeUtc().addDays(-1);
 //    QDateTime end = QDateTime::currentDateTimeUtc().addSecs(-60);// avoid future value, causes full dl

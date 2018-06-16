@@ -47,20 +47,18 @@ public:
     void CancelOrders();
 
 signals:
-    void OnError(); // make more specific
-
     // cld try passing a deserializer\iterators to avoid forcing container types
     void OnCandles(std::deque<Candle> values);
-    void OnTrades(std::deque<Trade> values);
-    void OnOrders(std::vector<Order> values);
 
 private slots:
     void CandlesFinished(QNetworkReply * reply);
-    void TradesFinished(QNetworkReply * reply);
 
 private:
     QNetworkRequest CreateAuthenticatedRequest(const QString & httpMethod, const QString & requestPath, const QUrlQuery & query,
                                                const QByteArray & body) const;
+
+    QNetworkRequest CreateRequest(const QString & requestPath, const QUrlQuery & query) const;
+
 };
 
 #endif // RESTPROVIDER_H

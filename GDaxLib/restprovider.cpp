@@ -36,18 +36,15 @@ namespace
     constexpr const char CbAccessTimestamp[] = "CB-ACCESS-TIMESTAMP";
     constexpr const char CbAccessPassphrase[] = "CB-ACCESS-PASSPHRASE";
 
-    // informational atm
-    void Error(QNetworkReply::NetworkError error)
+    template <typename T>
+    void WhenFinished(QNetworkReply * reply, T func)
     {
-        flog.Error("SocketError: {0}", QMetaEnum::fromType<QNetworkReply::NetworkError>().valueToKey(error));
-    }
-
-    void SslErrors(QList<QSslError> errors)
-    {
-        for (auto & e : errors)
+        QObject::connect(reply, &QNetworkReply::finished, [func{std::move(func)}, reply]()
         {
-            flog.Error("SslError: {0}, {1}", e.error(), e.errorString().toStdString());
-        }
+            reply->ignoreSslErrors(); // config
+            func(reply);
+            reply->deleteLater();
+        });
     }
 }
 
@@ -66,58 +63,33 @@ void RestProvider::SetAuthenticator(Authenticator * newAuthenticator)
 
 void RestProvider::FetchTime(std::function<void (ServerTimeResult)> func)
 {
-    // make a template Fetch?, parms func<TResult>  + Url + UrlQuery + needsAuthentication?
-    // keep request and reply code together?
-    QUrl url(baseUrl % Time);
-    flog.Info("Requesting {0}", url.toString());
-    QNetworkRequest request(url);
-    // reply always deleted? docs say finished may not get called, always hook error?
+    QNetworkRequest request = CreateRequest(baseUrl % Time, {});
     QNetworkReply * reply = manager->get(request);
-    reply->ignoreSslErrors();// allows fidler, set in cfg
-    connect(reply, &QNetworkReply::finished, [func{std::move(func)}, reply]()
-    {
-        func(ServerTimeResult(reply));
-        reply->deleteLater();
-    });
+    WhenFinished(reply, std::move(func));
 }
 
+// FetchCandles seems flakey on the server, if we request with an endtime > server UTC time then
+// both parameters are ignored and the last 300 candles are returned
+// convert to ladmbda mechanism
 void RestProvider::FetchAllCandles(Granularity granularity)
 {
     QUrlQuery query;
     query.addQueryItem("granularity", QString::number(static_cast<unsigned int>(granularity)));
-
-    QUrl url(baseUrl % Products % Product % Candles);
-    url.setQuery(query);
-
-    flog.Info("Requesting {0}", url.toString());
-    QNetworkRequest request(url);
+    QNetworkRequest request = CreateRequest(baseUrl % Products % Product % Candles, query);
     QNetworkReply * reply = manager->get(request);
-    // reply->ignoreSslErrors();// allows fidler, set in cfg
-    connect(reply, &QNetworkReply::sslErrors, &SslErrors);
-    connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), &Error);
-    connect(reply, &QNetworkReply::finished, [this, reply]() { RestProvider::CandlesFinished(reply); });
+    WhenFinished(reply, [this](QNetworkReply * reply) { RestProvider::CandlesFinished(reply); });
 }
 
+// convert to ladmbda mechanism
 void RestProvider::FetchCandles(const QDateTime & start, const QDateTime & end, Granularity granularity)
 {
-    // this version seems flakey on the server, if we request with an endtime > server UTC time then
-    // both parameters are ignored and the last 300 candles are returned
-
     QUrlQuery query;
     query.addQueryItem("start", start.toString(Qt::ISODate));
     query.addQueryItem("end", end.toString(Qt::ISODate));
     query.addQueryItem("granularity", QString::number(static_cast<unsigned int>(granularity)));
-
-    QUrl url(baseUrl % Products % Product % Candles);
-    url.setQuery(query);
-
-    flog.Info("Requesting {0}", url.toString());
-    QNetworkRequest request(url);
+    QNetworkRequest request = CreateRequest(baseUrl % Products % Product % Candles, query);
     QNetworkReply * reply = manager->get(request);
-    // reply->ignoreSslErrors();// allows fidler, set in cfg
-    connect(reply, &QNetworkReply::sslErrors, &SslErrors);
-    connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), &Error);
-    connect(reply, &QNetworkReply::finished, [this, reply]() { RestProvider::CandlesFinished(reply); });
+    WhenFinished(reply, [this](QNetworkReply * reply) { RestProvider::CandlesFinished(reply); });
 }
 
 void RestProvider::FetchOrders(std::function<void (OrdersResult)> func, unsigned int limit)
@@ -134,17 +106,11 @@ void RestProvider::FetchOrders(std::function<void (OrdersResult)> func, unsigned
     }
 
     QNetworkRequest request = CreateAuthenticatedRequest("GET", Orders, query, {});
-    QNetworkReply * reply = manager->get(request); // reply always deleted? finished may not get called, always hook error?
-    reply->ignoreSslErrors();// allows fidler, set in cfg
-    //connect(reply, &QNetworkReply::sslErrors, &SslErrors);
-    //connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), &Error);
-    connect(reply, &QNetworkReply::finished, [func{std::move(func)}, reply]()
-    {
-        func(OrdersResult(reply));
-        reply->deleteLater();
-    });
+    QNetworkReply * reply = manager->get(request);
+    WhenFinished(reply, std::move(func));
 }
 
+// convert to ladmbda mechanism
 void RestProvider::PlaceOrder(const Decimal & size, const Decimal & price, MakerSide side)
 {
     if (!authenticator)
@@ -165,20 +131,16 @@ void RestProvider::PlaceOrder(const Decimal & size, const Decimal & price, Maker
     auto data = doc.toJson();
 
     QNetworkRequest request = CreateAuthenticatedRequest("POST", Orders, {}, data);
-    // agent?
     request.setRawHeader("Content-Type", "application/json");
 
     QNetworkReply * reply = manager->post(request, data);
-    reply->ignoreSslErrors();// allows fidler, set in cfg
-    connect(reply, &QNetworkReply::sslErrors, &SslErrors);
-    connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), &Error);
-    connect(reply, &QNetworkReply::finished, [&]()
+    WhenFinished(reply, [&](QNetworkReply * )
     {
         flog.Info("OrderFinished");
-        // return order via lambda
     });
 }
 
+// convert to ladmbda mechanism
 void RestProvider::CancelOrders()
 {
     if (!authenticator)
@@ -189,13 +151,9 @@ void RestProvider::CancelOrders()
     // + product_id
     QNetworkRequest request = CreateAuthenticatedRequest("DELETE", Orders, {}, {});
     QNetworkReply * reply = manager->deleteResource(request);
-    reply->ignoreSslErrors();// allows fidler, set in cfg
-    connect(reply, &QNetworkReply::sslErrors, &SslErrors);
-    connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), &Error);
-    connect(reply, &QNetworkReply::finished, [&]()
+    WhenFinished(reply, [&](QNetworkReply * )
     {
         flog.Info("Delete Orders Finished");
-        // return result via lambda
     });
 }
 
@@ -209,22 +167,15 @@ void RestProvider::FetchTrades(std::function<void(TradesResult)> func, unsigned 
 
     QNetworkRequest request(url);
     QNetworkReply * reply = manager->get(request);
-    reply->ignoreSslErrors();// allows fidler, set in cfg
-
-    //connect(reply, &QNetworkReply::sslErrors, &SslErrors);
-    //connect(reply, QOverload<QNetworkReply::NetworkError>::of(&QNetworkReply::error), &Error);
-    connect(reply, &QNetworkReply::finished, [func{std::move(func)}, reply]()
-    {
-        func(TradesResult(reply));
-        reply->deleteLater();
-    });
+    WhenFinished(reply, func);
 }
 
+// convert to ladmbda mechanism
 void RestProvider::CandlesFinished(QNetworkReply *reply)
 {
     if (reply->error())
     {
-        emit OnError();
+        //emit OnError();
         return;
     }
 
@@ -249,26 +200,6 @@ void RestProvider::CandlesFinished(QNetworkReply *reply)
     emit OnCandles(std::move(candles));
 }
 
-void RestProvider::TradesFinished(QNetworkReply *reply)
-{
-    if (reply->error())
-    {
-        emit OnError();
-        return;
-    }
-
-    QJsonDocument document = QJsonDocument::fromJson(reply->readAll());
-    std::deque<Trade> trades;
-    const auto & array  = document.array();
-    for (const QJsonValue & t : array)
-    {
-        trades.push_back(Trade::FromJson(t.toObject()));
-    }
-    reply->deleteLater();
-
-    emit OnTrades(std::move(trades));
-}
-
 QNetworkRequest RestProvider::CreateAuthenticatedRequest(const QString & httpMethod, const QString & requestPath, const QUrlQuery & query,
                                                          const QByteArray & body) const
 {
@@ -285,7 +216,16 @@ QNetworkRequest RestProvider::CreateAuthenticatedRequest(const QString & httpMet
     request.setRawHeader(QByteArray(CbAccessSign), signature);
     request.setRawHeader(QByteArray(CbAccessTimestamp), timestamp.toUtf8());
     request.setRawHeader(QByteArray(CbAccessPassphrase), authenticator->Passphrase());
+    // set agent?
+    return request;
+}
 
-    // just return manager->get(request);
+QNetworkRequest RestProvider::CreateRequest(const QString & requestPath, const QUrlQuery & query) const
+{
+    QUrl url(requestPath);
+    url.setQuery(query);
+    flog.Info("Request {0}", url.toString());
+    QNetworkRequest request(url);
+    // set agent?
     return request;
 }

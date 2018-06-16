@@ -10,13 +10,10 @@ class Result
     QString const errorString;
 
 public:
-    Result(QNetworkReply * reply)
-        : error(reply->error())
-        , errorString(reply->errorString())
-    {}
+    Result(QNetworkReply * reply);
 
     QNetworkReply::NetworkError Error() const { return error; }
-    const QString & ErrorString() const { return errorString; }
+    QString ErrorString() const;
     bool HasError() const { return error != QNetworkReply::NetworkError::NoError; }
 };
 

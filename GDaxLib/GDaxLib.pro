@@ -25,7 +25,8 @@ SOURCES += \
     authenticator.cpp \
     orderresult.cpp \
     servertimeresult.cpp \
-    tradesresult.cpp
+    tradesresult.cpp \
+    result.cpp
 
 HEADERS += \
     utils.h \
