@@ -23,7 +23,8 @@ SOURCES += \
     qfmt.cpp \
     order.cpp \
     authenticator.cpp \
-    orderresult.cpp
+    orderresult.cpp \
+    servertimeresult.cpp
 
 HEADERS += \
     utils.h \
@@ -47,7 +48,8 @@ HEADERS += \
     order.h \
     authenticator.h \
     orderresult.h \
-    result.h
+    result.h \
+    servertimeresult.h
 
 DISTFILES += \
     misc.pri \

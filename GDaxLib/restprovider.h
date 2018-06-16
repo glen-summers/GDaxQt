@@ -5,6 +5,7 @@
 #include "candle.h"
 #include "order.h"
 #include "orderresult.h"
+#include "servertimeresult.h"
 
 #include <QObject>
 #include <QNetworkRequest>
@@ -32,6 +33,7 @@ public:
 
     void SetAuthenticator(Authenticator * authenticator);
 
+    void FetchTime(std::function<void(ServerTimeResult)> func);
     void FetchTrades(unsigned int limit);
     void FetchAllCandles(Granularity granularity);
     void FetchCandles(const QDateTime & start, const QDateTime & end, Granularity granularity);

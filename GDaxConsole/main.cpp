@@ -44,26 +44,35 @@ int main(int argc, char *argv[])
     RestProvider provider("https://api-public.sandbox.gdax.com", new QNetworkAccessManager());
     provider.SetAuthenticator(new Authenticator(std::move(apiKey), QByteArray::fromBase64(std::move(secret)), std::move(passphrase)));
 
+    auto now = QDateTime::currentDateTimeUtc();
+    provider.FetchTime([&](ServerTimeResult result)
+    {
+        if (result.HasError())
+        {
+            std::cout << SGR::Red << SGR::Bold << "Error fetching time : " << result.ErrorString() << SGR::Rst << std::endl;
+            return;
+        }
+        std::cout << "ServerTime: " << result.Value().toString().toStdString()
+                  << ", DeltaMs(+latency): " << now.msecsTo(result.Value())
+                  << std::endl;
+    });
+
+
 // place order
 //    provider.PlaceOrder(Decimal("0.01"), Decimal("0.1"), MakerSide::Buy);
 // todo listen for web socket update
 //    ConsoleKeyListener::WaitFor(5);
-
-//    provider.FetchTime(0, [](TimeResult result)
-//    {}
 
     provider.FetchOrders(0, [](OrderResult result)
     {
         if (result.HasError())
         {
             std::cout << SGR::Red << SGR::Bold << "Error fetching orders : " << result.ErrorString() << SGR::Rst << std::endl;
+            return;
         }
-        else
+        for (Order order : result)
         {
-            for (Order order : result)
-            {
-                std::cout << SGR::Yellow << order << SGR::Rst << std::endl;
-            }
+            std::cout << SGR::Yellow << order << SGR::Rst << std::endl;
         }
     });
 

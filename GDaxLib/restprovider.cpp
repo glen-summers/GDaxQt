@@ -29,6 +29,7 @@ namespace
     constexpr const char Candles[] = "/candles";
     constexpr const char Trades[] = "/trades";
     constexpr const char Orders[] = "/orders";
+    constexpr const char Time[] = "/time";
 
     constexpr const char CbAccessKey[]= "CB-ACCESS-KEY";
     constexpr const char CbAccessSign[] = "CB-ACCESS-SIGN";
@@ -61,6 +62,23 @@ RestProvider::RestProvider(const char * baseUrl, QNetworkAccessManager * manager
 void RestProvider::SetAuthenticator(Authenticator * newAuthenticator)
 {
     authenticator = newAuthenticator;
+}
+
+void RestProvider::FetchTime(std::function<void (ServerTimeResult)> func)
+{
+    // make a template Fetch?, parms func<TResult>  + Url + UrlQuery + needsAuthentication?
+    // keep request and reply code together?
+    QUrl url(baseUrl % Time);
+    flog.Info("Requesting {0}", url.toString());
+    QNetworkRequest request(url);
+    // reply always deleted? docs say finished may not get called, always hook error?
+    QNetworkReply * reply = manager->get(request);
+    reply->ignoreSslErrors();// allows fidler, set in cfg
+    connect(reply, &QNetworkReply::finished, [func{std::move(func)}, reply]()
+    {
+        func(ServerTimeResult(reply));
+        reply->deleteLater();
+    });
 }
 
 void RestProvider::FetchAllCandles(Granularity granularity)
