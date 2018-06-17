@@ -46,16 +46,25 @@ int main(int argc, char *argv[])
             std::cout << SGR::Red << SGR::Bold << "Error fetching time : " << result.ErrorString() << SGR::Rst << std::endl;
             return;
         }
-        std::cout << "ServerTime: " << result.Value().toString().toStdString()
-                  << ", DeltaMs(+latency): " << now.msecsTo(result.Value())
+        std::cout << "ServerTime: " << result().toString().toStdString()
+                  << ", DeltaMs(+latency): " << now.msecsTo(result())
                   << std::endl;
     });
 
 
 // place order
-//    provider.PlaceOrder(Decimal("0.01"), Decimal("0.1"), MakerSide::Buy);
+    auto placeOrderFn = [](OrderResult result)
+    {
+        if (result.HasError())
+        {
+            std::cout << SGR::Red << SGR::Bold << "Error placing order : " << result.ErrorString() << SGR::Rst << std::endl;
+            return;
+        }
+        std::cout << SGR::Green << result() << SGR::Rst << std::endl;
+    };
+    provider.PlaceOrder(placeOrderFn, Decimal("0.01"), Decimal("0.1"), MakerSide::Buy);
 // todo listen for web socket update
-//    ConsoleKeyListener::WaitFor(5);
+    ConsoleKeyListener::WaitFor(5);
 
     auto ordersFn = [](OrdersResult result)
     {
@@ -72,7 +81,19 @@ int main(int argc, char *argv[])
     provider.FetchOrders(ordersFn, 0);
 
     // cancel orders...
-    //provider.CancelOrders();
+    auto cancelOrdersFn = [](CancelOrdersResult result)
+    {
+        if (result.HasError())
+        {
+            std::cout << SGR::Red << SGR::Bold << "Error cancelling orders : " << result.ErrorString() << SGR::Rst << std::endl;
+            return;
+        }
+        for (QString id : result)
+        {
+            std::cout << SGR::Yellow << "OrderId cancelled : " << id << SGR::Rst << std::endl;
+        }
+    };
+    provider.CancelOrders(cancelOrdersFn);
 
     return con.Exec();
 }

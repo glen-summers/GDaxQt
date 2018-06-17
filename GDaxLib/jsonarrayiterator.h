@@ -5,7 +5,7 @@
 
 #include <iterator>
 
-template <typename T>
+template <typename T, typename Converter>
 class JsonArrayIterator
 {
     const QJsonArray & array;
@@ -24,7 +24,7 @@ public:
     {
         if (index!=array.size())
         {
-            value = T::FromJson(array[index]);
+            value = Converter::FromJson(array[index]);
         }
     }
 
@@ -36,11 +36,11 @@ public:
         ++index;
         if (index!=array.size())
         {
-            value = T::FromJson(array[index]);
+            value = Converter::FromJson(array[index]);
         }
         else
         {
-            value = {};
+            value = T{};
         }
         return *this;
     }

@@ -1,13 +1,7 @@
 #ifndef RESTPROVIDER_H
 #define RESTPROVIDER_H
 
-#include "trade.h"
-#include "candle.h"
-#include "order.h"
-#include "tradesresult.h"
-#include "candlesresult.h"
-#include "orderresult.h"
-#include "servertimeresult.h"
+#include "gdl.h" // avoid here?
 
 #include <QObject>
 #include <QNetworkRequest>
@@ -45,9 +39,9 @@ public:
 
     void FetchOrders(std::function<void(OrdersResult)> func, unsigned int limit = 0);
 
-    void PlaceOrder(const Decimal & size, const Decimal & price, MakerSide side);
+    void PlaceOrder(std::function<void(GenericResult<Order>)> func, const Decimal & size, const Decimal & price, MakerSide side);
 
-    void CancelOrders();
+    void CancelOrders(std::function<void(CancelOrdersResult)> func);
 
 private:
     QNetworkRequest CreateAuthenticatedRequest(const QString & httpMethod, const QString & requestPath, const QUrlQuery & query,

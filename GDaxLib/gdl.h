@@ -3,17 +3,40 @@
 
 #include "candle.h"
 #include "trade.h"
-
-#include <QNetworkReply>
+#include "order.h"
+#include "jsonarrayresult.h"
+#include "genericresult.h"
 
 #include <memory>
 #include <functional>
 
+// namespace?
 struct Tick;
 class QDateTime;
 class OrderBook;
-class TradesResult;
-class CandlesResult;
+
+// todo, try and expose these by a base interface?
+typedef JsonArrayResult<Trade> TradesResult;
+typedef JsonArrayResult<Candle> CandlesResult;
+typedef JsonArrayResult<Order> OrdersResult;
+typedef GenericResult<Order> OrderResult;
+struct JsonValueToString
+{
+    static QString FromJson(const QJsonValue & value)
+    {
+        return value.toString();
+    }
+};
+typedef JsonArrayResult<QString, JsonValueToString> CancelOrdersResult;
+
+struct ServerTimeToDateTime
+{
+    static QDateTime FromJson(const QJsonValue & value)
+    {
+        return QDateTime::fromString(value["iso"].toString(), Qt::DateFormat::ISODateWithMs);
+    }
+};
+typedef GenericResult<QDateTime, ServerTimeToDateTime> ServerTimeResult;
 
 namespace GDL
 {

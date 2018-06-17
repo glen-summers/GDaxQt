@@ -23,11 +23,7 @@ SOURCES += \
     qfmt.cpp \
     order.cpp \
     authenticator.cpp \
-    orderresult.cpp \
-    servertimeresult.cpp \
-    tradesresult.cpp \
     result.cpp \
-    candlesresult.cpp \
     candle.cpp
 
 HEADERS += \
@@ -51,12 +47,10 @@ HEADERS += \
     qfmt.h \
     order.h \
     authenticator.h \
-    orderresult.h \
     result.h \
-    servertimeresult.h \
-    tradesresult.h \
     jsonarrayiterator.h \
-    candlesresult.h
+    genericresult.h \
+    jsonarrayresult.h
 
 DISTFILES += \
     misc.pri \

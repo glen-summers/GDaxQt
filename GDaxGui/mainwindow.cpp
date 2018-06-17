@@ -4,8 +4,6 @@
 #include "depthchart.h"
 #include "candleoverlay.h"
 #include "orderbook.h"
-#include "tradesresult.h"
-#include "candlesresult.h"
 
 #include "utils.h"
 #include "expandbutton.h"

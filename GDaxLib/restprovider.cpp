@@ -92,11 +92,6 @@ void RestProvider::FetchCandles(std::function<void(CandlesResult)> func, const Q
 
 void RestProvider::FetchOrders(std::function<void (OrdersResult)> func, unsigned int limit)
 {
-    if (!authenticator)
-    {
-        throw std::runtime_error("Method requires authentication");
-    }
-
     QUrlQuery query;
     if (limit != 0)
     {
@@ -108,51 +103,40 @@ void RestProvider::FetchOrders(std::function<void (OrdersResult)> func, unsigned
     WhenFinished(reply, std::move(func));
 }
 
-// convert to ladmbda mechanism
-void RestProvider::PlaceOrder(const Decimal & size, const Decimal & price, MakerSide side)
+void RestProvider::PlaceOrder(std::function<void(GenericResult<Order>)> func, const Decimal & size, const Decimal & price, MakerSide side)
 {
-    if (!authenticator)
-    {
-        throw std::runtime_error("Method requires authentication");
-    }
     QString siderian = MakerSideToString(side);
     QString sz = DecNs::toString(size).c_str();
     QString pr = DecNs::toString(price).c_str();
 
     QJsonDocument doc(QJsonObject
     {
+        // class
         {"price", pr},
         {"size", sz},
         {"side", siderian },
         {"product_id", Product}
+
+        // +client_oid
+        // type: limit*|market
+        // stp
+        //stop: loss|entry, requires stop_price
+        //stop_price
     });
     auto data = doc.toJson();
 
     QNetworkRequest request = CreateAuthenticatedRequest("POST", Orders, {}, data);
     request.setRawHeader("Content-Type", "application/json");
-
     QNetworkReply * reply = manager->post(request, data);
-    WhenFinished(reply, [&](QNetworkReply * )
-    {
-        flog.Info("OrderFinished");
-    });
+    WhenFinished(reply, std::move(func));
 }
 
-// convert to ladmbda mechanism
-void RestProvider::CancelOrders()
+void RestProvider::CancelOrders(std::function<void(CancelOrdersResult)> func)
 {
-    if (!authenticator)
-    {
-        throw std::runtime_error("Method requires authentication");
-    }
-
-    // + product_id
+    // + optional product_id
     QNetworkRequest request = CreateAuthenticatedRequest("DELETE", Orders, {}, {});
     QNetworkReply * reply = manager->deleteResource(request);
-    WhenFinished(reply, [&](QNetworkReply * )
-    {
-        flog.Info("Delete Orders Finished");
-    });
+    WhenFinished(reply, std::move(func));
 }
 
 void RestProvider::FetchTrades(std::function<void(TradesResult)> func, unsigned int limit)
@@ -171,6 +155,11 @@ void RestProvider::FetchTrades(std::function<void(TradesResult)> func, unsigned 
 QNetworkRequest RestProvider::CreateAuthenticatedRequest(const QString & httpMethod, const QString & requestPath, const QUrlQuery & query,
                                                          const QByteArray & body) const
 {
+    if (!authenticator)
+    {
+        throw std::logic_error("Authentication has not been configured");
+    }
+
     QUrl url(baseUrl % requestPath);
     url.setQuery(query);
 

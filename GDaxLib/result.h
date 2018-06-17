@@ -4,7 +4,6 @@
 #include <QNetworkReply>
 #include <QString>
 
-// make a generic JsonArray Result?
 class Result
 {
     QNetworkReply::NetworkError const error;
