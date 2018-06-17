@@ -7,18 +7,15 @@
 #include <QJsonDocument>
 #include <QJsonArray>
 
-// expose to client via interface?
-// template <typename T> struct IIterableResult<T> {};
-
 template <typename T, typename Converter = T>
-class JsonArrayResult : public Result
+class IterableResult : public Result
 {
     QJsonArray const array;
 
 public:
     typedef JsonArrayIterator<T, Converter> iterator;
 
-    JsonArrayResult(QNetworkReply * reply)
+    IterableResult(QNetworkReply * reply)
         : Result(reply)
         , array(HasError() ? QJsonArray() : QJsonDocument::fromJson(reply->readAll()).array())
     {}

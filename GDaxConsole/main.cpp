@@ -5,6 +5,8 @@
 #include "authenticator.h"
 #include "utils.h"
 
+#include "order.h"
+
 #include <QCoreApplication>
 
 #include <QThread>
@@ -29,6 +31,8 @@ int main(int argc, char *argv[])
 //    QDateTime start = QDateTime::currentDateTimeUtc().addDays(-1);
 //    QDateTime end = QDateTime::currentDateTimeUtc().addSecs(-60);// avoid future value, causes full dl
 //    restProvider.FetchCandles(start, end, Granularity::Hours);
+
+    // bump this back to using GDL interface
 
     // sandbox test key
     auto apiKey = QByteArrayLiteral("86feb99f0b2244a1b756c9aca9c8eb0c");

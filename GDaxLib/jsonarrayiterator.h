@@ -5,7 +5,7 @@
 
 #include <iterator>
 
-template <typename T, typename Converter>
+template <typename T, typename Converter = T>
 class JsonArrayIterator
 {
     const QJsonArray & array;

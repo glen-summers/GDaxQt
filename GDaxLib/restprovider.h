@@ -3,6 +3,8 @@
 
 #include "gdl.h" // avoid here?
 
+#include "decimalwrap.h"
+
 #include <QObject>
 #include <QNetworkRequest>
 
@@ -39,7 +41,7 @@ public:
 
     void FetchOrders(std::function<void(OrdersResult)> func, unsigned int limit = 0);
 
-    void PlaceOrder(std::function<void(GenericResult<Order>)> func, const Decimal & size, const Decimal & price, MakerSide side);
+    void PlaceOrder(std::function<void(OrderResult)> func, const Decimal & size, const Decimal & price, MakerSide side);
 
     void CancelOrders(std::function<void(CancelOrdersResult)> func);
 

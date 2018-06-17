@@ -1,25 +1,29 @@
 #ifndef GDL_H
 #define GDL_H
 
-#include "candle.h"
-#include "trade.h"
-#include "order.h"
-#include "jsonarrayresult.h"
+#include "iterableresult.h"
 #include "genericresult.h"
+#include "decimalwrap.h"
 
 #include <memory>
 #include <functional>
 
-// namespace?
-struct Tick;
 class QDateTime;
 class OrderBook;
 
-// todo, try and expose these by a base interface?
-typedef JsonArrayResult<Trade> TradesResult;
-typedef JsonArrayResult<Candle> CandlesResult;
-typedef JsonArrayResult<Order> OrdersResult;
+struct Tick;
+struct Candle;
+class Trade;
+struct Order;
+
+enum class MakerSide : unsigned;
+enum class Granularity : unsigned;
+
+typedef IterableResult<Trade> TradesResult;
+typedef IterableResult<Candle> CandlesResult;
+typedef IterableResult<Order> OrdersResult;
 typedef GenericResult<Order> OrderResult;
+
 struct JsonValueToString
 {
     static QString FromJson(const QJsonValue & value)
@@ -27,7 +31,7 @@ struct JsonValueToString
         return value.toString();
     }
 };
-typedef JsonArrayResult<QString, JsonValueToString> CancelOrdersResult;
+typedef IterableResult<QString, JsonValueToString> CancelOrdersResult;
 
 struct ServerTimeToDateTime
 {
@@ -57,6 +61,10 @@ namespace GDL
         virtual void FetchAllCandles(Granularity granularity) = 0;
         virtual void FetchCandles(const QDateTime & start, const QDateTime & end, Granularity granularity) = 0;
         virtual void Shutdown() = 0;
+
+        virtual void FetchOrders(std::function<void(OrdersResult)> func, unsigned int limit = 0) = 0;
+        virtual void PlaceOrder(std::function<void(OrderResult)> func, const Decimal & size, const Decimal & price, MakerSide side) = 0;
+        virtual void CancelOrders(std::function<void(CancelOrdersResult)> func) = 0;
     };
 
     struct Callback

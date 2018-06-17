@@ -1,9 +1,9 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "gdl.h"
 #include "candle.h"
 #include "trade.h"
-#include "gdl.h"
 
 #include "flogging.h"
 

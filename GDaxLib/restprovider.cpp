@@ -1,7 +1,10 @@
 #include "restprovider.h"
 
+#include "defs.h"
 #include "utils.h"
 #include "authenticator.h"
+
+#include "order.h"
 
 #include "flogging.h"
 
