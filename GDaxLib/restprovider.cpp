@@ -55,13 +55,17 @@ RestProvider::RestProvider(const char * baseUrl, QNetworkAccessManager * manager
     : QObject(parent)
     , baseUrl(baseUrl)
     , manager(manager)
-    , authenticator()
 {
 }
 
-void RestProvider::SetAuthenticator(Authenticator * newAuthenticator)
+void RestProvider::SetAuthentication(QByteArray apiKey, QByteArray secretKey, QByteArray passphrase)
 {
-    authenticator = newAuthenticator;
+    authenticator = std::make_unique<Authenticator>(apiKey, QByteArray::fromBase64(secretKey), passphrase);
+}
+
+void RestProvider::ClearAuthentication()
+{
+    authenticator.reset();
 }
 
 void RestProvider::FetchTime(std::function<void (ServerTimeResult)> func)

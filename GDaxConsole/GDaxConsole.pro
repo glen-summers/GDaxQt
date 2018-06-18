@@ -10,8 +10,10 @@ CONFIG -= app_bundle
 DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += \
-        main.cpp
+        main.cpp \
+    consoletest.cpp
 
 HEADERS += \
-    consoleutils.h
+    consoleutils.h \
+    consoletest.h
 

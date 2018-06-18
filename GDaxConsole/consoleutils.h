@@ -7,6 +7,10 @@
 
 #include <future>
 
+#ifdef _MSC_VER
+#include <windows.h>
+#endif
+
 namespace SGR
 {
     static constexpr const char Black[]  = "\x1b[30m";
@@ -75,7 +79,24 @@ public:
         f.wait();
         return ret;
     }
-
 };
+
+inline void EnableAnsiConsole()
+{
+#ifdef _MSC_VER
+    HANDLE hOut = ::GetStdHandle(STD_OUTPUT_HANDLE);
+    DWORD dwMode = 0;
+    if (!GetConsoleMode(hOut, &dwMode))
+    {
+        throw ::GetLastError(); // ex
+    }
+
+    dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+    if (!SetConsoleMode(hOut, dwMode))
+    {
+        throw ::GetLastError();
+    }
+#endif
+}
 
 #endif // CONSOLEUTILS_H

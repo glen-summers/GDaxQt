@@ -22,6 +22,7 @@ public:
 
     iterator begin() const
     {
+        Verify();
         return {array, 0};
     }
 
@@ -29,6 +30,8 @@ public:
     {
         return {array, array.size()};
     }
+
+    size_t count() const { return array.size(); }
 };
 
 #endif // JSONARRAYRESULT_H

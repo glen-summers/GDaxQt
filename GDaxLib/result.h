@@ -13,8 +13,10 @@ public:
     Result(QNetworkReply * reply);
 
     QNetworkReply::NetworkError Error() const { return error; }
-    QString ErrorString() const;
+    std::string ErrorString() const;
     bool HasError() const { return error != QNetworkReply::NetworkError::NoError; }
+
+    void Verify() const;
 };
 
 

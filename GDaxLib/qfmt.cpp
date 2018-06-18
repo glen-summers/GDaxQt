@@ -5,6 +5,7 @@
 #include <QRect>
 #include <QRectF>
 #include <QString>
+#include <QDateTime>
 
 std::ostream & operator << (std::ostream & stm, const QPoint & p)
 {
@@ -31,3 +32,7 @@ std::ostream & operator << (std::ostream & stm, const QString & s)
     return stm << s.toStdString();
 }
 
+std::ostream &operator <<(std::ostream &stm, const QDateTime &s)
+{
+    return stm << s.toString(Qt::DateFormat::ISODateWithMs);
+}

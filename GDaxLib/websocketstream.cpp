@@ -35,7 +35,8 @@ namespace
     // informational atm
     void Error(QAbstractSocket::SocketError error)
     {
-        log.Error("SocketError: {0}", QMetaEnum::fromType<QNetworkReply::NetworkError>().valueToKey(error));
+        const char * err = QMetaEnum::fromType<QNetworkReply::NetworkError>().valueToKey(error);
+        log.Error("SocketError: {0}", err ? err : "unknown");
     }
 
     void SslErrors(QList<QSslError> errors)

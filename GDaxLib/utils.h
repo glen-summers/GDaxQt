@@ -9,8 +9,6 @@
 
 namespace Utils
 {
-    void EnableAnsiConsole();
-
     QString DiffText(const QString & s1, const QString & s2);
 
     namespace Detail

@@ -23,12 +23,14 @@ class RestProvider : public QObject
 
     QString const baseUrl;
     QNetworkAccessManager * const manager;
-    Authenticator * authenticator;
+    std::unique_ptr<Authenticator> authenticator;
 
 public:
     RestProvider(const char * baseUrl, QNetworkAccessManager * manager, QObject * parent = nullptr);
 
-    void SetAuthenticator(Authenticator * authenticator);
+    void SetAuthentication(QByteArray apiKey, QByteArray secretKey, QByteArray passphrase);
+
+    void ClearAuthentication();
 
     void FetchTime(std::function<void(ServerTimeResult)> func);
 

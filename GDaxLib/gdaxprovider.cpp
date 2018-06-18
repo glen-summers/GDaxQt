@@ -54,6 +54,16 @@ GDaxProvider::GDaxProvider(const char * streamUrl, const char * restUrl,
     connect(webSocketStream, &WebSocketStream::OnStateChanged, [&](GDL::ConnectedState state) { callback.OnStateChanged(state); });
 }
 
+void GDaxProvider::SetAuthentication(const char * key, const char * secret, const char * passphrase) const
+{
+    restProvider->SetAuthentication(key, secret, passphrase);
+}
+
+void GDaxProvider::ClearAuthentication() const
+{
+    restProvider->ClearAuthentication();
+}
+
 const OrderBook & GDaxProvider::Orders() const
 {
     return webSocketStream->Orders();

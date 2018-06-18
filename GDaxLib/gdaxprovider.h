@@ -30,6 +30,9 @@ public:
     GDaxProvider(const char * streamUrl, const char * restUrl,
             GDL::Callback & callback, QObject * parent = nullptr);
 
+    void SetAuthentication(const char * key, const char * secret, const char * passphrase) const override;
+    void ClearAuthentication() const override;
+
     const OrderBook & Orders() const override;
 
     void FetchTrades(unsigned int limit) override;

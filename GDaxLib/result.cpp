@@ -7,7 +7,15 @@ Result::Result(QNetworkReply *reply)
     , errorString(reply->errorString())
 {}
 
-QString Result::ErrorString() const
+std::string Result::ErrorString() const
 {
-    return QString("%1 : %2").arg(errorString).arg(QMetaEnum::fromType<QNetworkReply::NetworkError>().valueToKey(error));
+    return QString("%1 : %2").arg(errorString).arg(QMetaEnum::fromType<QNetworkReply::NetworkError>().valueToKey(error)).toStdString();
+}
+
+void Result::Verify() const
+{
+    if (HasError())
+    {
+        throw std::runtime_error(ErrorString());
+    }
 }

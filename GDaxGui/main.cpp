@@ -1,8 +1,8 @@
 #include "mainwindow.h"
 
-#include "gdaxprovider.h"
 #include "gdl.h"
 #include "utils.h"
+#include "gdaxprovider.h"
 
 #include <QApplication>
 #include <QSurfaceFormat>

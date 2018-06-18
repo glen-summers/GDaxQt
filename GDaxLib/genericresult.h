@@ -15,7 +15,11 @@ public:
         , value(HasError() ? T() : Converter::FromJson(QJsonDocument::fromJson(reply->readAll()).object()))
     {}
 
-    const T & operator()() const { return value; }
+    const T & operator()() const
+    {
+        Verify();
+        return value;
+    }
 };
 
 #endif // GENERICRESULT_H

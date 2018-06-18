@@ -12,24 +12,6 @@
 
 namespace Utils
 {
-    void EnableAnsiConsole()
-    {
-    #ifdef _MSC_VER
-        HANDLE hOut = ::GetStdHandle(STD_OUTPUT_HANDLE);
-        DWORD dwMode = 0;
-        if (!GetConsoleMode(hOut, &dwMode))
-        {
-            throw ::GetLastError(); // ex
-        }
-
-        dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-        if (!SetConsoleMode(hOut, dwMode))
-        {
-            throw ::GetLastError();
-        }
-    #endif
-    }
-
     QString DiffText(const QString & s1, const QString & s2)
     {
         if (s2.isEmpty())

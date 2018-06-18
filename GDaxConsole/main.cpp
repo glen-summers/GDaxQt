@@ -1,19 +1,13 @@
-
-#include "consoleutils.h"
-#include "websocketstream.h"
-#include "restprovider.h"
-#include "authenticator.h"
+#include "gdl.h"
 #include "utils.h"
+#include "gdaxprovider.h"
+#include "consoleutils.h"
+#include "consoletest.h"
 
-#include "order.h"
+#include "defs.h" // for makerSide
+#include "flogging.h"
 
 #include <QCoreApplication>
-
-#include <QThread>
-#include <QJsonObject>
-#include <QJsonDocument>
-#include <QStringBuilder>
-#include <QMessageAuthenticationCode>
 
 #include <iostream>
 
@@ -21,10 +15,14 @@ using namespace std::chrono_literals;
 
 int main(int argc, char *argv[])
 {
-    Utils::EnableAnsiConsole();
+    QCoreApplication a(argc, argv);
+
+    Flog::LogManager::SetLevel(Flog::Level::Info);
+    Flog::LogManager::SetThreadName("Main");
+
+    EnableAnsiConsole();
     std::cout << SGR::Bold << "GDax" << SGR::Rst << std::endl;
 
-    QCoreApplication a(argc, argv);
     ConsoleKeyListener con;
 
 //    RestProvider restProvider;
@@ -32,72 +30,51 @@ int main(int argc, char *argv[])
 //    QDateTime end = QDateTime::currentDateTimeUtc().addSecs(-60);// avoid future value, causes full dl
 //    restProvider.FetchCandles(start, end, Granularity::Hours);
 
-    // bump this back to using GDL interface
-
-    // sandbox test key
-    auto apiKey = QByteArrayLiteral("86feb99f0b2244a1b756c9aca9c8eb0c");
-    auto secret = QByteArrayLiteral("T9e1Aw7BFB0PJPKqd8VtMDH6agezkEBESWYrJHEoReS2KTgV7zIhDSSnnl5Bc5AqlswSz1rKam080937FTIQWA==");
-    auto passphrase = QByteArrayLiteral("eoxq18akv3u");
-
-    RestProvider provider("https://api-public.sandbox.gdax.com", new QNetworkAccessManager());
-    provider.SetAuthenticator(new Authenticator(std::move(apiKey), QByteArray::fromBase64(std::move(secret)), std::move(passphrase)));
-
-    auto now = QDateTime::currentDateTimeUtc();
-    provider.FetchTime([&](ServerTimeResult result)
+    // set sandbox
+    GDL::SetFactory([](GDL::Callback & callback)
     {
-        if (result.HasError())
-        {
-            std::cout << SGR::Red << SGR::Bold << "Error fetching time : " << result.ErrorString() << SGR::Rst << std::endl;
-            return;
-        }
-        std::cout << "ServerTime: " << result().toString().toStdString()
-                  << ", DeltaMs(+latency): " << now.msecsTo(result())
-                  << std::endl;
+        return GDL::InterfacePtr(Utils::QMake<GDaxProvider>("GDaxProvider",
+            "wss://ws-feed-public.sandbox.gdax.com",
+            "https://api-public.sandbox.gdax.com",
+            callback));
     });
 
+    ConsoleTest test;
 
-// place order
-    auto placeOrderFn = [](OrderResult result)
-    {
-        if (result.HasError())
-        {
-            std::cout << SGR::Red << SGR::Bold << "Error placing order : " << result.ErrorString() << SGR::Rst << std::endl;
-            return;
-        }
-        std::cout << SGR::Green << result() << SGR::Rst << std::endl;
-    };
-    provider.PlaceOrder(placeOrderFn, Decimal("0.01"), Decimal("0.1"), MakerSide::Buy);
-// todo listen for web socket update
+//    auto now = QDateTime::currentDateTimeUtc();
+//    provider.FetchTime([&](ServerTimeResult result)
+//    {
+//        if (result.HasError())
+//        {
+//            std::cout << SGR::Red << SGR::Bold << "Error fetching time : " << result.ErrorString() << SGR::Rst << std::endl;
+//            return;
+//        }
+//        std::cout << "ServerTime: " << result().toString().toStdString()
+//                  << ", DeltaMs(+latency): " << now.msecsTo(result())
+//                  << std::endl;
+//    });
+
+    // still borked itf? we need to have lamdba here, and repeatedly pass around
+    // better to model like std::future and use as return value
+    // but get() syncronous wait may be not be ideal for qt
+    // but can implement a Then([](){}); if truely async need to handle case already completed
+    test.PlaceOrder(Decimal("0.01"), Decimal("0.1"), MakerSide::Buy);
+    // todo have web socket listen for update + add our order id
     ConsoleKeyListener::WaitFor(5);
 
-    auto ordersFn = [](OrdersResult result)
-    {
-        if (result.HasError())
-        {
-            std::cout << SGR::Red << SGR::Bold << "Error fetching orders : " << result.ErrorString() << SGR::Rst << std::endl;
-            return;
-        }
-        for (Order order : result)
-        {
-            std::cout << SGR::Yellow << order << SGR::Rst << std::endl;
-        }
-    };
-    provider.FetchOrders(ordersFn, 0);
+    test.Orders();
 
-    // cancel orders...
-    auto cancelOrdersFn = [](CancelOrdersResult result)
-    {
-        if (result.HasError())
-        {
-            std::cout << SGR::Red << SGR::Bold << "Error cancelling orders : " << result.ErrorString() << SGR::Rst << std::endl;
-            return;
-        }
-        for (QString id : result)
-        {
-            std::cout << SGR::Yellow << "OrderId cancelled : " << id << SGR::Rst << std::endl;
-        }
-    };
-    provider.CancelOrders(cancelOrdersFn);
+    ConsoleKeyListener::WaitFor(5);
 
-    return con.Exec();
+    test.CancelOrders();
+
+    ConsoleKeyListener::WaitFor(5);
+
+    auto ret = con.Exec();
+
+    test.Shutdown();
+    // Shutdown causes: QIODevice::write (QTcpSocket): device not open
+    // and WebSocketStream : SocketError: unknown(-1)
+    // not seen in gui shutdown
+    return ret;
 }
