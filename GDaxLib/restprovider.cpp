@@ -78,18 +78,31 @@ Async<ServerTimeResult> RestProvider::FetchTime()
     return reply;
 }
 
+Async<TradesResult> RestProvider::FetchTrades(unsigned int limit)
+{
+    QUrlQuery query;
+    query.addQueryItem("limit", QString::number(limit));
+
+    QUrl url(baseUrl % Products % Product % Trades);
+    url.setQuery(query);
+
+    QNetworkRequest request(url);
+    QNetworkReply * reply = manager->get(request);
+    return reply;
+}
+
 // FetchCandles seems flakey on the server, if we request with an endtime > server UTC time then
 // both parameters are ignored and the last 300 candles are returned
-void RestProvider::FetchAllCandles(std::function<void(CandlesResult)> func, Granularity granularity)
+Async<CandlesResult> RestProvider::FetchAllCandles(Granularity granularity)
 {
     QUrlQuery query;
     query.addQueryItem("granularity", QString::number(static_cast<unsigned int>(granularity)));
     QNetworkRequest request = CreateRequest(baseUrl % Products % Product % Candles, query);
     QNetworkReply * reply = manager->get(request);
-    WhenFinished(reply, std::move(func));
+    return reply;
 }
 
-void RestProvider::FetchCandles(std::function<void(CandlesResult)> func, const QDateTime & start, const QDateTime & end, Granularity granularity)
+Async<CandlesResult> RestProvider::FetchCandles(const QDateTime & start, const QDateTime & end, Granularity granularity)
 {
     QUrlQuery query;
     query.addQueryItem("start", start.toString(Qt::ISODate));
@@ -97,7 +110,7 @@ void RestProvider::FetchCandles(std::function<void(CandlesResult)> func, const Q
     query.addQueryItem("granularity", QString::number(static_cast<unsigned int>(granularity)));
     QNetworkRequest request = CreateRequest(baseUrl % Products % Product % Candles, query);
     QNetworkReply * reply = manager->get(request);
-    WhenFinished(reply, std::move(func));
+    return reply;
 }
 
 Async<OrdersResult> RestProvider::FetchOrders(unsigned int limit)
@@ -147,19 +160,6 @@ Async<CancelOrdersResult> RestProvider::CancelOrders()
     QNetworkRequest request = CreateAuthenticatedRequest("DELETE", Orders, {}, {});
     QNetworkReply * reply = manager->deleteResource(request);
     return reply;
-}
-
-void RestProvider::FetchTrades(std::function<void(TradesResult)> func, unsigned int limit)
-{
-    QUrlQuery query;
-    query.addQueryItem("limit", QString::number(limit));
-
-    QUrl url(baseUrl % Products % Product % Trades);
-    url.setQuery(query);
-
-    QNetworkRequest request(url);
-    QNetworkReply * reply = manager->get(request);
-    WhenFinished(reply, std::move(func));
 }
 
 QNetworkRequest RestProvider::CreateAuthenticatedRequest(const QString & httpMethod, const QString & requestPath, const QUrlQuery & query,

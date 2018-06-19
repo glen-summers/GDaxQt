@@ -57,7 +57,7 @@ private:
     void GenerateTradeList();
 
     // Callbacks
-    // Now using interface\callback to allow abstraction instead of emiting QT signals from provider
+    // using interface\callback to allow abstraction instead of emiting QT signals from provider
     // if a callback is not in the UI thread it will need invoking\emiting, currently WebSocket callbacks are on
     // a worker thread
     void OnSnapshot() override
@@ -80,10 +80,9 @@ private:
         QMetaObject::invokeMethod( this, "StateChanged", Q_ARG( GDL::ConnectedState, state) );
     }
 
-    void OnCandles(const CandlesResult & values) override;
-
-    void OnTrades(const TradesResult & tradesResult) override;
-    // Callbacks
+    // Ui async callbacks
+    void OnTrades(const TradesResult & );
+    void OnCandles(const CandlesResult & );
 };
 
 #endif // MAINWINDOW_H

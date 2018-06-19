@@ -106,15 +106,3 @@ void ConsoleTest::OnStateChanged(GDL::ConnectedState state)
 {
     std::cout << "state: " << (unsigned)state << std::endl;
 }
-
-void ConsoleTest::OnCandles(const CandlesResult & value)
-{
-    std::cout << "candles: " << (value.HasError() ? value.ErrorString() : std::to_string(value.count()))
-                                                   << std::endl;
-}
-
-void ConsoleTest::OnTrades(const TradesResult & value)
-{
-    std::cout << "trades: " << (value.HasError() ? value.ErrorString() : std::to_string(value.count()))
-                                                  << std::endl;
-}

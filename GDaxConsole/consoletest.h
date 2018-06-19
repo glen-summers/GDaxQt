@@ -20,8 +20,6 @@ private:
     void OnHeartbeat(const QDateTime & serverTime) override;
     void OnTick(const Tick & tick) override;
     void OnStateChanged(GDL::ConnectedState state) override;
-    void OnCandles(const CandlesResult & values) override;
-    void OnTrades(const TradesResult & values) override;
 };
 
 #endif // CONSOLETEST_H

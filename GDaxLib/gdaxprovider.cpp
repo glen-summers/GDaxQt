@@ -69,34 +69,19 @@ const OrderBook & GDaxProvider::Orders() const
     return webSocketStream->Orders();
 }
 
-void GDaxProvider::FetchTrades(unsigned int limit)
+Async<TradesResult> GDaxProvider::FetchTrades(unsigned int limit)
 {
-    restProvider->FetchTrades([this](const TradesResult & result)
-    {
-        callback.OnTrades(result);
-    }, limit);
+    return restProvider->FetchTrades(limit);
 }
 
-void GDaxProvider::FetchAllCandles(Granularity granularity)
+Async<CandlesResult> GDaxProvider::FetchAllCandles(Granularity granularity)
 {
-    restProvider->FetchAllCandles([this](const CandlesResult & result)
-    {
-        callback.OnCandles(result);
-    }, granularity);
+    return restProvider->FetchAllCandles(granularity);
 }
 
-void GDaxProvider::FetchCandles(const QDateTime &start, const QDateTime &end, Granularity granularity)
+Async<CandlesResult> GDaxProvider::FetchCandles(const QDateTime & start, const QDateTime & end, Granularity granularity)
 {
-    return restProvider->FetchCandles([this](const CandlesResult & result)
-    {
-        callback.OnCandles(result);
-    }, start, end, granularity);
-}
-
-void GDaxProvider::Shutdown()
-{
-    workerThread->quit();
-    workerThread->wait();
+    return restProvider->FetchCandles(start, end, granularity);
 }
 
 Async<ServerTimeResult> GDaxProvider::FetchTime()
@@ -118,5 +103,12 @@ Async<CancelOrdersResult> GDaxProvider::CancelOrders()
 {
     return restProvider->CancelOrders();
 }
+
+void GDaxProvider::Shutdown()
+{
+    workerThread->quit();
+    workerThread->wait();
+}
+
 
 

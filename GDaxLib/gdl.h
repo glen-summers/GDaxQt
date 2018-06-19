@@ -67,11 +67,10 @@ namespace GDL
 
         virtual const OrderBook & Orders() const = 0;
 
-        virtual void FetchTrades(unsigned int limit) = 0;
-        virtual void FetchAllCandles(Granularity granularity) = 0;
-        virtual void FetchCandles(const QDateTime & start, const QDateTime & end, Granularity granularity) = 0;
-
         virtual Async<ServerTimeResult> FetchTime() = 0;
+        virtual Async<TradesResult> FetchTrades(unsigned int limit) = 0;
+        virtual Async<CandlesResult> FetchAllCandles(Granularity granularity) = 0;
+        virtual Async<CandlesResult> FetchCandles(const QDateTime & start, const QDateTime & end, Granularity granularity) = 0;
         virtual Async<OrdersResult> FetchOrders(unsigned int limit = 0) = 0;
         virtual Async<OrderResult> PlaceOrder(const Decimal & size, const Decimal & price, MakerSide side) = 0;
         virtual Async<CancelOrdersResult> CancelOrders() = 0;
@@ -87,10 +86,6 @@ namespace GDL
         virtual void OnHeartbeat(const QDateTime & serverTime) = 0;
         virtual void OnTick(const Tick & tick) = 0;
         virtual void OnStateChanged(ConnectedState state) = 0;
-
-        // change these to lambdas, so Callback is only for Stream state
-        virtual void OnCandles(const CandlesResult & values) = 0;
-        virtual void OnTrades(const TradesResult & values) = 0;
     };
 
     struct Deleter { void operator()(Interface*) const noexcept; };

@@ -35,17 +35,15 @@ public:
 
     const OrderBook & Orders() const override;
 
-    void FetchTrades(unsigned int limit) override;
-    void FetchAllCandles(Granularity granularity) override;
-    void FetchCandles(const QDateTime & start, const QDateTime & end, Granularity granularity) override;
-    void Shutdown() override;
-
     Async<ServerTimeResult> FetchTime() override;
-
+    Async<TradesResult> FetchTrades(unsigned int limit) override;
+    Async<CandlesResult> FetchAllCandles(Granularity granularity) override;
+    Async<CandlesResult> FetchCandles(const QDateTime & start, const QDateTime & end, Granularity granularity) override;
     Async<OrdersResult> FetchOrders(unsigned int limit = 0) override;
     Async<OrderResult> PlaceOrder(const Decimal & size, const Decimal & price, MakerSide side) override;
     Async<CancelOrdersResult> CancelOrders() override;
 
+    void Shutdown() override;
 };
 
 #endif // GDAXPROVIDER_H

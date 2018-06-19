@@ -315,32 +315,6 @@ td.amount span { color:grey; }
    tradesWidget.document()->setHtml(*stream.string());
 }
 
-void MainWindow::OnCandles(const CandlesResult & result)
-{
-    if (result.HasError())
-    {
-        log.Error("OnTrades error : {0}", result.ErrorString());
-        // trigger retry?
-        return;
-    }
-
-    this->ui->candleChart->SetCandles(std::deque<Candle>(result.begin(), result.end()), granularity);
-}
-
-void MainWindow::OnTrades(const TradesResult & result)
-{
-    if (result.HasError())
-    {
-        log.Error("OnTrades error : {0}", result.ErrorString());
-        // trigger retry?
-        return;
-    }
-
-    // todo keep any trades that have come in as ticks while trade reqest in flight
-    trades = std::move(std::deque<Trade>(result.begin(), result.end()));
-    GenerateTradeList();
-}
-
 void MainWindow::Ticker(const Tick &tick)
 {
 //    if (!trades.empty())
@@ -417,13 +391,17 @@ void MainWindow::StateChanged(GDL::ConnectedState state)
 void MainWindow::GranularityChanged(QAction * action)
 {
     granularity = (Granularity)action->data().toUInt();
-    gdl->FetchAllCandles(granularity);
+    gdl->FetchAllCandles(granularity).Then([this](const CandlesResult & result)
+    {
+        OnCandles(result);
+    });
 }
 
 void MainWindow::Connected()
 {
     // clear now to avoid ticks being added to old data will blank display while fetching
     // better model to store all data in an atomically swapable entity
+    log.Info("Connected");
 
     trades.clear();
     ui->candleChart->SetCandles({}, granularity);
@@ -433,6 +411,40 @@ void MainWindow::Connected()
     ui->depthChart->update();
 
     // calc value? want to be >= trade history window rows
-    gdl->FetchTrades(100);
-    gdl->FetchAllCandles(granularity);
+    gdl->FetchTrades(100).Then([this](const TradesResult & result)
+    {
+        OnTrades(result);
+    });
+
+    gdl->FetchAllCandles(granularity).Then([this](const CandlesResult & result)
+    {
+        OnCandles(result);
+    });
+}
+
+void MainWindow::OnTrades(const TradesResult & result)
+{
+    Flog::ScopeLog s(log, Flog::Level::Info, "OnTrades");
+    if (result.HasError())
+    {
+        log.Error("OnTades error : {0}", result.ErrorString());
+        // trigger retry?
+        return;
+    }
+
+    // todo keep any trades that have come in as ticks while trade reqest in flight
+    trades = std::move(std::deque<Trade>(result.begin(), result.end()));
+    GenerateTradeList();
+}
+
+void MainWindow::OnCandles(const CandlesResult & result)
+{
+    Flog::ScopeLog s(log, Flog::Level::Info, "OnCandles");
+    if (result.HasError())
+    {
+        log.Error("OnCandles error : {0}", result.ErrorString());
+        // trigger retry?
+        return;
+    }
+    ui->candleChart->SetCandles(std::deque<Candle>(result.begin(), result.end()), granularity);
 }

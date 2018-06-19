@@ -35,12 +35,11 @@ public:
 
     Async<ServerTimeResult> FetchTime();
 
-    void FetchTrades(std::function<void(TradesResult)> func, unsigned int limit);
+    Async<TradesResult> FetchTrades(unsigned int limit);
 
-    void FetchAllCandles(std::function<void(CandlesResult)> func, Granularity granularity);
+    Async<CandlesResult> FetchAllCandles(Granularity granularity);
 
-    void FetchCandles(std::function<void(CandlesResult)> func, const QDateTime & start,
-                      const QDateTime & end, Granularity granularity);
+    Async<CandlesResult> FetchCandles(const QDateTime & start, const QDateTime & end, Granularity granularity);
 
     Async<OrdersResult> FetchOrders(unsigned int limit = 0);
 
