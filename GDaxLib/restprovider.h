@@ -27,12 +27,13 @@ class RestProvider : public QObject
 
 public:
     RestProvider(const char * baseUrl, QNetworkAccessManager * manager, QObject * parent = nullptr);
+    ~RestProvider();
 
     void SetAuthentication(QByteArray apiKey, QByteArray secretKey, QByteArray passphrase);
 
     void ClearAuthentication();
 
-    void FetchTime(std::function<void(ServerTimeResult)> func);
+    Async<ServerTimeResult> FetchTime();
 
     void FetchTrades(std::function<void(TradesResult)> func, unsigned int limit);
 

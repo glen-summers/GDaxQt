@@ -18,6 +18,17 @@ namespace
 ConsoleTest::ConsoleTest() : gdl(GDL::Create(*this))
 {
     gdl->SetAuthentication(apiKey, secret, passphrase);
+
+    gdl->FetchTime().Then([](const ServerTimeResult & serverTime)
+    {
+        QDateTime dateTime = serverTime(); // catch here
+        auto now = QDateTime::currentDateTimeUtc();
+        std::cout << SGR::Cyan
+                  << "HB, ServerTime: " << dateTime
+                  << ", DeltaMs(-latency): " << now.msecsTo(dateTime)
+                  << SGR::Rst
+                  << std::endl;
+    });
 }
 
 void ConsoleTest::PlaceOrder(const Decimal &size, const Decimal &price, MakerSide side) const

@@ -40,6 +40,8 @@ public:
     void FetchCandles(const QDateTime & start, const QDateTime & end, Granularity granularity) override;
     void Shutdown() override;
 
+    Async<ServerTimeResult> FetchTime() override;
+
     void FetchOrders(std::function<void(OrdersResult)> func, unsigned int limit = 0) override;
     void PlaceOrder(std::function<void(OrderResult)> func, const Decimal & size, const Decimal & price, MakerSide side) override;
     void CancelOrders(std::function<void(CancelOrdersResult)> func) override;

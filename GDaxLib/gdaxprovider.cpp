@@ -99,6 +99,11 @@ void GDaxProvider::Shutdown()
     workerThread->wait();
 }
 
+Async<ServerTimeResult> GDaxProvider::FetchTime()
+{
+    return restProvider->FetchTime();
+}
+
 void GDaxProvider::FetchOrders(std::function<void(OrdersResult)> func, unsigned int limit)
 {
     restProvider->FetchOrders(std::move(func), limit);

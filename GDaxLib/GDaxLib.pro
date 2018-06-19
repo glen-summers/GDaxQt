@@ -50,7 +50,8 @@ HEADERS += \
     result.h \
     jsonarrayiterator.h \
     genericresult.h \
-    iterableresult.h
+    iterableresult.h \
+    asyncresult.h
 
 DISTFILES += \
     misc.pri \

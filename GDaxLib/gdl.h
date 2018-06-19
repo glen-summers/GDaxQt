@@ -3,6 +3,8 @@
 
 #include "iterableresult.h"
 #include "genericresult.h"
+#include "asyncresult.h"
+
 #include "decimalwrap.h"
 
 #include <memory>
@@ -64,10 +66,13 @@ namespace GDL
         virtual void ClearAuthentication() const = 0;
 
         virtual const OrderBook & Orders() const = 0;
+
         virtual void FetchTrades(unsigned int limit) = 0;
         virtual void FetchAllCandles(Granularity granularity) = 0;
         virtual void FetchCandles(const QDateTime & start, const QDateTime & end, Granularity granularity) = 0;
         virtual void Shutdown() = 0;
+
+        virtual Async<ServerTimeResult> FetchTime() = 0;
 
         virtual void FetchOrders(std::function<void(OrdersResult)> func, unsigned int limit = 0) = 0;
         virtual void PlaceOrder(std::function<void(OrderResult)> func, const Decimal & size, const Decimal & price, MakerSide side) = 0;

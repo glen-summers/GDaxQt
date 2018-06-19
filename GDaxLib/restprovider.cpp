@@ -42,9 +42,9 @@ namespace
     template <typename T>
     void WhenFinished(QNetworkReply * reply, T func)
     {
+        reply->ignoreSslErrors(); // diags, set from config
         QObject::connect(reply, &QNetworkReply::finished, [func{std::move(func)}, reply]()
         {
-            reply->ignoreSslErrors(); // config
             func(reply);
             reply->deleteLater();
         });
@@ -58,6 +58,9 @@ RestProvider::RestProvider(const char * baseUrl, QNetworkAccessManager * manager
 {
 }
 
+// prevents ~UniquePtr compile error with incomplete type
+RestProvider::~RestProvider() = default;
+
 void RestProvider::SetAuthentication(QByteArray apiKey, QByteArray secretKey, QByteArray passphrase)
 {
     authenticator = std::make_unique<Authenticator>(apiKey, QByteArray::fromBase64(secretKey), passphrase);
@@ -68,11 +71,11 @@ void RestProvider::ClearAuthentication()
     authenticator.reset();
 }
 
-void RestProvider::FetchTime(std::function<void (ServerTimeResult)> func)
+Async<ServerTimeResult> RestProvider::FetchTime()
 {
     QNetworkRequest request = CreateRequest(baseUrl % Time, {});
     QNetworkReply * reply = manager->get(request);
-    WhenFinished(reply, std::move(func));
+    return std::move(Async<ServerTimeResult>(reply));
 }
 
 // FetchCandles seems flakey on the server, if we request with an endtime > server UTC time then
@@ -156,7 +159,7 @@ void RestProvider::FetchTrades(std::function<void(TradesResult)> func, unsigned 
 
     QNetworkRequest request(url);
     QNetworkReply * reply = manager->get(request);
-    WhenFinished(reply, func);
+    WhenFinished(reply, std::move(func));
 }
 
 QNetworkRequest RestProvider::CreateAuthenticatedRequest(const QString & httpMethod, const QString & requestPath, const QUrlQuery & query,
