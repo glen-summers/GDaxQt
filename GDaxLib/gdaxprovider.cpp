@@ -99,19 +99,24 @@ void GDaxProvider::Shutdown()
     workerThread->wait();
 }
 
-void GDaxProvider::FetchOrders(std::function<void(OrdersResult)> func, unsigned int limit)
+Async<ServerTimeResult> GDaxProvider::FetchTime()
 {
-    restProvider->FetchOrders(std::move(func), limit);
+    return restProvider->FetchTime();
 }
 
-void GDaxProvider::PlaceOrder(std::function<void(OrderResult)> func, const Decimal & size, const Decimal & price, MakerSide side)
+Async<OrdersResult> GDaxProvider::FetchOrders(unsigned int limit)
 {
-    restProvider->PlaceOrder(std::move(func), size, price, side);
+    return restProvider->FetchOrders(limit);
 }
 
-void GDaxProvider::CancelOrders(std::function<void(CancelOrdersResult)> func)
+Async<OrderResult> GDaxProvider::PlaceOrder(const Decimal & size, const Decimal & price, MakerSide side)
 {
-    restProvider->CancelOrders(std::move(func));
+    return restProvider->PlaceOrder(size, price, side);
+}
+
+Async<CancelOrdersResult> GDaxProvider::CancelOrders()
+{
+    return restProvider->CancelOrders();
 }
 
 

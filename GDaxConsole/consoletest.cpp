@@ -18,11 +18,22 @@ namespace
 ConsoleTest::ConsoleTest() : gdl(GDL::Create(*this))
 {
     gdl->SetAuthentication(apiKey, secret, passphrase);
+
+    gdl->FetchTime().Then([](const ServerTimeResult & serverTime)
+    {
+        QDateTime dateTime = serverTime(); // catch here
+        auto now = QDateTime::currentDateTimeUtc();
+        std::cout << SGR::Cyan
+                  << "HB, ServerTime: " << dateTime
+                  << ", DeltaMs(-latency): " << now.msecsTo(dateTime)
+                  << SGR::Rst
+                  << std::endl;
+    });
 }
 
 void ConsoleTest::PlaceOrder(const Decimal &size, const Decimal &price, MakerSide side) const
 {
-    gdl->PlaceOrder([](OrderResult result)
+    gdl->PlaceOrder(size, price, side).Then([](OrderResult result)
     {
         if(result.HasError())
         {
@@ -30,12 +41,12 @@ void ConsoleTest::PlaceOrder(const Decimal &size, const Decimal &price, MakerSid
             return;
         }
         std::cout << SGR::Green << result() << SGR::Rst << std::endl;
-    }, size, price, side);
+    });
 }
 
 void ConsoleTest::Orders() const
 {
-    auto ordersFn = [](OrdersResult result)
+    gdl->FetchOrders().Then([](OrdersResult result)
     {
         if (result.HasError())
         {
@@ -46,13 +57,12 @@ void ConsoleTest::Orders() const
         {
             std::cout << SGR::Yellow << order << SGR::Rst << std::endl;
         }
-    };
-    gdl->FetchOrders(ordersFn);
+    });
 }
 
 void ConsoleTest::CancelOrders() const
 {
-    auto fn = [](CancelOrdersResult result)
+    gdl->CancelOrders().Then([](CancelOrdersResult result)
     {
         if (result.HasError())
         {
@@ -63,9 +73,7 @@ void ConsoleTest::CancelOrders() const
         {
             std::cout << "Cancelled: " << SGR::Yellow << orderId << SGR::Rst << std::endl;
         }
-    };
-
-    gdl->CancelOrders(fn);
+    });
 }
 
 void ConsoleTest::Shutdown()

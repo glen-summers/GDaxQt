@@ -79,6 +79,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->candleChart->setAttribute(Qt::WA_AcceptTouchEvents, true);
 }
 
+// prevents ~UniquePtr compile error with incomplete type
 MainWindow::~MainWindow() = default;
 
 void MainWindow::AttachExpander(QWidget * parent, QWidget * widget, bool expanded)

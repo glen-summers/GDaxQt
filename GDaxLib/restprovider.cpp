@@ -42,9 +42,9 @@ namespace
     template <typename T>
     void WhenFinished(QNetworkReply * reply, T func)
     {
+        reply->ignoreSslErrors(); // diags, set from config
         QObject::connect(reply, &QNetworkReply::finished, [func{std::move(func)}, reply]()
         {
-            reply->ignoreSslErrors(); // config
             func(reply);
             reply->deleteLater();
         });
@@ -58,6 +58,9 @@ RestProvider::RestProvider(const char * baseUrl, QNetworkAccessManager * manager
 {
 }
 
+// prevents ~UniquePtr compile error with incomplete type
+RestProvider::~RestProvider() = default;
+
 void RestProvider::SetAuthentication(QByteArray apiKey, QByteArray secretKey, QByteArray passphrase)
 {
     authenticator = std::make_unique<Authenticator>(apiKey, QByteArray::fromBase64(secretKey), passphrase);
@@ -68,11 +71,11 @@ void RestProvider::ClearAuthentication()
     authenticator.reset();
 }
 
-void RestProvider::FetchTime(std::function<void (ServerTimeResult)> func)
+Async<ServerTimeResult> RestProvider::FetchTime()
 {
     QNetworkRequest request = CreateRequest(baseUrl % Time, {});
     QNetworkReply * reply = manager->get(request);
-    WhenFinished(reply, std::move(func));
+    return reply;
 }
 
 // FetchCandles seems flakey on the server, if we request with an endtime > server UTC time then
@@ -97,7 +100,7 @@ void RestProvider::FetchCandles(std::function<void(CandlesResult)> func, const Q
     WhenFinished(reply, std::move(func));
 }
 
-void RestProvider::FetchOrders(std::function<void (OrdersResult)> func, unsigned int limit)
+Async<OrdersResult> RestProvider::FetchOrders(unsigned int limit)
 {
     QUrlQuery query;
     if (limit != 0)
@@ -107,10 +110,10 @@ void RestProvider::FetchOrders(std::function<void (OrdersResult)> func, unsigned
 
     QNetworkRequest request = CreateAuthenticatedRequest("GET", Orders, query, {});
     QNetworkReply * reply = manager->get(request);
-    WhenFinished(reply, std::move(func));
+    return reply;
 }
 
-void RestProvider::PlaceOrder(std::function<void(GenericResult<Order>)> func, const Decimal & size, const Decimal & price, MakerSide side)
+Async<OrderResult> RestProvider::PlaceOrder(const Decimal & size, const Decimal & price, MakerSide side)
 {
     QString siderian = MakerSideToString(side);
     QString sz = DecNs::toString(size).c_str();
@@ -135,15 +138,15 @@ void RestProvider::PlaceOrder(std::function<void(GenericResult<Order>)> func, co
     QNetworkRequest request = CreateAuthenticatedRequest("POST", Orders, {}, data);
     request.setRawHeader("Content-Type", "application/json");
     QNetworkReply * reply = manager->post(request, data);
-    WhenFinished(reply, std::move(func));
+    return reply;
 }
 
-void RestProvider::CancelOrders(std::function<void(CancelOrdersResult)> func)
+Async<CancelOrdersResult> RestProvider::CancelOrders()
 {
     // + optional product_id
     QNetworkRequest request = CreateAuthenticatedRequest("DELETE", Orders, {}, {});
     QNetworkReply * reply = manager->deleteResource(request);
-    WhenFinished(reply, std::move(func));
+    return reply;
 }
 
 void RestProvider::FetchTrades(std::function<void(TradesResult)> func, unsigned int limit)
@@ -156,7 +159,7 @@ void RestProvider::FetchTrades(std::function<void(TradesResult)> func, unsigned 
 
     QNetworkRequest request(url);
     QNetworkReply * reply = manager->get(request);
-    WhenFinished(reply, func);
+    WhenFinished(reply, std::move(func));
 }
 
 QNetworkRequest RestProvider::CreateAuthenticatedRequest(const QString & httpMethod, const QString & requestPath, const QUrlQuery & query,

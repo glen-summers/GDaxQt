@@ -13,6 +13,9 @@ class IterableResult : public Result
     QJsonArray const array;
 
 public:
+    typedef T Type;
+    typedef Converter ConverterType;
+
     typedef JsonArrayIterator<T, Converter> iterator;
 
     IterableResult(QNetworkReply * reply)

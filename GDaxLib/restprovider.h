@@ -27,12 +27,13 @@ class RestProvider : public QObject
 
 public:
     RestProvider(const char * baseUrl, QNetworkAccessManager * manager, QObject * parent = nullptr);
+    ~RestProvider();
 
     void SetAuthentication(QByteArray apiKey, QByteArray secretKey, QByteArray passphrase);
 
     void ClearAuthentication();
 
-    void FetchTime(std::function<void(ServerTimeResult)> func);
+    Async<ServerTimeResult> FetchTime();
 
     void FetchTrades(std::function<void(TradesResult)> func, unsigned int limit);
 
@@ -41,11 +42,11 @@ public:
     void FetchCandles(std::function<void(CandlesResult)> func, const QDateTime & start,
                       const QDateTime & end, Granularity granularity);
 
-    void FetchOrders(std::function<void(OrdersResult)> func, unsigned int limit = 0);
+    Async<OrdersResult> FetchOrders(unsigned int limit = 0);
 
-    void PlaceOrder(std::function<void(OrderResult)> func, const Decimal & size, const Decimal & price, MakerSide side);
+    Async<OrderResult> PlaceOrder(const Decimal & size, const Decimal & price, MakerSide side);
 
-    void CancelOrders(std::function<void(CancelOrdersResult)> func);
+    Async<CancelOrdersResult> CancelOrders();
 
 private:
     QNetworkRequest CreateAuthenticatedRequest(const QString & httpMethod, const QString & requestPath, const QUrlQuery & query,
