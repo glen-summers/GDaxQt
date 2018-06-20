@@ -15,7 +15,7 @@ class OrderBook;
 
 struct Tick;
 struct Candle;
-class Trade;
+struct Trade;
 struct Order;
 
 enum class MakerSide : unsigned;

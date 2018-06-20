@@ -8,9 +8,8 @@
 
 class QJsonValue;
 
-class Trade
+struct Trade
 {
-public:
     typedef unsigned long long TradeId;
 
     static Trade FromJson(const QJsonValue & object);
