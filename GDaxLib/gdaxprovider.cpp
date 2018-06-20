@@ -5,7 +5,6 @@
 #include "restprovider.h"
 #include "utils.h"
 
-#include <QNetworkAccessManager>
 #include <QThread>
 #include <QtConcurrent>
 
@@ -37,9 +36,8 @@ GDaxProvider::GDaxProvider(const char * streamUrl, const char * restUrl,
                            GDL::Callback & callback, QObject * parent)
     : QObject(parent)
     , callback(callback)
-    , networkAccessManager(Utils::QMake<QNetworkAccessManager>("networkAccessManager", this))
     , webSocketStream(Utils::QMake<WebSocketStream>("webSocketStream", streamUrl)) // no parent, move to thread
-    , restProvider(Utils::QMake<RestProvider>("restProvider", restUrl, networkAccessManager, this))
+    , restProvider(Utils::QMake<RestProvider>("restProvider", restUrl, this))
     , workerThread(Utils::QMake<QThread>("QThread", this))
 {
     webSocketStream->moveToThread(workerThread);

@@ -26,7 +26,7 @@ class RestProvider : public QObject
     std::unique_ptr<Authenticator> authenticator;
 
 public:
-    RestProvider(const char * baseUrl, QNetworkAccessManager * manager, QObject * parent = nullptr);
+    RestProvider(const char * baseUrl, QObject * parent = nullptr);
     ~RestProvider();
 
     void SetAuthentication(QByteArray apiKey, QByteArray secretKey, QByteArray passphrase);

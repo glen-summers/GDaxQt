@@ -14,13 +14,11 @@ class RestProvider;
 class QWebSocket;
 class QJsonObject;
 class QNetworkReply;
-class QNetworkAccessManager;
 class QThread;
 
 class GDaxProvider : public QObject, public GDL::Interface
 {
     GDL::Callback & callback;
-    QNetworkAccessManager * const networkAccessManager;
     WebSocketStream * const webSocketStream;
     RestProvider * const restProvider;
     QThread * const workerThread;

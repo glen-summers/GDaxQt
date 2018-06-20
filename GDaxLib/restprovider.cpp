@@ -38,23 +38,12 @@ namespace
     constexpr const char CbAccessSign[] = "CB-ACCESS-SIGN";
     constexpr const char CbAccessTimestamp[] = "CB-ACCESS-TIMESTAMP";
     constexpr const char CbAccessPassphrase[] = "CB-ACCESS-PASSPHRASE";
-
-    template <typename T>
-    void WhenFinished(QNetworkReply * reply, T func)
-    {
-        reply->ignoreSslErrors(); // diags, set from config
-        QObject::connect(reply, &QNetworkReply::finished, [func{std::move(func)}, reply]()
-        {
-            func(reply);
-            reply->deleteLater();
-        });
-    }
 }
 
-RestProvider::RestProvider(const char * baseUrl, QNetworkAccessManager * manager, QObject * parent)
+RestProvider::RestProvider(const char * baseUrl, QObject * parent)
     : QObject(parent)
     , baseUrl(baseUrl)
-    , manager(manager)
+    , manager(Utils::QMake<QNetworkAccessManager>("networkAccessManager", this))
 {
 }
 
