@@ -18,13 +18,14 @@ SOURCES += \
     restprovider.cpp \
     filelogger.cpp \
     trade.cpp \
-    gdaxprovider.cpp \
     websocketstream.cpp \
     qfmt.cpp \
     order.cpp \
     authenticator.cpp \
     result.cpp \
-    candle.cpp
+    candle.cpp \
+    gdl.cpp \
+    factory.cpp
 
 HEADERS += \
     utils.h \
@@ -38,7 +39,6 @@ HEADERS += \
     candle.h \
     decimalwrap.h \
     orderbook.h \
-    gdaxprovider.h \
     gdl.h \
     websocketstream.h \
     formatter.h \
@@ -51,7 +51,8 @@ HEADERS += \
     jsonarrayiterator.h \
     genericresult.h \
     iterableresult.h \
-    asyncresult.h
+    asyncresult.h \
+    factory.h
 
 DISTFILES += \
     misc.pri \

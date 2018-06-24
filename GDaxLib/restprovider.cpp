@@ -50,9 +50,9 @@ RestProvider::RestProvider(const char * baseUrl, QObject * parent)
 // prevents ~UniquePtr compile error with incomplete type
 RestProvider::~RestProvider() = default;
 
-void RestProvider::SetAuthentication(QByteArray apiKey, QByteArray secretKey, QByteArray passphrase)
+void RestProvider::SetAuthentication(const char key[], const char secret[], const char passphrase[])
 {
-    authenticator = std::make_unique<Authenticator>(apiKey, QByteArray::fromBase64(secretKey), passphrase);
+    authenticator = std::make_unique<Authenticator>(key, QByteArray::fromBase64(secret), passphrase);
 }
 
 void RestProvider::ClearAuthentication()

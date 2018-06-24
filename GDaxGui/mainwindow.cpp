@@ -43,15 +43,17 @@ MainWindow::MainWindow(QWidget *parent)
     , settings(Utils::QMake<QSettings>("settings", "Crapola", nullptr, this))
     , ui(std::make_unique<Ui::MainWindow>())
     , updateTimer(Utils::QMake<QTimer>("updateTimer", this))
-    , gdl(GDL::Create(*this))
+    , gdlRequest(GDL::GetFactory().CreateRequest())
     , granularity()
 {
+    ui->setupUi(this);
+    gdlStream = GDL::GetFactory().CreateStream(*this);
+
     for (const QScreen * s : QApplication::screens())
     {
         log.Info("Screen: {0} = {1}dpi{2}", s->name(), s->logicalDotsPerInch(), s==QApplication::primaryScreen()? " Primary" : "");
     }
 
-    ui->setupUi(this);
 
     AttachExpander(ui->centralWidget, ui->trades, settings->value(TradesVisibleSetting, true).toBool());
     AttachExpander(ui->centralWidget, ui->orderBook, settings->value(OrdersVisibleSetting, true).toBool());
@@ -69,7 +71,7 @@ MainWindow::MainWindow(QWidget *parent)
     }, *ui->action1H);
     connect(ui->menuGranularity, &QMenu::triggered, this, &MainWindow::GranularityChanged);
 
-    ui->depthChart->SetProvider(gdl.get());
+    ui->depthChart->SetProvider(gdlStream.get());
 
     connect(updateTimer, &QTimer::timeout, this, &MainWindow::TimerUpdate);
     updateTimer->start(UpdateTimerMs);
@@ -95,13 +97,14 @@ void MainWindow::AttachExpander(QWidget * parent, QWidget * widget, bool expande
     }
 }
 
-void MainWindow::Shutdown() const
+void MainWindow::Shutdown()
 {
     settings->setValue(TradesVisibleSetting, !ui->trades->isHidden());
     settings->setValue(OrdersVisibleSetting, !ui->orderBook->isHidden());
     settings->setValue(DepthVisibleSetting, !ui->depthChart->isHidden());
 
-    gdl->Shutdown();
+    gdlStream->Shutdown(); // just reset?
+    gdlStream.reset();
 }
 
 void MainWindow::TimerUpdate()
@@ -143,7 +146,7 @@ void MainWindow::GenerateOrderBook()
     int lines = orderBookUi.height()/2/fontHeight-1;
 
     // lock orderbook, move\improve impl
-    const auto & orderBook = gdl->Orders();
+    const auto & orderBook = gdlStream->Orders();
     QMutexLocker lock(&const_cast<QMutex&>(orderBook.Mutex()));
 
     const auto & asks = orderBook.Asks();
@@ -391,7 +394,7 @@ void MainWindow::StateChanged(GDL::ConnectedState state)
 void MainWindow::GranularityChanged(QAction * action)
 {
     granularity = (Granularity)action->data().toUInt();
-    gdl->FetchAllCandles(granularity).Then([this](const CandlesResult & result)
+    gdlRequest->FetchAllCandles(granularity).Then([this](const CandlesResult & result)
     {
         OnCandles(result);
     });
@@ -411,12 +414,12 @@ void MainWindow::Connected()
     ui->depthChart->update();
 
     // calc value? want to be >= trade history window rows
-    gdl->FetchTrades(100).Then([this](const TradesResult & result)
+    gdlRequest->FetchTrades(100).Then([this](const TradesResult & result)
     {
         OnTrades(result);
     });
 
-    gdl->FetchAllCandles(granularity).Then([this](const CandlesResult & result)
+    gdlRequest->FetchAllCandles(granularity).Then([this](const CandlesResult & result)
     {
         OnCandles(result);
     });

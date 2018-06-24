@@ -1,10 +1,12 @@
-#include "gdl.h"
-#include "utils.h"
-#include "gdaxprovider.h"
-#include "consoleutils.h"
+
 #include "consoletest.h"
 
+#include "utils.h"
+#include "consoleutils.h"
+
 #include "defs.h" // for makerSide
+#include "factory.h"
+
 #include "flogging.h"
 
 #include <QCoreApplication>
@@ -30,14 +32,7 @@ int main(int argc, char *argv[])
 //    QDateTime end = QDateTime::currentDateTimeUtc().addSecs(-60);// avoid future value, causes full dl
 //    restProvider.FetchCandles(start, end, Granularity::Hours);
 
-    // set sandbox
-    GDL::SetFactory([](GDL::Callback & callback)
-    {
-        return GDL::InterfacePtr(Utils::QMake<GDaxProvider>("GDaxProvider",
-            "wss://ws-feed-public.sandbox.gdax.com",
-            "https://api-public.sandbox.gdax.com",
-            callback));
-    });
+    GDL::SetFactory(std::make_unique<GDL::Factory>("wss://ws-feed-public.sandbox.gdax.com", "https://api-public.sandbox.gdax.com"));
 
     ConsoleTest test;
 
@@ -76,5 +71,7 @@ int main(int argc, char *argv[])
     // Shutdown causes: QIODevice::write (QTcpSocket): device not open
     // and WebSocketStream : SocketError: unknown(-1)
     // not seen in gui shutdown
+
+    Utils::DumpObjects();
     return ret;
 }

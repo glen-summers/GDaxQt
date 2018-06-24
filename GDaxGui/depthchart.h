@@ -8,8 +8,6 @@
 
 #include <QOpenGLWidget>
 
-class GDaxProvider;
-
 class DepthChart : public QOpenGLWidget
 {
     inline static const Flog::Log log = Flog::LogManager::GetLog<DepthChart>();
@@ -21,13 +19,13 @@ class DepthChart : public QOpenGLWidget
 
     QBrush background;
     Plot mutable depthPlot;
-    const GDL::Interface * gdl;
+    const GDL::IStream * gdl;
     double orderbookFraction;
 
 public:
     DepthChart(QWidget *parent = nullptr);
 
-    void SetProvider(const GDL::Interface * value)
+    void SetProvider(const GDL::IStream * value)
     {
         gdl = value;
     }

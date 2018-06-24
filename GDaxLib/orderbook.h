@@ -6,6 +6,7 @@
 #include <QMutex>
 
 #include <map>
+#include <algorithm>
 
 class OrderBook
 {

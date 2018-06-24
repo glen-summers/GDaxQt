@@ -2,7 +2,7 @@ CONFIG += c++17
 win32: {
     QMAKE_CXXFLAGS_WARN_ON -= -W3
     QMAKE_CXXFLAGS_WARN_ON += -W4
-    QMAKE_CXXFLAGS += /std:c++17 /permissive-
+    QMAKE_CXXFLAGS += /std:c++17 /permissive- /DNOMINMAX
 }
 
 unix: {

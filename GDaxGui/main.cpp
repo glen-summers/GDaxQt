@@ -1,8 +1,8 @@
 #include "mainwindow.h"
 
+#include "factory.h"
 #include "gdl.h"
 #include "utils.h"
-#include "gdaxprovider.h"
 
 #include <QApplication>
 #include <QSurfaceFormat>
@@ -55,19 +55,18 @@ int main(int argc, char *argv[])
 
     if (argc>1 && strcmp(argv[1], "-sandbox")==0)
     {
-        GDL::SetFactory([](GDL::Callback & callback)
-        {
-            return GDL::InterfacePtr(Utils::QMake<GDaxProvider>("GDaxProvider",
-                "wss://ws-feed-public.sandbox.gdax.com",
-                "https://api-public.sandbox.gdax.com",
-                callback));
-        });
+        GDL::SetFactory(std::make_unique<GDL::Factory>("wss://ws-feed-public.sandbox.gdax.com", "https://api-public.sandbox.gdax.com"));
     }
 
-    MainWindow w;
-    w.showMaximized();
+    int ret;
+    {
+        MainWindow w;
+        w.showMaximized();
 
-    int ret = a.exec();
-    w.Shutdown();
+        ret = a.exec();
+        w.Shutdown();
+    }
+
+    Utils::DumpObjects();
     return ret;
 }

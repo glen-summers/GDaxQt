@@ -20,7 +20,7 @@ struct Tick;
 class QTimer;
 class QSettings;
 
-class MainWindow : public QMainWindow, public GDL::Callback
+class MainWindow : public QMainWindow, public GDL::IStreamCallbacks
 {
     inline static const Flog::Log log = Flog::LogManager::GetLog<MainWindow>();
 
@@ -29,17 +29,19 @@ class MainWindow : public QMainWindow, public GDL::Callback
     QSettings * const settings;
     std::unique_ptr<Ui::MainWindow> ui;
     QTimer * const updateTimer;
-    GDL::InterfacePtr const gdl;
+    GDL::RequestPtr const gdlRequest;
     std::deque<Candle> candles;
     std::deque<Trade> trades;
 
     // use finer grain and map to GDax::Granularity
     Granularity granularity;
 
+    GDL::StreamPtr gdlStream;
+
 public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
-    void Shutdown() const;
+    void Shutdown();
 
 private slots: // On...?
     void on_actionE_xit_triggered();

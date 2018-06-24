@@ -73,10 +73,12 @@ WebSocketStream::FunctionMap WebSocketStream::functionMap =
     { "error", &WebSocketStream::ProcessError }
 };
 
-WebSocketStream::WebSocketStream(const char * url, QObject * parent)
-    : QObject(parent)
+WebSocketStream::WebSocketStream(const char * url, GDL::IStreamCallbacks & callback)
+    : QObject()
+    , callback(callback)
     , url(url)
     , webSocket(Utils::QMake<QWebSocket>("webSocket", QString(), QWebSocketProtocol::VersionLatest, this))
+    , workerThread(Utils::QMake<QThread>("workerThread", this))
     , pingTimer(Utils::QMake<QTimer>("pingTimer", this))
     , lastTradeId()
 {
@@ -89,7 +91,7 @@ WebSocketStream::WebSocketStream(const char * url, QObject * parent)
     connect(webSocket, &QWebSocket::stateChanged, [&](QAbstractSocket::SocketState socketState)
     {
         log.Info("WebSocket state: {0}", QMetaEnum::fromType<QAbstractSocket::SocketState>().valueToKey(socketState));
-        emit OnStateChanged(ToState(socketState));
+        callback.OnStateChanged(ToState(socketState));
     });
 
     connect(webSocket, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error), Error);
@@ -105,6 +107,31 @@ WebSocketStream::WebSocketStream(const char * url, QObject * parent)
 
     log.Info("Connecting to {0}", url);
     webSocket->open(QUrl(url));
+
+    this->moveToThread(workerThread);
+
+    QObject::connect(workerThread, &QThread::started, [](){ Flog::LogManager::SetThreadName("GDax"); });
+    QObject::connect(workerThread, &QThread::finished, webSocket, &QObject::deleteLater);
+    workerThread->start();
+}
+
+void WebSocketStream::SetAuthentication(const char key[], const char secret[], const char passphrase[])
+{
+    // todo... impl and use in subscribe, need reconnect? ie this is a logon action
+    // just ensure no subscriptions exist, or does a subrciption object hold the authenticator
+    // so that multiple 'users'\'api keys' could use the api independently
+    //authenticator = std::make_unique<Authenticator>(key, QByteArray::fromBase64(secret), passphrase);
+}
+
+void WebSocketStream::ClearAuthentication()
+{
+
+}
+
+void WebSocketStream::Shutdown()
+{
+    workerThread->quit();
+    workerThread->wait();
 }
 
 void WebSocketStream::Ping()
@@ -219,7 +246,7 @@ void WebSocketStream::ProcessSnapshot(const QJsonObject & object)
 
         orderBook.AddAsk(dp, da);
     }
-    emit OnSnapshot();
+    callback.OnSnapshot();
 }
 
 void WebSocketStream::ProcessUpdate(const QJsonObject & object)
@@ -263,7 +290,7 @@ void WebSocketStream::ProcessHeartbeat(const QJsonObject & object)
     }
 
     QDateTime serverTime = QDateTime::fromString(serverTimeString, Qt::ISODateWithMs);
-    emit OnHeartbeat(serverTime);
+    callback.OnHeartbeat(serverTime);
 }
 
 void WebSocketStream::ProcessTicker(const QJsonObject & object)
@@ -276,5 +303,5 @@ void WebSocketStream::ProcessTicker(const QJsonObject & object)
         return;
     }
 
-    emit OnTick(tick);
+    callback.OnTick(tick);
 }

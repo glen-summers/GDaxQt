@@ -17,7 +17,7 @@ class QNetworkAccessManager;
 class QNetworkReply;
 class QUrlQuery;
 
-class RestProvider : public QObject
+class RestProvider : public QObject, public GDL::IRequest
 {
     Q_OBJECT
 
@@ -29,9 +29,9 @@ public:
     RestProvider(const char * baseUrl, QObject * parent = nullptr);
     ~RestProvider();
 
-    void SetAuthentication(QByteArray apiKey, QByteArray secretKey, QByteArray passphrase);
+    void SetAuthentication(const char key[], const char secret[], const char passphrase[]) override;
 
-    void ClearAuthentication();
+    void ClearAuthentication() override;
 
     Async<ServerTimeResult> FetchTime();
 

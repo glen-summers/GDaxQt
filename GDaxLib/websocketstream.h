@@ -15,7 +15,7 @@ class QWebSocket;
 class QJsonObject;
 class QTimer;
 
-class WebSocketStream : public QObject
+class WebSocketStream : public QObject, public GDL::IStream
 {
     inline static const Flog::Log log = Flog::LogManager::GetLog<WebSocketStream>();
 
@@ -24,22 +24,22 @@ class WebSocketStream : public QObject
     typedef std::unordered_map<std::string, void(WebSocketStream::*)(const QJsonObject & object)> FunctionMap;
     static FunctionMap functionMap;
 
+    GDL::IStreamCallbacks & callback;
     QString const url;
     QWebSocket * const webSocket;
+    QThread * const workerThread;
     QTimer * const pingTimer;
+
     OrderBook orderBook;
     TradeId lastTradeId;
 
 public:
-    explicit WebSocketStream(const char * url, QObject * parent = nullptr);
+    explicit WebSocketStream(const char * url, GDL::IStreamCallbacks & callback);
 
-    const OrderBook & Orders() const { return orderBook; }
-
-signals:
-    void OnSnapshot();
-    void OnHeartbeat(const QDateTime & serverTime);
-    void OnTick(const Tick & tick);
-    void OnStateChanged(GDL::ConnectedState state);
+    void SetAuthentication(const char key[], const char secret[], const char passphrase[]) override;
+    void ClearAuthentication() override ;
+    const OrderBook & Orders() const override { return orderBook; }
+    void Shutdown() override;
 
 private slots:
     void Connected();

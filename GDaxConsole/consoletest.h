@@ -3,9 +3,9 @@
 
 #include "gdl.h"
 
-class ConsoleTest : public GDL::Callback
+class ConsoleTest
 {
-    GDL::InterfacePtr gdl;
+    GDL::RequestPtr request;
 
 public:
     ConsoleTest();
@@ -14,12 +14,6 @@ public:
     void Orders() const;
     void CancelOrders() const;
     void Shutdown();
-
-private:
-    void OnSnapshot() override;
-    void OnHeartbeat(const QDateTime & serverTime) override;
-    void OnTick(const Tick & tick) override;
-    void OnStateChanged(GDL::ConnectedState state) override;
 };
 
 #endif // CONSOLETEST_H

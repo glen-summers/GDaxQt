@@ -15,13 +15,18 @@ namespace
     constexpr const char passphrase[] = "eoxq18akv3u";
 }
 
-ConsoleTest::ConsoleTest() : gdl(GDL::Create(*this))
+ConsoleTest::ConsoleTest() : request(GDL::GetFactory().CreateRequest())
 {
-    gdl->SetAuthentication(apiKey, secret, passphrase);
+    request->SetAuthentication(apiKey, secret, passphrase);
 
-    gdl->FetchTime().Then([](const ServerTimeResult & serverTime)
+    request->FetchTime().Then([](const ServerTimeResult & result)
     {
-        QDateTime dateTime = serverTime(); // catch here
+        if(result.HasError())
+        {
+            std::cerr << SGR::Red << SGR::Bold << "Error getting server time: " << result.ErrorString() << SGR::Rst << std::endl;
+            return;
+        }
+        QDateTime dateTime = result();
         auto now = QDateTime::currentDateTimeUtc();
         std::cout << SGR::Cyan
                   << "HB, ServerTime: " << dateTime
@@ -33,7 +38,7 @@ ConsoleTest::ConsoleTest() : gdl(GDL::Create(*this))
 
 void ConsoleTest::PlaceOrder(const Decimal &size, const Decimal &price, MakerSide side) const
 {
-    gdl->PlaceOrder(size, price, side).Then([](OrderResult result)
+    request->PlaceOrder(size, price, side).Then([](OrderResult result)
     {
         if(result.HasError())
         {
@@ -46,7 +51,7 @@ void ConsoleTest::PlaceOrder(const Decimal &size, const Decimal &price, MakerSid
 
 void ConsoleTest::Orders() const
 {
-    gdl->FetchOrders().Then([](OrdersResult result)
+    request->FetchOrders().Then([](OrdersResult result)
     {
         if (result.HasError())
         {
@@ -62,7 +67,7 @@ void ConsoleTest::Orders() const
 
 void ConsoleTest::CancelOrders() const
 {
-    gdl->CancelOrders().Then([](CancelOrdersResult result)
+    request->CancelOrders().Then([](CancelOrdersResult result)
     {
         if (result.HasError())
         {
@@ -78,31 +83,5 @@ void ConsoleTest::CancelOrders() const
 
 void ConsoleTest::Shutdown()
 {
-    gdl->Shutdown();
-    gdl.reset();
-}
-
-void ConsoleTest::OnSnapshot()
-{
-    std::cout << "Snapshot" << std::endl;
-}
-
-void ConsoleTest::OnHeartbeat(const QDateTime & serverTime)
-{
-    auto now = QDateTime::currentDateTimeUtc();
-    std::cout << SGR::Cyan
-              << "HB, ServerTime: " << serverTime
-              << ", DeltaMs(-latency): " << now.msecsTo(serverTime)
-              << SGR::Rst
-              << std::endl;
-}
-
-void ConsoleTest::OnTick(const Tick & /*tick*/)
-{
-    std::cout << SGR::Magenta << "tick " << SGR::Rst << std::endl;
-}
-
-void ConsoleTest::OnStateChanged(GDL::ConnectedState state)
-{
-    std::cout << "state: " << (unsigned)state << std::endl;
+    request.reset();
 }

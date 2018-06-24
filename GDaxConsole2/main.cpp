@@ -5,6 +5,6 @@
 int main()
 {
     std::cout << "GDax" << std::endl;
-    WebSocketStream g(GDL::defaultStreamUrl);
+    //WebSocketStream g(GDL::defaultStreamUrl);
     return 0;
 }
