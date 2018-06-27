@@ -6,7 +6,12 @@
 
 namespace
 {
-    GDL::FactoryPtr factory = std::make_unique<GDL::Factory>("wss://ws-feed.gdax.com", "https://api.gdax.com");
+    const char StreamUrl[] = "wss://ws-feed.pro.coinbase.com";
+    const char RequestUrl[] = "https://api.pro.coinbase.com";
+    const char SandboxStreamUrl[] = "wss://ws-feed-public.sandbox.gdax.com"; // pro ver?
+    const char SandboxRequestUrl[] = "https://api-public.sandbox.gdax.com"; // pro ver?
+
+    GDL::FactoryPtr factory = std::make_unique<GDL::Factory>(StreamUrl, RequestUrl);
 }
 
 void GDL::SetFactory(GDL::FactoryPtr value)
@@ -17,4 +22,9 @@ void GDL::SetFactory(GDL::FactoryPtr value)
 const GDL::IFactory & GDL::GetFactory()
 {
     return *factory;
+}
+
+void GDL::SetSandbox()
+{
+    SetFactory(std::make_unique<GDL::Factory>(SandboxStreamUrl, SandboxRequestUrl));
 }

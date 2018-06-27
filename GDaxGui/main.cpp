@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
 
     if (argc>1 && strcmp(argv[1], "-sandbox")==0)
     {
-        GDL::SetFactory(std::make_unique<GDL::Factory>("wss://ws-feed-public.sandbox.gdax.com", "https://api-public.sandbox.gdax.com"));
+        GDL::SetSandbox();
     }
 
     int ret;

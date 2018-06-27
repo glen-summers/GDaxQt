@@ -114,6 +114,7 @@ namespace GDL
 
     const IFactory & GetFactory();
     void SetFactory(FactoryPtr);
+    void SetSandbox();
 }
 
 #endif // GDL_H

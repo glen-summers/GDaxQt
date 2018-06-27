@@ -21,6 +21,7 @@ int main(int argc, char *argv[])
 
     Flog::LogManager::SetLevel(Flog::Level::Info);
     Flog::LogManager::SetThreadName("Main");
+    GDL::SetSandbox();
 
     EnableAnsiConsole();
     std::cout << SGR::Bold << "GDax" << SGR::Rst << std::endl;
@@ -31,8 +32,6 @@ int main(int argc, char *argv[])
 //    QDateTime start = QDateTime::currentDateTimeUtc().addDays(-1);
 //    QDateTime end = QDateTime::currentDateTimeUtc().addSecs(-60);// avoid future value, causes full dl
 //    restProvider.FetchCandles(start, end, Granularity::Hours);
-
-    GDL::SetFactory(std::make_unique<GDL::Factory>("wss://ws-feed-public.sandbox.gdax.com", "https://api-public.sandbox.gdax.com"));
 
     ConsoleTest test;
 
