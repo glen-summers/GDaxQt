@@ -8,33 +8,63 @@
 #include <map>
 #include <algorithm>
 
-class OrderBook
+struct IOrderBook
 {
-    QMutex mutex;
+    virtual const std::map<Decimal, Decimal> & Bids() const = 0;
+    virtual const std::map<Decimal, Decimal> & Asks() const = 0;
+    virtual Decimal SeekAmount(const Decimal & priceLow, const Decimal & priceHigh) const = 0;
+    virtual Decimal MidPrice() const = 0;
+
+    virtual void AddBid(const Decimal & price, const Decimal & amount) = 0;
+    virtual void UpdateBid(const Decimal & price, const Decimal & amount) = 0;
+    virtual void AddAsk(const Decimal & price, const Decimal & amount) = 0;
+    virtual void UpdateAsk(const Decimal & price, const Decimal & amount) = 0;
+
+protected:
+    ~IOrderBook() = default;
+};
+
+class OrderBook : private IOrderBook
+{
+    QMutex mutable mutex;
     std::map<Decimal, Decimal> bids, asks;
     Decimal totBid;
     Decimal totAsk;
 
 public:
-    const QMutex & Mutex() const { return mutex; }
+    OrderBook() : mutex()
+    {}
 
-    const std::map<Decimal, Decimal> & Bids() const
+    template <typename Func> void VisitUnderLock(Func func) const
+    {
+        QMutexLocker lock(&mutex);
+        func(static_cast<const IOrderBook&>(*this));
+    }
+
+    template <typename Func> void VisitUnderLock(Func func)
+    {
+        QMutexLocker lock(&mutex);
+        func(static_cast<IOrderBook&>(*this));
+    }
+
+private:
+    const std::map<Decimal, Decimal> & Bids() const override
     {
         return bids;
     }
 
-    const std::map<Decimal, Decimal> & Asks() const
+    const std::map<Decimal, Decimal> & Asks() const override
     {
         return asks;
     }
 
-    void AddBid(const Decimal & price, const Decimal & amount)
+    void AddBid(const Decimal & price, const Decimal & amount) override
     {
         bids[price] += amount;
         totBid += amount;
     }
 
-    void UpdateBid(const Decimal & price, const Decimal & amount)
+    void UpdateBid(const Decimal & price, const Decimal & amount) override
     {
         auto it = bids.find(price);
         if (it != bids.end())
@@ -56,13 +86,13 @@ public:
         totBid += amount;
     }
 
-    void AddAsk(const Decimal & price, const Decimal & amount)
+    void AddAsk(const Decimal & price, const Decimal & amount) override
     {
         asks[price] += amount;
         totAsk += amount;
     }
 
-    void UpdateAsk(const Decimal & price, const Decimal & amount)
+    void UpdateAsk(const Decimal & price, const Decimal & amount) override
     {
         auto it = asks.find(price);
         if (it != asks.end())
@@ -84,7 +114,7 @@ public:
         totAsk += amount;
     }
 
-    Decimal SeekAmount(const Decimal & priceLow, const Decimal & priceHigh) const
+    Decimal SeekAmount(const Decimal & priceLow, const Decimal & priceHigh) const override
     {
         Decimal bidAmount, askAmount;
         for (auto bit = bids.rbegin(); bit!=bids.rend() && bit->first >= priceLow; ++bit)
@@ -98,7 +128,7 @@ public:
         return std::max(bidAmount, askAmount);
     }
 
-    Decimal MidPrice() const
+    Decimal MidPrice() const override
     {
         auto bidIt = bids.rbegin();
         auto askIt = asks.begin();
@@ -108,12 +138,13 @@ public:
             : Decimal{};
     }
 
+public:
     void Clear()
     {
+        QMutexLocker lock(&mutex);
         bids.clear();
         asks.clear();
     }
 };
-
 
 #endif // ORDERBOOK_H

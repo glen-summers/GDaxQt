@@ -69,7 +69,6 @@ void Utils::Detail::Constructed(const char * name, QObject * object)
 
 void Utils::DumpObjects()
 {
-
     QMutexLocker lock(&mutex);
     if (objectMap.empty())
     {

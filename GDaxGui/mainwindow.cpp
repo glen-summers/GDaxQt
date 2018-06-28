@@ -19,6 +19,8 @@
 #include <QMutex>
 #include <QScreen>
 
+#include <cassert>
+
 namespace
 {
     constexpr int UpdateTimerMs = 5000;
@@ -54,10 +56,11 @@ MainWindow::MainWindow(QWidget *parent)
         log.Info("Screen: {0} = {1}dpi{2}", s->name(), s->logicalDotsPerInch(), s==QApplication::primaryScreen()? " Primary" : "");
     }
 
-
     AttachExpander(ui->centralWidget, ui->trades, settings->value(TradesVisibleSetting, true).toBool());
     AttachExpander(ui->centralWidget, ui->orderBook, settings->value(OrdersVisibleSetting, true).toBool());
     AttachExpander(ui->centralWidget, ui->depthChart, settings->value(DepthVisibleSetting, true).toBool());
+
+    ui->depthChart->SetOrderBook(&orderBook);
 
     granularity = Granularity::Hours; // persist
     SetupActionGroup(*new QActionGroup(this),
@@ -70,8 +73,6 @@ MainWindow::MainWindow(QWidget *parent)
         {*ui->action1D, Granularity::Days}
     }, *ui->action1H);
     connect(ui->menuGranularity, &QMenu::triggered, this, &MainWindow::GranularityChanged);
-
-    ui->depthChart->SetProvider(gdlStream.get());
 
     connect(updateTimer, &QTimer::timeout, this, &MainWindow::TimerUpdate);
     updateTimer->start(UpdateTimerMs);
@@ -99,6 +100,7 @@ void MainWindow::AttachExpander(QWidget * parent, QWidget * widget, bool expande
 
 void MainWindow::Shutdown()
 {
+    // do this in dtor?
     settings->setValue(TradesVisibleSetting, !ui->trades->isHidden());
     settings->setValue(OrdersVisibleSetting, !ui->orderBook->isHidden());
     settings->setValue(DepthVisibleSetting, !ui->depthChart->isHidden());
@@ -124,7 +126,6 @@ void MainWindow::on_actionE_xit_triggered()
 
 void MainWindow::Snapshot()
 {
-    Flog::ScopeLog s(log, Flog::Level::Info, "Snapshot");
     ui->depthChart->update();
     GenerateOrderBook();
 }
@@ -138,19 +139,24 @@ void MainWindow::GenerateOrderBook()
         return;
     }
 
+    orderBook.VisitUnderLock([&](IOrderBook & lockedOrderBook)
+    {
+        GenerateOrderBookLocked(lockedOrderBook);
+    });
+}
+
+void MainWindow::GenerateOrderBookLocked(IOrderBook & lockedOrderBook)
+{
     Flog::ScopeLog s(log, Flog::Level::Info, "GenerateOrderBook");
 
+    auto & orderBookUi = *ui->orderBook;
     QFont font = orderBookUi.document()->defaultFont();
     QFontMetrics fm(font);
     int fontHeight = fm.height();
     int lines = orderBookUi.height()/2/fontHeight-1;
 
-    // lock orderbook, move\improve impl
-    const auto & orderBook = gdlStream->Orders();
-    QMutexLocker lock(&const_cast<QMutex&>(orderBook.Mutex()));
-
-    const auto & asks = orderBook.Asks();
-    const auto & bids = orderBook.Bids();
+    const auto & asks = lockedOrderBook.Asks();
+    const auto & bids = lockedOrderBook.Bids();
     int priceDecs = 2;
     int amountDecs = 4;
     Decimal tot;
@@ -205,7 +211,7 @@ td.amount span { color:grey; }
     stream << "</table>";
 
     // show mid or last trade here??
-    auto mid = orderBook.MidPrice();
+    auto mid = lockedOrderBook.MidPrice();
     if (mid != Decimal{})
     {
         stream << R"(<table width="100%" cellspacing="0" cellpadding="0">
@@ -318,19 +324,77 @@ td.amount span { color:grey; }
    tradesWidget.document()->setHtml(*stream.string());
 }
 
+void MainWindow::OnSnapshot(const QString & product, const IterableResult<GDL::OrderBookItem> & bids, const IterableResult<GDL::OrderBookItem> & asks)
+{
+    Flog::ScopeLog s(log, Flog::Level::Info, "Snapshot");
+
+    orderBook.VisitUnderLock([&](IOrderBook & book)
+    {
+        for (auto bid : bids)
+        {
+            book.AddBid(bid.price, bid.amount);
+        }
+
+        for (auto ask : asks)
+        {
+            book.AddAsk(ask.price, ask.amount);
+        }
+    });
+
+    QMetaObject::invokeMethod(this, "Snapshot");
+}
+
+void MainWindow::OnUpdate(const QString &product, const IterableResult<GDL::OrderBookChange> & changes)
+{
+    orderBook.VisitUnderLock([&](IOrderBook & book)
+    {
+        for (auto change : changes)
+        {
+            switch (change.side)
+            {
+            case MakerSide::Buy:
+                book.UpdateBid(change.price, change.amount);
+                break;
+
+            case MakerSide::Sell:
+                book.UpdateAsk(change.price, change.amount);
+                break;
+
+            default:
+                assert(false);
+            }
+        }
+    });
+}
+
+void MainWindow::OnHeartbeat(const QDateTime &serverTime)
+{
+    QMetaObject::invokeMethod( this, "Heartbeat", Q_ARG( const QDateTime &, serverTime) );
+}
+
+void MainWindow::OnTick(const Tick &tick)
+{
+    QMetaObject::invokeMethod( this, "Ticker", Q_ARG( const Tick &, tick) );
+}
+
+void MainWindow::OnStateChanged(GDL::ConnectedState state)
+{
+    QMetaObject::invokeMethod( this, "StateChanged", Q_ARG( GDL::ConnectedState, state) );
+}
+
 void MainWindow::Ticker(const Tick &tick)
 {
-//    if (!trades.empty())
-//    {
-        // tick sequenceNumber is batched as are the associated trades
-        // for a complete trade list the HB channel could should fetch any missing trades, or do it here? or on a separate timer
-        // so ticks should not be stored as a trade? unless identified as unbatched?
-        //        if (ticks.front().sequence != tick.sequence -1)
-        //        {
-        //            log.Info(QString("Missed ticks %1 : %2").arg(ticks.front().sequence).arg(tick.sequence));
-        //        }
+    //    if (!trades.empty())
+    //    {
+    // tick sequenceNumber is batched as are the associated trades
+    // for a complete trade list the HB channel could should fetch any missing trades, or do it here? or on a separate timer
+    // so ticks should not be stored as a trade? unless identified as unbatched?
+    //        if (ticks.front().sequence != tick.sequence -1)
+    //        {
+    //            log.Info(QString("Missed ticks %1 : %2").arg(ticks.front().sequence).arg(tick.sequence));
+    //        }
 
-        // currently ticks starts as a trade snaphot + aggregated trade tick updates
+    // currently ticks starts as a trade snaphot + aggregated trade tick updates
         // expect this code to onlt trigger at startup
 //        Tick lastTick = ticks.front();
 //        if (lastTick.sequence >= tick.sequence)
@@ -405,6 +469,8 @@ void MainWindow::Connected()
     // clear now to avoid ticks being added to old data will blank display while fetching
     // better model to store all data in an atomically swapable entity
     log.Info("Connected");
+
+    orderBook.Clear();
 
     trades.clear();
     ui->candleChart->SetCandles({}, granularity);

@@ -4,6 +4,7 @@
 #include "gdl.h"
 #include "candle.h"
 #include "trade.h"
+#include "orderbook.h"
 
 #include "flogging.h"
 
@@ -33,6 +34,8 @@ class MainWindow : public QMainWindow, public GDL::IStreamCallbacks
     std::deque<Candle> candles;
     std::deque<Trade> trades;
 
+    OrderBook orderBook;
+
     // use finer grain and map to GDax::Granularity
     Granularity granularity;
 
@@ -41,6 +44,7 @@ class MainWindow : public QMainWindow, public GDL::IStreamCallbacks
 public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+
     void Shutdown();
 
 private slots: // On...?
@@ -56,33 +60,21 @@ private:
     void AttachExpander(QWidget * parent, QWidget * widget, bool expanded);
     void Connected();
     void GenerateOrderBook();
+    void GenerateOrderBookLocked(IOrderBook & lockedOrderBook);
     void GenerateTradeList();
 
-    // Callbacks
+    // <IStreamCallbacks>
     // using interface\callback to allow abstraction instead of emiting QT signals from provider
-    // if a callback is not in the UI thread it will need invoking\emiting, currently WebSocket callbacks are on
-    // a worker thread
-    void OnSnapshot() override
-    {
-        QMetaObject::invokeMethod(this, "Snapshot");
-    }
+    // if a callback is not in the UI thread it will need invoking\emiting,
+    // currently WebSocket callbacks are all on a worker thread
+    void OnSnapshot(const QString & product, const IterableResult<GDL::OrderBookItem> & bids, const IterableResult<GDL::OrderBookItem> & asks) override;
+    void OnUpdate(const QString & product, const IterableResult<GDL::OrderBookChange> & changes) override;
+    void OnHeartbeat(const QDateTime & serverTime) override;
+    void OnTick(const Tick & tick) override;
+    void OnStateChanged(GDL::ConnectedState state) override;
+    //  </IStreamCallbacks>
 
-    void OnHeartbeat(const QDateTime & serverTime) override
-    {
-        QMetaObject::invokeMethod( this, "Heartbeat", Q_ARG( const QDateTime &, serverTime) );
-    }
-
-    void OnTick(const Tick & tick) override
-    {
-        QMetaObject::invokeMethod( this, "Ticker", Q_ARG( const Tick &, tick) );
-    }
-
-    void OnStateChanged(GDL::ConnectedState state) override
-    {
-        QMetaObject::invokeMethod( this, "StateChanged", Q_ARG( GDL::ConnectedState, state) );
-    }
-
-    // Ui async callbacks
+    // async request callbacks, are on currently on UI thread
     void OnTrades(const TradesResult & );
     void OnCandles(const CandlesResult & );
 };

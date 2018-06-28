@@ -1,6 +1,7 @@
 #include "depthchart.h"
 
 #include "orderbook.h"
+#include "mainwindow.h"
 
 namespace
 {
@@ -19,10 +20,15 @@ DepthChart::DepthChart(QWidget *parent)
     : QOpenGLWidget(parent)
     , background(QApplication::palette().color(QPalette::Base))
     , depthPlot(10, false, true)
-    , gdl()
     , orderbookFraction(orderbookFractionInitial)
+    , orderBook()
 {
     setAutoFillBackground(false);
+}
+
+void DepthChart::SetOrderBook(OrderBook * value)
+{
+    orderBook = value;
 }
 
 void DepthChart::paintEvent(QPaintEvent *event)
@@ -66,17 +72,19 @@ void DepthChart::wheelEvent(QWheelEvent *event)
 
 void DepthChart::Paint(QPainter & painter) const
 {
-    if (!gdl)
+    if (orderBook)
     {
-        return;
+        orderBook->VisitUnderLock([&](const IOrderBook & lockedOrderBook)
+        {
+            PaintOrderBook(painter, lockedOrderBook);
+        });
     }
+}
 
-    // lock orderbook, move\improve impl
-    const auto & orderBook = gdl->Orders();
-    QMutexLocker lock(&const_cast<QMutex&>(orderBook.Mutex()));
-
-    const auto & bids = orderBook.Bids();
-    const auto & asks = orderBook.Asks();
+void DepthChart::PaintOrderBook(QPainter & painter, const IOrderBook & lockedOrderBook) const
+{
+    const auto & bids = lockedOrderBook.Bids();
+    const auto & asks = lockedOrderBook.Asks();
 
     if (bids.empty() || asks.empty())
     {
@@ -84,11 +92,11 @@ void DepthChart::Paint(QPainter & painter) const
     }
 
     // try using a Path object and scaling after to fit to avoid double scan
-    auto mid = orderBook.MidPrice();
+    auto mid = lockedOrderBook.MidPrice();
     auto seekRange = mid * DecNs::decimal_cast<4>(orderbookFraction);
     auto lo = mid - seekRange;
     auto hi = mid + seekRange;
-    double xRange = orderBook.SeekAmount(lo, hi).getAsDouble();
+    double xRange = lockedOrderBook.SeekAmount(lo, hi).getAsDouble();
     double yRange = seekRange.getAsDouble() * 2;
     double yOrg = mid.getAsDouble();
     depthPlot.SetView(QRectF{QPointF{0, lo.getAsDouble()}, QPointF{xRange, hi.getAsDouble()}});

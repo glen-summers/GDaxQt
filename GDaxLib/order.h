@@ -15,6 +15,7 @@ enum class SelfTradeProtection  : unsigned { None, DecrementAndCancel, CancelOld
 
 struct Order
 {
+    // todo decouple QJson, use an opaque Deserialiser?
     static Order FromJson(const QJsonValue &value);
 
     QString id;

@@ -10,7 +10,7 @@ class Result
     QString const errorString;
 
 public:
-    Result(QNetworkReply * reply);
+    Result(QNetworkReply * reply = nullptr);
 
     QNetworkReply::NetworkError Error() const { return error; }
     std::string ErrorString() const;

@@ -1,10 +1,11 @@
 #include "result.h"
 
 #include <QMetaEnum>
+#include <QNetworkReply>
 
 Result::Result(QNetworkReply *reply)
-    : error(reply->error())
-    , errorString(reply->errorString())
+    : error(reply ? reply->error() : QNetworkReply::NetworkError::NoError) // avoid one error?
+    , errorString(reply ? reply->errorString() : "")//
 {}
 
 std::string Result::ErrorString() const

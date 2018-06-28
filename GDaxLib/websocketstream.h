@@ -2,7 +2,6 @@
 #define WEBSOCKETSTREAM_H
 
 #include "defs.h"
-#include "orderbook.h"
 #include "gdl.h" //fwd?
 
 #include "flogging.h"
@@ -30,7 +29,6 @@ class WebSocketStream : public QObject, public GDL::IStream
     QThread * const workerThread;
     QTimer * const pingTimer;
 
-    OrderBook orderBook;
     TradeId lastTradeId;
 
 public:
@@ -38,7 +36,6 @@ public:
 
     void SetAuthentication(const char key[], const char secret[], const char passphrase[]) override;
     void ClearAuthentication() override ;
-    const OrderBook & Orders() const override { return orderBook; }
     void Shutdown() override;
 
 private slots:

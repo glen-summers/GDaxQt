@@ -23,6 +23,9 @@ public:
         , array(HasError() ? QJsonArray() : QJsonDocument::fromJson(reply->readAll()).array())
     {}
 
+    IterableResult(const QJsonArray & array) : array(array)
+    {}
+
     iterator begin() const
     {
         Verify();

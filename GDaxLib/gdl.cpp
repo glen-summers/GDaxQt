@@ -28,3 +28,33 @@ void GDL::SetSandbox()
 {
     SetFactory(std::make_unique<GDL::Factory>(SandboxStreamUrl, SandboxRequestUrl));
 }
+
+QString JsonValueToString::FromJson(const QJsonValue &value)
+{
+    return value.toString();
+}
+
+QDateTime ServerTimeToDateTime::FromJson(const QJsonValue &value)
+{
+    return QDateTime::fromString(value["iso"].toString(), Qt::DateFormat::ISODateWithMs);
+}
+
+GDL::OrderBookItem GDL::OrderBookItem::FromJson(const QJsonValue &value)
+{
+    const auto & ar = value.toArray();
+    return
+    {
+        Decimal(ar[0].toString().toStdString()), Decimal(ar[1].toString().toStdString())
+    };
+}
+
+GDL::OrderBookChange GDL::OrderBookChange::FromJson(const QJsonValue &value)
+{
+    const auto & ar = value.toArray();
+    return
+    {
+        MakerSideFromString(ar[0].toString().toStdString()),
+                Decimal(ar[1].toString().toStdString()),
+                Decimal(ar[2].toString().toStdString())
+    };
+}

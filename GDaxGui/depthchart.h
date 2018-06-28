@@ -8,6 +8,9 @@
 
 #include <QOpenGLWidget>
 
+class OrderBook;
+struct IOrderBook;
+
 class DepthChart : public QOpenGLWidget
 {
     inline static const Flog::Log log = Flog::LogManager::GetLog<DepthChart>();
@@ -19,16 +22,13 @@ class DepthChart : public QOpenGLWidget
 
     QBrush background;
     Plot mutable depthPlot;
-    const GDL::IStream * gdl;
     double orderbookFraction;
+    OrderBook * orderBook;
 
 public:
     DepthChart(QWidget *parent = nullptr);
 
-    void SetProvider(const GDL::IStream * value)
-    {
-        gdl = value;
-    }
+    void SetOrderBook(OrderBook * value);
 
 private:
     void paintEvent(QPaintEvent *event) override;
@@ -36,6 +36,7 @@ private:
 
 private:
     void Paint(QPainter & painter) const;
+    void PaintOrderBook(QPainter & painter, const IOrderBook & orderBook) const;
 };
 
 #endif // GRAPHICSWIDGET_H

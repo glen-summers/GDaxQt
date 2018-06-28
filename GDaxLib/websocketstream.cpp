@@ -196,9 +196,6 @@ void WebSocketStream::Pong()
 
 void WebSocketStream::Clear()
 {
-    // lock orderbook, move\improve impl
-    QMutexLocker lock(&const_cast<QMutex&>(orderBook.Mutex()));
-    orderBook.Clear();
     lastTradeId = 0;
 }
 
@@ -218,61 +215,12 @@ void WebSocketStream::ProcessError(const QJsonObject & object)
 
 void WebSocketStream::ProcessSnapshot(const QJsonObject & object)
 {
-    Flog::ScopeLog s(log, Flog::Level::Info, "Snapshot");
-
-    // lock orderbook, move\improve impl
-    QMutexLocker lock(&const_cast<QMutex&>(orderBook.Mutex()));
-
-    for (QJsonValueRef bid : object["bids"].toArray())
-    {
-        QJsonArray bidArray = bid.toArray();
-        QString price = bidArray[0].toString();
-        QString amount = bidArray[1].toString();
-
-        Decimal dp(price.toStdString());
-        Decimal da(amount.toStdString());
-
-        orderBook.AddBid(dp, da);
-    }
-
-    for (QJsonValueRef ask : object["asks"].toArray())
-    {
-        QJsonArray askArray = ask.toArray();
-        QString price = askArray[0].toString();
-        QString amount = askArray[1].toString();
-
-        Decimal dp(price.toStdString());
-        Decimal da(amount.toStdString());
-
-        orderBook.AddAsk(dp, da);
-    }
-    callback.OnSnapshot();
+    callback.OnSnapshot("todo Product", object["bids"].toArray(), object["asks"].toArray());
 }
 
 void WebSocketStream::ProcessUpdate(const QJsonObject & object)
 {
-    // lock orderbook, move\improve impl
-    QMutexLocker lock(&const_cast<QMutex&>(orderBook.Mutex()));
-
-    for(QJsonValueRef changes : object["changes"].toArray())
-    {
-        QJsonArray array = changes.toArray();
-        QString  changeType = array[0].toString();
-        bool bid = changeType == "buy";
-
-        Decimal pd(array[1].toString().toStdString());
-        Decimal ad(array[2].toString().toStdString());
-
-        if (bid)
-        {
-            orderBook.UpdateBid(pd, ad);
-        }
-        else
-        {
-            orderBook.UpdateAsk(pd, ad);
-        }
-    }
-    // adjust scales here?
+    callback.OnUpdate("todo Product", object["changes"].toArray());
 }
 
 void WebSocketStream::ProcessHeartbeat(const QJsonObject & object)
