@@ -15,6 +15,7 @@ struct IOrderBook
     virtual Decimal SeekAmount(const Decimal & priceLow, const Decimal & priceHigh) const = 0;
     virtual Decimal MidPrice() const = 0;
 
+    virtual void Clear() = 0;
     virtual void AddBid(const Decimal & price, const Decimal & amount) = 0;
     virtual void UpdateBid(const Decimal & price, const Decimal & amount) = 0;
     virtual void AddAsk(const Decimal & price, const Decimal & amount) = 0;
@@ -138,10 +139,8 @@ private:
             : Decimal{};
     }
 
-public:
-    void Clear()
+    void Clear() override
     {
-        QMutexLocker lock(&mutex);
         bids.clear();
         asks.clear();
     }

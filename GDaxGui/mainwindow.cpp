@@ -13,7 +13,6 @@
 #include <QTimer>
 #include <QToolBar>
 #include <QActionGroup>
-#include <QThread>
 #include <QSettings>
 #include <QTextStream>
 #include <QMutex>
@@ -330,6 +329,7 @@ void MainWindow::OnSnapshot(const QString & product, const IterableResult<GDL::O
 
     orderBook.VisitUnderLock([&](IOrderBook & book)
     {
+        book.Clear();
         for (auto bid : bids)
         {
             book.AddBid(bid.price, bid.amount);
@@ -469,8 +469,6 @@ void MainWindow::Connected()
     // clear now to avoid ticks being added to old data will blank display while fetching
     // better model to store all data in an atomically swapable entity
     log.Info("Connected");
-
-    orderBook.Clear();
 
     trades.clear();
     ui->candleChart->SetCandles({}, granularity);

@@ -14,6 +14,8 @@
 
 namespace
 {
+    constexpr bool useWorkerThead = true;
+
     constexpr int PingTimerMs = 5000;
 
     // param for product
@@ -108,11 +110,13 @@ WebSocketStream::WebSocketStream(const char * url, GDL::IStreamCallbacks & callb
     log.Info("Connecting to {0}", url);
     webSocket->open(QUrl(url));
 
-    this->moveToThread(workerThread);
-
-    QObject::connect(workerThread, &QThread::started, [](){ Flog::LogManager::SetThreadName("GDax"); });
-    QObject::connect(workerThread, &QThread::finished, webSocket, &QObject::deleteLater);
-    workerThread->start();
+    if (useWorkerThead)
+    {
+        this->moveToThread(workerThread);
+        QObject::connect(workerThread, &QThread::started, [](){ Flog::LogManager::SetThreadName("GDax"); });
+        QObject::connect(workerThread, &QThread::finished, webSocket, &QObject::deleteLater);
+        workerThread->start();
+    } // else setParent for delete
 }
 
 void WebSocketStream::SetAuthentication(const char key[], const char secret[], const char passphrase[])
@@ -130,8 +134,11 @@ void WebSocketStream::ClearAuthentication()
 
 void WebSocketStream::Shutdown()
 {
-    workerThread->quit();
-    workerThread->wait();
+    if (useWorkerThead)
+    {
+        workerThread->quit();
+        workerThread->wait();
+    }
 }
 
 void WebSocketStream::Ping()
