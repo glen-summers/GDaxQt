@@ -6,20 +6,20 @@
 #include "decimalwrap.h"
 
 #include <QObject>
-#include <QNetworkRequest>
-
+#include <QNetworkReply>
 #include <functional>
 
 class Authenticator;
 
 class QString;
 class QNetworkAccessManager;
-class QNetworkReply;
 class QUrlQuery;
 
 class RestProvider : public QObject, public GDL::IRequest
 {
     Q_OBJECT
+
+    enum class RequestMethod {Get, Post, Delete};
 
     QString const baseUrl;
     QNetworkAccessManager * const manager;
@@ -48,11 +48,12 @@ public:
     Async<CancelOrdersResult> CancelOrders();
 
 private:
-    QNetworkRequest CreateAuthenticatedRequest(const QString & httpMethod, const QString & requestPath, const QUrlQuery & query,
-                                               const QByteArray & body) const;
+    void Authenticate(QNetworkRequest & request, const QString & httpMethod, const QByteArray * body) const;
 
-    QNetworkRequest CreateRequest(const QString & requestPath, const QUrlQuery & query) const;
+    QNetworkReply * CreateRequest(bool authenicate, RequestMethod method, const QString & requestPath,
+                                  const QUrlQuery * query = nullptr, const QByteArray * body = nullptr) const;
 
+    static QString RequestMethodToString(RequestMethod method);
 };
 
 #endif // RESTPROVIDER_H

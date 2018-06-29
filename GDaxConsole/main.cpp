@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
 
-    Flog::LogManager::SetLevel(Flog::Level::Info);
+    Flog::LogManager::SetLevel(Flog::Level::Debug);
     Flog::LogManager::SetThreadName("Main");
     GDL::SetSandbox();
 

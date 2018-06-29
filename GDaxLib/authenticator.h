@@ -13,7 +13,7 @@ public:
 
     const QByteArray & ApiKey() const;
     const QByteArray & Passphrase() const;
-    QByteArray ComputeSignature(const QString & httpMethod, QString timestamp, const QString & requestPath, const QByteArray &contentBody={});
+    QByteArray ComputeSignature(const QString & httpMethod, QString timestamp, const QString & requestPath, const QByteArray * contentBody);
 };
 
 #endif // AUTHENTICATOR_H

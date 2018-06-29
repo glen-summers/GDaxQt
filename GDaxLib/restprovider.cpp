@@ -62,22 +62,14 @@ void RestProvider::ClearAuthentication()
 
 Async<ServerTimeResult> RestProvider::FetchTime()
 {
-    QNetworkRequest request = CreateRequest(baseUrl % Time, {});
-    QNetworkReply * reply = manager->get(request);
-    return reply;
+    return CreateRequest(false, RequestMethod::Get, baseUrl % Time);
 }
 
 Async<TradesResult> RestProvider::FetchTrades(unsigned int limit)
 {
     QUrlQuery query;
     query.addQueryItem("limit", QString::number(limit));
-
-    QUrl url(baseUrl % Products % Product % Trades);
-    url.setQuery(query);
-
-    QNetworkRequest request(url);
-    QNetworkReply * reply = manager->get(request);
-    return reply;
+    return CreateRequest(false, RequestMethod::Get, baseUrl % Products % Product % Trades, &query);
 }
 
 // FetchCandles seems flakey on the server, if we request with an endtime > server UTC time then
@@ -86,9 +78,7 @@ Async<CandlesResult> RestProvider::FetchAllCandles(Granularity granularity)
 {
     QUrlQuery query;
     query.addQueryItem("granularity", QString::number(static_cast<unsigned int>(granularity)));
-    QNetworkRequest request = CreateRequest(baseUrl % Products % Product % Candles, query);
-    QNetworkReply * reply = manager->get(request);
-    return reply;
+    return CreateRequest(false, RequestMethod::Get, baseUrl % Products % Product % Candles, &query);
 }
 
 Async<CandlesResult> RestProvider::FetchCandles(const QDateTime & start, const QDateTime & end, Granularity granularity)
@@ -97,9 +87,7 @@ Async<CandlesResult> RestProvider::FetchCandles(const QDateTime & start, const Q
     query.addQueryItem("start", start.toString(Qt::ISODate));
     query.addQueryItem("end", end.toString(Qt::ISODate));
     query.addQueryItem("granularity", QString::number(static_cast<unsigned int>(granularity)));
-    QNetworkRequest request = CreateRequest(baseUrl % Products % Product % Candles, query);
-    QNetworkReply * reply = manager->get(request);
-    return reply;
+    return CreateRequest(false, RequestMethod::Get, baseUrl % Products % Product % Candles, &query);
 }
 
 Async<OrdersResult> RestProvider::FetchOrders(unsigned int limit)
@@ -110,9 +98,7 @@ Async<OrdersResult> RestProvider::FetchOrders(unsigned int limit)
         query.addQueryItem("limit", QString::number(limit));
     }
 
-    QNetworkRequest request = CreateAuthenticatedRequest("GET", Orders, query, {});
-    QNetworkReply * reply = manager->get(request);
-    return reply;
+    return CreateRequest(true, RequestMethod::Get, baseUrl % Orders, &query);
 }
 
 Async<OrderResult> RestProvider::PlaceOrder(const Decimal & size, const Decimal & price, MakerSide side)
@@ -136,52 +122,86 @@ Async<OrderResult> RestProvider::PlaceOrder(const Decimal & size, const Decimal 
         //stop_price
     });
     auto data = doc.toJson();
-
-    QNetworkRequest request = CreateAuthenticatedRequest("POST", Orders, {}, data);
-    request.setRawHeader("Content-Type", "application/json");
-    QNetworkReply * reply = manager->post(request, data);
-    return reply;
+    return CreateRequest(true, RequestMethod::Post, baseUrl % Orders, {}, &data);
 }
 
 Async<CancelOrdersResult> RestProvider::CancelOrders()
 {
     // + optional product_id
-    QNetworkRequest request = CreateAuthenticatedRequest("DELETE", Orders, {}, {});
-    QNetworkReply * reply = manager->deleteResource(request);
-    return reply;
+    return CreateRequest(true, RequestMethod::Delete, baseUrl % Orders);
 }
 
-QNetworkRequest RestProvider::CreateAuthenticatedRequest(const QString & httpMethod, const QString & requestPath, const QUrlQuery & query,
-                                                         const QByteArray & body) const
+void RestProvider::Authenticate(QNetworkRequest & request, const QString & httpMethod, const QByteArray * body) const
 {
     if (!authenticator)
     {
         throw std::logic_error("Authentication has not been configured");
     }
 
-    QUrl url(baseUrl % requestPath);
-    url.setQuery(query);
-
     auto timestamp = QString::number(QDateTime::currentSecsSinceEpoch()); // needs to get from server if time drift +-30s!
-    auto pathForSignature = url.toString(QUrl::RemoveScheme | QUrl::RemoveAuthority);
+    auto pathForSignature = request.url().toString(QUrl::RemoveScheme | QUrl::RemoveAuthority);
     QByteArray signature = authenticator->ComputeSignature(httpMethod, timestamp, pathForSignature, body);
-
-    flog.Info("Authenticated Request {0} : {1}", httpMethod, url.toString());
-    QNetworkRequest request(url);
     request.setRawHeader(QByteArray(CbAccessKey), authenticator->ApiKey());
     request.setRawHeader(QByteArray(CbAccessSign), signature);
     request.setRawHeader(QByteArray(CbAccessTimestamp), timestamp.toUtf8());
     request.setRawHeader(QByteArray(CbAccessPassphrase), authenticator->Passphrase());
-    // set agent?
-    return request;
 }
 
-QNetworkRequest RestProvider::CreateRequest(const QString & requestPath, const QUrlQuery & query) const
+QNetworkReply * RestProvider::CreateRequest(bool authenticate, RequestMethod method, const QString & requestPath,
+                                            const QUrlQuery * query, const QByteArray * body) const
 {
+    QString httpMethod = RequestMethodToString(method);
     QUrl url(requestPath);
-    url.setQuery(query);
-    flog.Info("Request {0}", url.toString());
+    if (query)
+    {
+        url.setQuery(*query);
+    }
+
+    flog.Info("{0}Request {1} : {2}", authenticate?"Authenticated":"", httpMethod, url.toString());
+
     QNetworkRequest request(url);
+    if (authenticate)
+    {
+        Authenticate(request, httpMethod, body);
+    }
+
     // set agent?
-    return request;
+    QNetworkReply * reply = nullptr;
+    switch (method)
+    {
+        case RequestMethod::Get:
+            reply = manager->get(request);
+            break;
+
+        case RequestMethod::Post:
+            request.setRawHeader("Content-Type", "application/json");
+            reply = manager->post(request, body ? *body : QByteArray{});
+            break;
+
+        case RequestMethod::Delete:
+            reply = manager->deleteResource(request);
+            break;
+
+        default:;
+    }
+    if (!reply)
+    {
+        throw std::logic_error("invalid method");
+    }
+
+    Utils::Detail::Constructed("reply", reply);
+
+    return reply;
+}
+
+QString RestProvider::RequestMethodToString(RestProvider::RequestMethod method)
+{
+    switch (method)
+    {
+        case RequestMethod::Get: return "GET";
+        case RequestMethod::Post: return "POST";
+        case RequestMethod::Delete: return "DELETE";
+        default:;
+    }
+    throw std::logic_error("invalid method");
 }

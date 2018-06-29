@@ -24,10 +24,20 @@ const QByteArray &Authenticator::Passphrase() const
 }
 
 QByteArray Authenticator::ComputeSignature(const QString & httpMethod, QString timestamp, const QString & requestPath,
-                                           const QByteArray & contentBody)
+                                           const QByteArray * contentBody)
 {
+    int length = timestamp.length() + httpMethod.length() + requestPath.length();
+    if (contentBody)
+    {
+        length += contentBody->length();
+    }
+
     QByteArray what;
-    what.reserve(timestamp.length() + httpMethod.length() + requestPath.length() + contentBody.length());
-    what.append(timestamp).append(httpMethod).append(requestPath).append(contentBody);
+    what.reserve(length);
+    what.append(timestamp).append(httpMethod).append(requestPath);
+    if (contentBody)
+    {
+        what.append(*contentBody);
+    }
     return QMessageAuthenticationCode::hash(what, secretKey, QCryptographicHash::Algorithm::Sha256).toBase64();
 }
