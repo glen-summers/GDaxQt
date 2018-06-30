@@ -25,7 +25,8 @@ SOURCES += \
     result.cpp \
     candle.cpp \
     gdl.cpp \
-    factory.cpp
+    factory.cpp \
+    subscription.cpp
 
 HEADERS += \
     utils.h \
@@ -52,7 +53,8 @@ HEADERS += \
     genericresult.h \
     iterableresult.h \
     asyncresult.h \
-    factory.h
+    factory.h \
+    subscription.h
 
 DISTFILES += \
     misc.pri \

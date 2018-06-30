@@ -2,6 +2,7 @@
 
 #include "tick.h"
 #include "utils.h"
+#include "subscription.h"
 
 #include <QWebSocket>
 #include <QJsonDocument>
@@ -17,20 +18,6 @@ namespace
     constexpr bool useWorkerThead = true;
 
     constexpr int PingTimerMs = 5000;
-
-    // param for product
-    constexpr const char * subscribeMessage = R"(
-{
-"type": "subscribe",
-"product_ids": [
-    "BTC-EUR"
-],
-"channels": [
-    "level2",
-    "heartbeat",
-    "ticker"
-]
-})";
 
     const Flog::Log log = Flog::LogManager::GetLog<WebSocketStream>();
 
@@ -63,6 +50,25 @@ namespace
                 return GDL::ConnectedState::NotConnected;;
         };
     }
+
+    QString ToJson(const Subscription & subscription, bool subscribe)
+    {
+        QJsonObject obj;
+        obj.insert("type", subscribe? "subscribe" : "unsubscribe");
+
+        QJsonArray products, channels;
+        for (auto & p : subscription.ProductIds)
+        {
+            products.push_back(p.c_str());
+        }
+        obj.insert("product_ids", products);
+        for (auto & c : subscription.Channels)
+        {
+            channels.push_back(c.c_str());
+        }
+        obj.insert("channels", channels);
+        return QJsonDocument(obj).toJson();
+    }
 }
 
 WebSocketStream::FunctionMap WebSocketStream::functionMap =
@@ -75,10 +81,11 @@ WebSocketStream::FunctionMap WebSocketStream::functionMap =
     { "error", &WebSocketStream::ProcessError }
 };
 
-WebSocketStream::WebSocketStream(const char * url, GDL::IStreamCallbacks & callback)
+WebSocketStream::WebSocketStream(const char * url, const Subscription & subscription, GDL::IStreamCallbacks & callback)
     : QObject()
     , callback(callback)
     , url(url)
+    , subscription(subscription)
     , webSocket(Utils::QMake<QWebSocket>("webSocket", QString(), QWebSocketProtocol::VersionLatest, this))
     , workerThread(Utils::QMake<QThread>("workerThread", this))
     , pingTimer(Utils::QMake<QTimer>("pingTimer", this))
@@ -132,6 +139,19 @@ void WebSocketStream::ClearAuthentication()
 
 }
 
+// these need to added to a queue and processed sequentially and honouring connected status
+// and\OR to merge into a single held subcription so can resubscribe on connection errors
+
+//void WebSocketStream::Subscribe(const Subscription & subscription)
+//{
+//    webSocket->sendBinaryMessage(ToJson(subscription, true));
+//}
+
+//void WebSocketStream::Unsubscribe(const Subscription & subscription)
+//{
+//    webSocket->sendBinaryMessage(ToJson(subscription, false));
+//}
+
 void WebSocketStream::Shutdown()
 {
     if (useWorkerThead)
@@ -166,9 +186,9 @@ void WebSocketStream::Connected()
     // need qInstallMessageHandler(SyslogMessageHandler);? and handle ourselves?
     // https://stackoverflow.com/questions/28540571/how-to-enable-and-disable-qdebug-messages
     // https://gist.github.com/polovik/10714049
-    log.Info("onConnected, subscribing...");
-    Clear();
-    webSocket->sendTextMessage(subscribeMessage);
+    log.Info("onConnected");
+    Clear(); // avoid state?
+    webSocket->sendTextMessage(ToJson(subscription, true));
 }
 
 void WebSocketStream::TextMessageReceived(QString message)

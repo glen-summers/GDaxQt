@@ -8,8 +8,13 @@ namespace
 {
     const char StreamUrl[] = "wss://ws-feed.pro.coinbase.com";
     const char RequestUrl[] = "https://api.pro.coinbase.com";
-    const char SandboxStreamUrl[] = "wss://ws-feed-public.sandbox.gdax.com"; // pro ver?
-    const char SandboxRequestUrl[] = "https://api-public.sandbox.gdax.com"; // pro ver?
+
+    const char SandboxStreamUrl[] = "wss://ws-feed-public.sandbox.gdax.com";
+    const char SandboxRequestUrl[] = "https://api-public.sandbox.gdax.com";
+
+    // not working yet..
+    //const char SandboxStreamUrl[] = "wss://ws-feed-public.sandbox.pro.coinbase.com";
+    //const char SandboxRequestUrl[] = "https://api-public.sandbox.pro.coinbase.com";
 
     GDL::FactoryPtr factory = std::make_unique<GDL::Factory>(StreamUrl, RequestUrl);
 }

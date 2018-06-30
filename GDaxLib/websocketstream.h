@@ -3,6 +3,7 @@
 
 #include "defs.h"
 #include "gdl.h" //fwd?
+#include "subscription.h"
 
 #include "flogging.h"
 
@@ -25,6 +26,7 @@ class WebSocketStream : public QObject, public GDL::IStream
 
     GDL::IStreamCallbacks & callback;
     QString const url;
+    Subscription const subscription;
     QWebSocket * const webSocket;
     QThread * const workerThread;
     QTimer * const pingTimer;
@@ -32,10 +34,14 @@ class WebSocketStream : public QObject, public GDL::IStream
     TradeId lastTradeId;
 
 public:
-    explicit WebSocketStream(const char * url, GDL::IStreamCallbacks & callback);
+    explicit WebSocketStream(const char * url, const Subscription & subscription, GDL::IStreamCallbacks & callback);
 
     void SetAuthentication(const char key[], const char secret[], const char passphrase[]) override;
-    void ClearAuthentication() override ;
+    void ClearAuthentication() override;
+
+    //void Subscribe(const Subscription & subscription) override;
+    //void Unsubscribe(const Subscription & subscription) override;
+
     void Shutdown() override;
 
 private slots:

@@ -13,6 +13,7 @@
 class QDateTime;
 class OrderBook;
 
+struct Subscription;
 struct Tick;
 struct Candle;
 struct Trade;
@@ -68,6 +69,8 @@ namespace GDL
     // then arrive, a ping thread checks connection and reconnects, connection updates are sent to client
     struct IStream : IAuth
     {
+//        virtual void Subscribe(const Subscription & subscription) = 0;
+//        virtual void Unsubscribe(const Subscription & subscription) = 0;
         virtual void Shutdown() = 0;
         virtual ~IStream() = default;
     };
@@ -147,8 +150,8 @@ namespace GDL
     struct IFactory
     {
         //virtual AuthPtr CreateAuthenticator(/*creds*/) const = 0;
-        virtual StreamPtr CreateStream(IStreamCallbacks&) const = 0; // +optional authPtr?
-        virtual RequestPtr CreateRequest() const = 0; // +optional authPtr?
+        virtual StreamPtr CreateStream(IStreamCallbacks &, const Subscription &) const = 0; // +optional authPtr?
+        virtual RequestPtr CreateRequest(const char * product) const = 0; // +optional authPtr?
         virtual ~IFactory() = default;
     };
 

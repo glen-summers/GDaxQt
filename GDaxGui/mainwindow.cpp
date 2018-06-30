@@ -4,6 +4,7 @@
 #include "depthchart.h"
 #include "candleoverlay.h"
 #include "orderbook.h"
+#include "subscription.h"
 
 #include "utils.h"
 #include "expandbutton.h"
@@ -22,7 +23,8 @@
 
 namespace
 {
-    constexpr int UpdateTimerMs = 5000;
+    static constexpr int UpdateTimerMs = 5000;
+    static constexpr const char Product[] ="BTC-EUR";
 
     void SetupActionGroup(QActionGroup & group, const std::initializer_list<std::pair<QAction &, Granularity>> & actions, QAction & selected)
     {
@@ -44,11 +46,16 @@ MainWindow::MainWindow(QWidget *parent)
     , settings(Utils::QMake<QSettings>("settings", "Crapola", nullptr, this))
     , ui(std::make_unique<Ui::MainWindow>())
     , updateTimer(Utils::QMake<QTimer>("updateTimer", this))
-    , gdlRequest(GDL::GetFactory().CreateRequest())
+    , gdlRequest(GDL::GetFactory().CreateRequest(Product))
     , granularity()
 {
     ui->setupUi(this);
-    gdlStream = GDL::GetFactory().CreateStream(*this);
+
+    gdlStream = GDL::GetFactory().CreateStream(*this,
+    {
+        { Product },
+        { Channel::Level2, Channel::Heartbeat, Channel::Ticker}
+    });
 
     for (const QScreen * s : QApplication::screens())
     {
@@ -325,6 +332,7 @@ td.amount span { color:grey; }
 
 void MainWindow::OnSnapshot(const QString & product, const IterableResult<GDL::OrderBookItem> & bids, const IterableResult<GDL::OrderBookItem> & asks)
 {
+    (void)product;
     Flog::ScopeLog s(log, Flog::Level::Info, "Snapshot");
 
     orderBook.VisitUnderLock([&](IOrderBook & book)
@@ -344,8 +352,10 @@ void MainWindow::OnSnapshot(const QString & product, const IterableResult<GDL::O
     QMetaObject::invokeMethod(this, "Snapshot");
 }
 
-void MainWindow::OnUpdate(const QString &product, const IterableResult<GDL::OrderBookChange> & changes)
+void MainWindow::OnUpdate(const QString & product, const IterableResult<GDL::OrderBookChange> & changes)
 {
+    (void)product;
+
     orderBook.VisitUnderLock([&](IOrderBook & book)
     {
         for (auto change : changes)

@@ -25,9 +25,6 @@ namespace
 {
     const Flog::Log flog = Flog::LogManager::GetLog<RestProvider>();
 
-    // parm
-    constexpr const char Product[] = "BTC-EUR";
-
     constexpr const char Products[] = "/products/";
     constexpr const char Candles[] = "/candles";
     constexpr const char Trades[] = "/trades";
@@ -40,9 +37,10 @@ namespace
     constexpr const char CbAccessPassphrase[] = "CB-ACCESS-PASSPHRASE";
 }
 
-RestProvider::RestProvider(const char * baseUrl, QObject * parent)
+RestProvider::RestProvider(const char * baseUrl, const char * product, QObject * parent)
     : QObject(parent)
     , baseUrl(baseUrl)
+    , product(product)
     , manager(Utils::QMake<QNetworkAccessManager>("networkAccessManager", this))
 {
 }
@@ -69,7 +67,7 @@ Async<TradesResult> RestProvider::FetchTrades(unsigned int limit)
 {
     QUrlQuery query;
     query.addQueryItem("limit", QString::number(limit));
-    return CreateRequest(false, RequestMethod::Get, baseUrl % Products % Product % Trades, &query);
+    return CreateRequest(false, RequestMethod::Get, baseUrl % Products % product % Trades, &query);
 }
 
 // FetchCandles seems flakey on the server, if we request with an endtime > server UTC time then
@@ -78,7 +76,7 @@ Async<CandlesResult> RestProvider::FetchAllCandles(Granularity granularity)
 {
     QUrlQuery query;
     query.addQueryItem("granularity", QString::number(static_cast<unsigned int>(granularity)));
-    return CreateRequest(false, RequestMethod::Get, baseUrl % Products % Product % Candles, &query);
+    return CreateRequest(false, RequestMethod::Get, baseUrl % Products % product % Candles, &query);
 }
 
 Async<CandlesResult> RestProvider::FetchCandles(const QDateTime & start, const QDateTime & end, Granularity granularity)
@@ -87,7 +85,7 @@ Async<CandlesResult> RestProvider::FetchCandles(const QDateTime & start, const Q
     query.addQueryItem("start", start.toString(Qt::ISODate));
     query.addQueryItem("end", end.toString(Qt::ISODate));
     query.addQueryItem("granularity", QString::number(static_cast<unsigned int>(granularity)));
-    return CreateRequest(false, RequestMethod::Get, baseUrl % Products % Product % Candles, &query);
+    return CreateRequest(false, RequestMethod::Get, baseUrl % Products % product % Candles, &query);
 }
 
 Async<OrdersResult> RestProvider::FetchOrders(unsigned int limit)
@@ -113,7 +111,7 @@ Async<OrderResult> RestProvider::PlaceOrder(const Decimal & size, const Decimal 
         {"price", pr},
         {"size", sz},
         {"side", siderian },
-        {"product_id", Product}
+        {"product_id", product}
 
         // +client_oid
         // type: limit*|market

@@ -22,11 +22,12 @@ class RestProvider : public QObject, public GDL::IRequest
     enum class RequestMethod {Get, Post, Delete};
 
     QString const baseUrl;
+    QString const product;
     QNetworkAccessManager * const manager;
     std::unique_ptr<Authenticator> authenticator;
 
 public:
-    RestProvider(const char * baseUrl, QObject * parent = nullptr);
+    RestProvider(const char * baseUrl, const char * product, QObject * parent = nullptr);
     ~RestProvider();
 
     void SetAuthentication(const char key[], const char secret[], const char passphrase[]) override;
