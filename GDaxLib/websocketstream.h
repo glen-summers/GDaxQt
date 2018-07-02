@@ -11,6 +11,8 @@
 #include <unordered_map>
 
 struct Tick;
+class Authenticator;
+
 class QWebSocket;
 class QJsonObject;
 class QTimer;
@@ -30,6 +32,7 @@ class WebSocketStream : public QObject, public GDL::IStream
     QWebSocket * const webSocket;
     QThread * const workerThread;
     QTimer * const pingTimer;
+    std::unique_ptr<Authenticator> authenticator;
 
     TradeId lastTradeId;
 
@@ -51,6 +54,7 @@ private slots:
     void Pong();
 
 private:
+    void Open();
     void Clear();
     void ProcessSubscriptions(const QJsonObject & object);
     void ProcessError(const QJsonObject & object);
@@ -58,6 +62,10 @@ private:
     void ProcessUpdate(const QJsonObject & object);
     void ProcessHeartbeat(const QJsonObject & object);
     void ProcessTicker(const QJsonObject & object);
+
+    void ProcessReceived(const QJsonObject & object);
+    void ProcessOpen(const QJsonObject & object);
+    void ProcessDone(const QJsonObject & object);
 };
 
 #endif // WEBSOCKETSTREAM_H

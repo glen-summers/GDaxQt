@@ -3,9 +3,10 @@
 
 #include "gdl.h"
 
-class ConsoleTest
+class ConsoleTest : GDL::IStreamCallbacks
 {
     GDL::RequestPtr request;
+    GDL::StreamPtr stream;
 
 public:
     ConsoleTest();
@@ -14,6 +15,13 @@ public:
     void Orders() const;
     void CancelOrders() const;
     void Shutdown();
+
+private:
+    void OnSnapshot(const QString & product, const IterableResult<GDL::OrderBookItem> & bids, const IterableResult<GDL::OrderBookItem> & asks) override;
+    void OnUpdate(const QString & product, const IterableResult<GDL::OrderBookChange> & changes) override;
+    void OnHeartbeat(const QDateTime & serverTime) override;
+    void OnTick(const Tick & tick) override;
+    void OnStateChanged(GDL::ConnectedState state) override;
 };
 
 #endif // CONSOLETEST_H

@@ -27,7 +27,7 @@ class RestProvider : public QObject, public GDL::IRequest
     std::unique_ptr<Authenticator> authenticator;
 
 public:
-    RestProvider(const char * baseUrl, const char * product, QObject * parent = nullptr);
+    RestProvider(const char * baseUrl, const char * product);
     ~RestProvider();
 
     void SetAuthentication(const char key[], const char secret[], const char passphrase[]) override;

@@ -17,19 +17,26 @@
 	<!-- QTConfig -->
 	<PropertyGroup>
 		<Qt>C:\Qt</Qt>
-		<Jom>$(Qt)\Tools\QtCreator\bin\jom.exe</Jom>
-		<QtKit>Desktop_Qt_5_10_1_MSVC2017_64bit</QtKit>
+		<QtVer>5.11.1</QtVer>
+		<QtKit>MSVC2017_64</QtKit>
 		<Spec>win32-msvc</Spec>
+
+		<QtVerUnd>$(QtVer.Replace('.', '_'))</QtVerUnd>
+		<Jom>$(Qt)\Tools\QtCreator\bin\jom.exe</Jom>
+		<QMake>$(Qt)\$(QtVer)\$(QtKit)\bin\qmake.exe</QMake>
+		<WinDeployQT>$(Qt)\$(QtVer)\$(QtKit)\bin\windeployqt.exe</WinDeployQT>
+		<QtKit>Desktop_Qt_$(QtVerUnd)_$(QtKit)bit</QtKit>
 
 		<!-- simplify-->
 		<QmlDebug Condition="'$(Config)'=='Debug'"> "CONFIG+=qml_debug"</QmlDebug>
 		<QmlDebug Condition="'$(Config)'=='Release'"/>
 
-		<BuildCmd>qmake.exe $(Root)\$(Project).pro -spec $(Spec) "CONFIG+=$(Config)"$(QmlDebug)</BuildCmd>
+		<BuildCmd>$(QMake) $(Root)\$(Project).pro -spec $(Spec) "CONFIG+=$(Config)"$(QmlDebug)</BuildCmd>
 		<BuildTarget>$(Parent)\build-$(Project)-$(QtKit)-$(Config)</BuildTarget>
+
+		<GuiExecutable>$(BuildTarget)\$(GuiProject)\$(Config)\$(GuiProject).exe</GuiExecutable>
 		<TestExecutable>$(BuildTarget)\$(TestProject)\$(Config)\$(TestProject).exe</TestExecutable>
 	</PropertyGroup>
-	
 
 	<Target Name="Clean">
 		<Exec Command='"$(Jom)" distclean' WorkingDirectory="$(BuildTarget)" Condition="Exists('$(BuildTarget)\Makefile')"/>
@@ -48,6 +55,9 @@
 		<exec command="$(BuildCmd)" WorkingDirectory="$(BuildTarget)"/>
 		<Exec Command='"$(Jom)" qmake_all' WorkingDirectory="$(BuildTarget)"/>
 		<Exec Command='"$(Jom)"' WorkingDirectory="$(BuildTarget)"/>
+		
+		<Exec Command="$(WinDeployQT) $(TestExecutable)" WorkingDirectory="$(BuildTarget)"/>
+		<Exec Command="$(WinDeployQT) $(GuiExecutable)" WorkingDirectory="$(BuildTarget)"/>
 	</Target>
 	
 	<Target Name="Test">
@@ -55,11 +65,11 @@
 	</Target>
   
 	<Target Name="Gui" DependsOnTargets="Compile">
-		<Exec command="$(BuildTarget)\$(GuiProject)\$(Config)\$(GuiProject).exe"/>
+		<Exec command="$(GuiExecutable)"/>
 	</Target>
 	
 	<Target Name="Sandbox" DependsOnTargets="Compile">
-		<Exec command="$(BuildTarget)\$(GuiProject)\$(Config)\$(GuiProject).exe -sandbox"/>
+		<Exec command="$(GuiExecutable) -sandbox"/>
 	</Target>
 
 	<Target Name="Build" DependsOnTargets="Compile;Test"/>

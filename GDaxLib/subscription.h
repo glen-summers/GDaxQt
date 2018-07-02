@@ -7,8 +7,10 @@
 namespace Channel
 {
     extern const char Level2[];
+    extern const char Full[];
     extern const char Heartbeat[];
     extern const char Ticker[];
+    extern const char Matches[];
 };
 
 struct Subscription

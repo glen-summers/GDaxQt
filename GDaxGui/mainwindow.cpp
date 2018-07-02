@@ -111,7 +111,6 @@ void MainWindow::Shutdown()
     settings->setValue(OrdersVisibleSetting, !ui->orderBook->isHidden());
     settings->setValue(DepthVisibleSetting, !ui->depthChart->isHidden());
 
-    gdlStream->Shutdown(); // just reset?
     gdlStream.reset();
 }
 

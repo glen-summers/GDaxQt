@@ -63,3 +63,8 @@ GDL::OrderBookChange GDL::OrderBookChange::FromJson(const QJsonValue &value)
                 Decimal(ar[2].toString().toStdString())
     };
 }
+
+void GDL::ShutDown::operator()(GDL::IStream * stream)
+{
+    stream->Shutdown();
+}

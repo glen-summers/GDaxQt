@@ -2,6 +2,7 @@
 
 #include "tick.h"
 #include "utils.h"
+#include "authenticator.h"
 #include "subscription.h"
 
 #include <QWebSocket>
@@ -12,6 +13,7 @@
 #include <QMetaEnum>
 #include <QNetworkReply>
 #include <QTimer>
+#include <QCoreApplication>
 
 namespace
 {
@@ -78,7 +80,12 @@ WebSocketStream::FunctionMap WebSocketStream::functionMap =
     { "l2update", &WebSocketStream::ProcessUpdate },
     { "heartbeat", &WebSocketStream::ProcessHeartbeat },
     { "ticker", &WebSocketStream::ProcessTicker},
-    { "error", &WebSocketStream::ProcessError }
+    { "error", &WebSocketStream::ProcessError },
+
+//todo...
+//    { "received" , &WebSocketStream::ProcessReceived },
+//    { "open" , &WebSocketStream::ProcessOpen },
+//    { "done" , &WebSocketStream::ProcessDone },
 };
 
 WebSocketStream::WebSocketStream(const char * url, const Subscription & subscription, GDL::IStreamCallbacks & callback)
@@ -114,8 +121,7 @@ WebSocketStream::WebSocketStream(const char * url, const Subscription & subscrip
     qRegisterMetaType<GDL::ConnectedState>("GDL::ConnectedState");
     qRegisterMetaType<Tick>("Tick");
 
-    log.Info("Connecting to {0}", url);
-    webSocket->open(QUrl(url));
+    Open();
 
     if (useWorkerThead)
     {
@@ -131,12 +137,12 @@ void WebSocketStream::SetAuthentication(const char key[], const char secret[], c
     // todo... impl and use in subscribe, need reconnect? ie this is a logon action
     // just ensure no subscriptions exist, or does a subrciption object hold the authenticator
     // so that multiple 'users'\'api keys' could use the api independently
-    //authenticator = std::make_unique<Authenticator>(key, QByteArray::fromBase64(secret), passphrase);
+    authenticator = std::make_unique<Authenticator>(key, QByteArray::fromBase64(secret), passphrase);
 }
 
 void WebSocketStream::ClearAuthentication()
 {
-
+    authenticator.reset();
 }
 
 // these need to added to a queue and processed sequentially and honouring connected status
@@ -158,6 +164,24 @@ void WebSocketStream::Shutdown()
     {
         workerThread->quit();
         workerThread->wait();
+
+        //todo: fix leaks when using thread:
+
+        //delete this;
+        /* causes
+        QObject::killTimer: Timers cannot be stopped from another thread
+        QObject::~QObject: Timers cannot be stopped from another thread
+
+        deleteLater too late on exit
+        custom thread start\owns timer?
+        */
+
+        /* webSocketStream owns websocket, workerThread and pingTimer
+02 Jul 2018, 14:09:46.309 : [ Main  ] : INFO     : Utils        : 0000029105352150:webSocket
+02 Jul 2018, 14:09:46.309 : [ Main  ] : INFO     : Utils        : 0000029105350640:webSocketStream
+02 Jul 2018, 14:09:46.309 : [ Main  ] : INFO     : Utils        : 00000291054B6820:workerThread
+02 Jul 2018, 14:09:46.309 : [ Main  ] : INFO     : Utils        : 00000291054B1E40:pingTimer
+*/
     }
 }
 
@@ -166,8 +190,7 @@ void WebSocketStream::Ping()
     switch (webSocket->state())
     {
         case QAbstractSocket::SocketState::UnconnectedState:
-            log.Info("Reconnecting...");
-            webSocket->open(QUrl(url));
+            Open();
             break;
 
         case QAbstractSocket::SocketState::ConnectedState:
@@ -188,6 +211,7 @@ void WebSocketStream::Connected()
     // https://gist.github.com/polovik/10714049
     log.Info("onConnected");
     Clear(); // avoid state?
+
     webSocket->sendTextMessage(ToJson(subscription, true));
 }
 
@@ -207,7 +231,7 @@ void WebSocketStream::TextMessageReceived(QString message)
         }
         else
         {
-            log.Warning("Unprocessed message: {0}", type);
+            log.Warning("Unprocessed message: {0} : {1}", type, message);
         }
     }
     catch (const std::exception & e)
@@ -219,6 +243,31 @@ void WebSocketStream::TextMessageReceived(QString message)
 void WebSocketStream::Pong()
 {
     log.Spam("Pong");
+}
+
+void WebSocketStream::Open()
+{
+    log.Info("Connecting to {0}", url);
+
+    // todo: consolidate
+    constexpr const char CbAccessKey[]= "CB-ACCESS-KEY";
+    constexpr const char CbAccessSign[] = "CB-ACCESS-SIGN";
+    constexpr const char CbAccessTimestamp[] = "CB-ACCESS-TIMESTAMP";
+    constexpr const char CbAccessPassphrase[] = "CB-ACCESS-PASSPHRASE";
+
+    QNetworkRequest request(url);
+    if (authenticator)
+    {
+        // if authenticated sign as GET /users/self/verify
+        auto timestamp = QString::number(QDateTime::currentSecsSinceEpoch()); // needs to get from server if time drift +-30s!
+        auto pathForSignature = "/users/self/verify";
+        QByteArray signature = authenticator->ComputeSignature("GET", timestamp, pathForSignature, nullptr);
+        request.setRawHeader(QByteArray(CbAccessKey), authenticator->ApiKey());
+        request.setRawHeader(QByteArray(CbAccessSign), signature);
+        request.setRawHeader(QByteArray(CbAccessTimestamp), timestamp.toUtf8());
+        request.setRawHeader(QByteArray(CbAccessPassphrase), authenticator->Passphrase());
+    }
+    webSocket->open(request);
 }
 
 void WebSocketStream::Clear()
@@ -279,4 +328,54 @@ void WebSocketStream::ProcessTicker(const QJsonObject & object)
     }
 
     callback.OnTick(tick);
+}
+
+void WebSocketStream::ProcessReceived(const QJsonObject &object)
+{
+    /*
+{
+    "type":"received",
+    "order_id":"f752b833-f468-46eb-b5e8-e67b137c49b6",
+    "order_type":"limit",
+    "size":"0.01000000",
+    "price":"0.10000000",
+    "side":"buy",
+    "product_id":"BTC-EUR",
+    "sequence":6825716,
+    "time":"2018-07-01T10:26:53.533000Z"
+}
+*/
+}
+
+void WebSocketStream::ProcessOpen(const QJsonObject &object)
+{
+/*
+{
+    "type":"open",
+    "side":"buy",
+    "price":"0.10000000",
+    "order_id":"f752b833-f468-46eb-b5e8-e67b137c49b6",
+    "remaining_size":"0.01000000",
+    "product_id":"BTC-EUR",
+    "sequence":6825717,
+    "time":"2018-07-01T10:26:53.533000Z"
+}
+*/
+}
+
+void WebSocketStream::ProcessDone(const QJsonObject &object)
+{
+/*
+{
+    "type":"done",
+    "side":"buy",
+    "order_id":"f752b833-f468-46eb-b5e8-e67b137c49b6",
+    "reason":"canceled",
+    "product_id":"BTC-EUR",
+    "price":"0.10000000",
+    "remaining_size":"0.01000000",
+    "sequence":6825718,
+    "time":"2018-07-01T10:27:03.293000Z"
+}
+*/
 }

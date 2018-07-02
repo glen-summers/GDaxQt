@@ -18,6 +18,7 @@
 #include <QStringBuilder>
 #include <QUrlQuery>
 #include <QMessageAuthenticationCode>
+#include <QUuid>
 
 #include <cassert>
 
@@ -37,9 +38,8 @@ namespace
     constexpr const char CbAccessPassphrase[] = "CB-ACCESS-PASSPHRASE";
 }
 
-RestProvider::RestProvider(const char * baseUrl, const char * product, QObject * parent)
-    : QObject(parent)
-    , baseUrl(baseUrl)
+RestProvider::RestProvider(const char * baseUrl, const char * product)
+    : baseUrl(baseUrl)
     , product(product)
     , manager(Utils::QMake<QNetworkAccessManager>("networkAccessManager", this))
 {
@@ -104,16 +104,16 @@ Async<OrderResult> RestProvider::PlaceOrder(const Decimal & size, const Decimal 
     QString siderian = MakerSideToString(side);
     QString sz = DecNs::toString(size).c_str();
     QString pr = DecNs::toString(price).c_str();
+    QString clientId = QUuid::createUuid().toString(QUuid::StringFormat::WithoutBraces);
 
     QJsonDocument doc(QJsonObject
     {
-        // class
+        // todo: class
         {"price", pr},
         {"size", sz},
         {"side", siderian },
-        {"product_id", product}
-
-        // +client_oid
+        {"product_id", product},
+        {"client_oid", clientId}
         // type: limit*|market
         // stp
         //stop: loss|entry, requires stop_price
@@ -186,8 +186,6 @@ QNetworkReply * RestProvider::CreateRequest(bool authenticate, RequestMethod met
     {
         throw std::logic_error("invalid method");
     }
-
-    Utils::Detail::Constructed("reply", reply);
 
     return reply;
 }

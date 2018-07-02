@@ -1,6 +1,7 @@
 #include "consoletest.h"
 
 #include "order.h"
+#include "subscription.h"
 #include "qfmt.h"
 
 #include "consoleutils.h"
@@ -10,15 +11,17 @@
 namespace
 {
     // sandbox test key settings
-    constexpr const char apiKey[] = "86feb99f0b2244a1b756c9aca9c8eb0c";
-    constexpr const char secret[] = "T9e1Aw7BFB0PJPKqd8VtMDH6agezkEBESWYrJHEoReS2KTgV7zIhDSSnnl5Bc5AqlswSz1rKam080937FTIQWA==";
-    constexpr const char passphrase[] = "eoxq18akv3u";
-    constexpr const char product[] ="BTC-EUR";
+    constexpr const char ApiKey[] = "86feb99f0b2244a1b756c9aca9c8eb0c";
+    constexpr const char Secret[] = "T9e1Aw7BFB0PJPKqd8VtMDH6agezkEBESWYrJHEoReS2KTgV7zIhDSSnnl5Bc5AqlswSz1rKam080937FTIQWA==";
+    constexpr const char Passphrase[] = "eoxq18akv3u";
+    constexpr const char Product[] ="BTC-EUR";
 }
 
-ConsoleTest::ConsoleTest() : request(GDL::GetFactory().CreateRequest(product))
+ConsoleTest::ConsoleTest()
+    : request(GDL::GetFactory().CreateRequest(Product))
+    , stream(GDL::GetFactory().CreateStream(*this, {{Product}, {Channel::Full}}))
 {
-    request->SetAuthentication(apiKey, secret, passphrase);
+    request->SetAuthentication(ApiKey, Secret, Passphrase);
 
     request->FetchTime().Then([](const ServerTimeResult & result)
     {
@@ -85,4 +88,29 @@ void ConsoleTest::CancelOrders() const
 void ConsoleTest::Shutdown()
 {
     request.reset();
+}
+
+void ConsoleTest::OnSnapshot(const QString & product, const IterableResult<GDL::OrderBookItem> &bids, const IterableResult<GDL::OrderBookItem> &asks)
+{
+
+}
+
+void ConsoleTest::OnUpdate(const QString &product, const IterableResult<GDL::OrderBookChange> &changes)
+{
+
+}
+
+void ConsoleTest::OnHeartbeat(const QDateTime &serverTime)
+{
+
+}
+
+void ConsoleTest::OnTick(const Tick &tick)
+{
+
+}
+
+void ConsoleTest::OnStateChanged(GDL::ConnectedState state)
+{
+
 }

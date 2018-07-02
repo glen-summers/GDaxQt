@@ -44,8 +44,13 @@ namespace GDL
     struct IStream;
     struct IRequest;
     struct IFactory;
+    struct ShutDown
+    {
+        void operator()(IStream*);
+    };
 
-    typedef std::unique_ptr<IStream> StreamPtr;
+    //typedef std::unique_ptr<IStream> StreamPtr;
+    typedef std::unique_ptr<IStream, ShutDown> StreamPtr;
     typedef std::unique_ptr<IRequest> RequestPtr;
     typedef std::unique_ptr<IFactory> FactoryPtr;
 
@@ -106,6 +111,7 @@ namespace GDL
 
     // lambdas good for connectinng async request\reponse
     // but interface better for streamed reponse
+    // but itf may be too obtrusive if add too many types, how about a single OnMessage(type, opaque data) + swicth Get<T>(), or reqister individual callbacks?
     struct IStreamCallbacks
     {
         virtual void OnSnapshot(const QString & product, const IterableResult<OrderBookItem> & bids, const IterableResult<OrderBookItem> & asks) = 0;
