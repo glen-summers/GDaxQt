@@ -33,6 +33,7 @@ int main(int argc, char *argv[])
 //    QDateTime end = QDateTime::currentDateTimeUtc().addSecs(-60);// avoid future value, causes full dl
 //    restProvider.FetchCandles(start, end, Granularity::Hours);
 
+    {//scope
     ConsoleTest test;
 
 //    auto now = QDateTime::currentDateTimeUtc();
@@ -63,11 +64,12 @@ int main(int argc, char *argv[])
     test.CancelOrders();
 
     ConsoleKeyListener::WaitFor(5);
+    } // scope
+
 
     auto ret = con.Exec();
 
-    test.Shutdown();
-    // Shutdown causes: QIODevice::write (QTcpSocket): device not open
+    // Shutdown caused: QIODevice::write (QTcpSocket): device not open
     // and WebSocketStream : SocketError: unknown(-1)
     // not seen in gui shutdown
 

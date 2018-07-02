@@ -110,8 +110,6 @@ void MainWindow::Shutdown()
     settings->setValue(TradesVisibleSetting, !ui->trades->isHidden());
     settings->setValue(OrdersVisibleSetting, !ui->orderBook->isHidden());
     settings->setValue(DepthVisibleSetting, !ui->depthChart->isHidden());
-
-    gdlStream.reset();
 }
 
 void MainWindow::TimerUpdate()

@@ -14,7 +14,6 @@ public:
     void PlaceOrder(const Decimal & size, const Decimal & price, MakerSide side) const;
     void Orders() const;
     void CancelOrders() const;
-    void Shutdown();
 
 private:
     void OnSnapshot(const QString & product, const IterableResult<GDL::OrderBookItem> & bids, const IterableResult<GDL::OrderBookItem> & asks) override;

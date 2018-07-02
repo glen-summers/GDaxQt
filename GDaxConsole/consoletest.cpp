@@ -22,6 +22,7 @@ ConsoleTest::ConsoleTest()
     , stream(GDL::GetFactory().CreateStream(*this, {{Product}, {Channel::Full}}))
 {
     request->SetAuthentication(ApiKey, Secret, Passphrase);
+    stream->SetAuthentication(ApiKey, Secret, Passphrase);
 
     request->FetchTime().Then([](const ServerTimeResult & result)
     {
@@ -83,11 +84,6 @@ void ConsoleTest::CancelOrders() const
             std::cout << "Cancelled: " << SGR::Yellow << orderId << SGR::Rst << std::endl;
         }
     });
-}
-
-void ConsoleTest::Shutdown()
-{
-    request.reset();
 }
 
 void ConsoleTest::OnSnapshot(const QString & product, const IterableResult<GDL::OrderBookItem> &bids, const IterableResult<GDL::OrderBookItem> &asks)

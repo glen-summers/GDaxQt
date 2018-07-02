@@ -89,12 +89,11 @@ WebSocketStream::FunctionMap WebSocketStream::functionMap =
 };
 
 WebSocketStream::WebSocketStream(const char * url, const Subscription & subscription, GDL::IStreamCallbacks & callback)
-    : QObject()
-    , callback(callback)
+    : callback(callback)
     , url(url)
     , subscription(subscription)
     , webSocket(Utils::QMake<QWebSocket>("webSocket", QString(), QWebSocketProtocol::VersionLatest, this))
-    , workerThread(Utils::QMake<QThread>("workerThread", this))
+    , workerThread(Utils::QMake<QThread>("workerThread"))
     , pingTimer(Utils::QMake<QTimer>("pingTimer", this))
     , lastTradeId()
 {
@@ -103,19 +102,17 @@ WebSocketStream::WebSocketStream(const char * url, const Subscription & subscrip
 
     connect(webSocket, &QWebSocket::connected, this, &WebSocketStream::Connected);
     connect(webSocket, &QWebSocket::textMessageReceived, this, &WebSocketStream::TextMessageReceived);
-
     connect(webSocket, &QWebSocket::stateChanged, [&](QAbstractSocket::SocketState socketState)
     {
         log.Info("WebSocket state: {0}", QMetaEnum::fromType<QAbstractSocket::SocketState>().valueToKey(socketState));
         callback.OnStateChanged(ToState(socketState));
     });
-
+    // need to marshall errors register meta
     connect(webSocket, QOverload<QAbstractSocket::SocketError>::of(&QWebSocket::error), Error);
     connect(webSocket, QOverload<const QList<QSslError> &>::of(&QWebSocket::sslErrors), SslErrors);
 
     connect(webSocket, &QWebSocket::pong, this, &WebSocketStream::Pong);
     connect(pingTimer, &QTimer::timeout, this, &WebSocketStream::Ping);
-    pingTimer->start(PingTimerMs);
 
     qRegisterMetaType<QAbstractSocket::SocketState>("QAbstractSocket::SocketState>");
     qRegisterMetaType<GDL::ConnectedState>("GDL::ConnectedState");
@@ -126,10 +123,18 @@ WebSocketStream::WebSocketStream(const char * url, const Subscription & subscrip
     if (useWorkerThead)
     {
         this->moveToThread(workerThread);
-        QObject::connect(workerThread, &QThread::started, [](){ Flog::LogManager::SetThreadName("GDax"); });
-        QObject::connect(workerThread, &QThread::finished, webSocket, &QObject::deleteLater);
+        QObject::connect(workerThread, &QThread::started, [this]()
+        {
+            Flog::LogManager::SetThreadName("GDax");
+            pingTimer->start(PingTimerMs);
+        });
+        QObject::connect(workerThread, &QThread::finished, [this]()
+        {
+            this->deleteLater();
+            workerThread->deleteLater(); // still gets logged as leak
+        });
         workerThread->start();
-    } // else setParent for delete
+    } // else setParents for delete
 }
 
 void WebSocketStream::SetAuthentication(const char key[], const char secret[], const char passphrase[])
@@ -164,24 +169,6 @@ void WebSocketStream::Shutdown()
     {
         workerThread->quit();
         workerThread->wait();
-
-        //todo: fix leaks when using thread:
-
-        //delete this;
-        /* causes
-        QObject::killTimer: Timers cannot be stopped from another thread
-        QObject::~QObject: Timers cannot be stopped from another thread
-
-        deleteLater too late on exit
-        custom thread start\owns timer?
-        */
-
-        /* webSocketStream owns websocket, workerThread and pingTimer
-02 Jul 2018, 14:09:46.309 : [ Main  ] : INFO     : Utils        : 0000029105352150:webSocket
-02 Jul 2018, 14:09:46.309 : [ Main  ] : INFO     : Utils        : 0000029105350640:webSocketStream
-02 Jul 2018, 14:09:46.309 : [ Main  ] : INFO     : Utils        : 00000291054B6820:workerThread
-02 Jul 2018, 14:09:46.309 : [ Main  ] : INFO     : Utils        : 00000291054B1E40:pingTimer
-*/
     }
 }
 

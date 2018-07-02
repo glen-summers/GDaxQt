@@ -5,6 +5,7 @@
 #include <QString>
 #include <QBitArray>
 #include <QMutex>
+#include <QCoreApplication>
 
 #include <qglobal.h>
 
@@ -69,6 +70,9 @@ void Utils::Detail::Constructed(const char * name, QObject * object)
 
 void Utils::DumpObjects()
 {
+    // try catch latent deleteLaters
+    QCoreApplication::processEvents(QEventLoop::AllEvents, 0);
+
     QMutexLocker lock(&mutex);
     if (objectMap.empty())
     {

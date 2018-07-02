@@ -29,9 +29,9 @@ class WebSocketStream : public QObject, public GDL::IStream
     GDL::IStreamCallbacks & callback;
     QString const url;
     Subscription const subscription;
-    QWebSocket * const webSocket;
+    QWebSocket * webSocket;
     QThread * const workerThread;
-    QTimer * const pingTimer;
+    QTimer * pingTimer;
     std::unique_ptr<Authenticator> authenticator;
 
     TradeId lastTradeId;
