@@ -38,25 +38,16 @@ namespace
     constexpr const char CbAccessPassphrase[] = "CB-ACCESS-PASSPHRASE";
 }
 
-RestProvider::RestProvider(const char * baseUrl, const char * product)
+RestProvider::RestProvider(const char * baseUrl, const char * product, GDL::Auth * auth)
     : baseUrl(baseUrl)
     , product(product)
+    , authenticator(Authenticator::Create(auth))
     , manager(Utils::QMake<QNetworkAccessManager>("networkAccessManager", this))
 {
 }
 
 // prevents ~UniquePtr compile error with incomplete type
 RestProvider::~RestProvider() = default;
-
-void RestProvider::SetAuthentication(const char key[], const char secret[], const char passphrase[])
-{
-    authenticator = std::make_unique<Authenticator>(key, QByteArray::fromBase64(secret), passphrase);
-}
-
-void RestProvider::ClearAuthentication()
-{
-    authenticator.reset();
-}
 
 Async<ServerTimeResult> RestProvider::FetchTime()
 {

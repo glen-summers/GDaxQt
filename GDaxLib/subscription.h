@@ -11,6 +11,7 @@ namespace Channel
     extern const char Heartbeat[];
     extern const char Ticker[];
     extern const char Matches[];
+    extern const char User[];
 };
 
 struct Subscription

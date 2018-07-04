@@ -1,10 +1,17 @@
 #include "authenticator.h"
+#include "gdl.h"
 
 #include <QDebug>
 
 #include <QString>
 #include <QStringBuilder>
 #include <QMessageAuthenticationCode>
+
+std::unique_ptr<Authenticator> Authenticator::Create(GDL::Auth * auth)
+{
+    return auth ? std::make_unique<Authenticator>(auth->key, QByteArray::fromBase64(auth->secret), auth->passphrase)
+                : nullptr;
+}
 
 Authenticator::Authenticator(QByteArray apiKey, QByteArray secretKey, QByteArray passphrase)
  : apiKey(std::move(apiKey))

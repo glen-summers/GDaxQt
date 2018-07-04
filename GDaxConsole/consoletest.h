@@ -9,7 +9,7 @@ class ConsoleTest : GDL::IStreamCallbacks
     GDL::StreamPtr stream;
 
 public:
-    ConsoleTest();
+    ConsoleTest(GDL::Auth * auth);
 
     void PlaceOrder(const Decimal & size, const Decimal & price, MakerSide side) const;
     void Orders() const;

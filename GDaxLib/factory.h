@@ -13,8 +13,8 @@ namespace GDL
         Factory(const std::string & streamUrl, const std::string & requestUrl);
 
     private:
-        GDL::StreamPtr CreateStream(GDL::IStreamCallbacks & callbacks, const Subscription & subscription) const override;
-        GDL::RequestPtr CreateRequest(const char * product) const override;
+        GDL::StreamPtr CreateStream(GDL::IStreamCallbacks & callbacks, const Subscription & subscription, Auth * auth) const override;
+        GDL::RequestPtr CreateRequest(const char * product, Auth * auth) const override;
     };
 }
 

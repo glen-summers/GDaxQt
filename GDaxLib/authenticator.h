@@ -4,11 +4,18 @@
 #include <QString>
 #include <QByteArray>
 
+namespace GDL
+{
+    struct Auth;
+}
+
 class Authenticator
 {
     QByteArray apiKey, secretKey, passphrase;
 
 public:
+    static std::unique_ptr<Authenticator> Create(GDL::Auth * auth);
+
     Authenticator(QByteArray apiKey, QByteArray secretKey, QByteArray passphrase);
 
     const QByteArray & ApiKey() const;

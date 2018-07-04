@@ -5,3 +5,4 @@ const char Channel::Full[] = "full";
 const char Channel::Heartbeat[] = "heartbeat";
 const char Channel::Ticker[] = "ticker";
 const char Channel::Matches[] = "matches";
+const char Channel::User[] = "user";

@@ -29,18 +29,15 @@ class WebSocketStream : public QObject, public GDL::IStream
     GDL::IStreamCallbacks & callback;
     QString const url;
     Subscription const subscription;
-    QWebSocket * webSocket;
+    std::unique_ptr<Authenticator> const authenticator;
+    QWebSocket * const webSocket;
     QThread * const workerThread;
     QTimer * pingTimer;
-    std::unique_ptr<Authenticator> authenticator;
 
     TradeId lastTradeId;
 
 public:
-    explicit WebSocketStream(const char * url, const Subscription & subscription, GDL::IStreamCallbacks & callback);
-
-    void SetAuthentication(const char key[], const char secret[], const char passphrase[]) override;
-    void ClearAuthentication() override;
+    explicit WebSocketStream(const char * url, const Subscription & subscription, GDL::IStreamCallbacks & callback, GDL::Auth * auth);
 
     //void Subscribe(const Subscription & subscription) override;
     //void Unsubscribe(const Subscription & subscription) override;

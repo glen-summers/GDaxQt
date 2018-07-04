@@ -66,11 +66,16 @@ public:
 
     static void WaitFor(int seconds)
     {
-        QTime endTime = QTime::currentTime().addSecs(seconds);
-        while (QTime::currentTime() < endTime)
+        QTimer timer;
+        QEventLoop q;
+        QObject::connect(&timer, &QTimer::timeout, [&]()
         {
-            QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
-        }
+            q.quit();
+        });
+
+        timer.setSingleShot(true);
+        timer.start(seconds*1000);
+        q.exec();
     }
 
     int Exec() const

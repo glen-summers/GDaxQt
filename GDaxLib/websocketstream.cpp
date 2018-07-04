@@ -82,16 +82,17 @@ WebSocketStream::FunctionMap WebSocketStream::functionMap =
     { "ticker", &WebSocketStream::ProcessTicker},
     { "error", &WebSocketStream::ProcessError },
 
-//todo...
+// last_match
 //    { "received" , &WebSocketStream::ProcessReceived },
 //    { "open" , &WebSocketStream::ProcessOpen },
 //    { "done" , &WebSocketStream::ProcessDone },
 };
 
-WebSocketStream::WebSocketStream(const char * url, const Subscription & subscription, GDL::IStreamCallbacks & callback)
+WebSocketStream::WebSocketStream(const char * url, const Subscription & subscription, GDL::IStreamCallbacks & callback, GDL::Auth * auth)
     : callback(callback)
     , url(url)
     , subscription(subscription)
+    , authenticator(Authenticator::Create(auth))
     , webSocket(Utils::QMake<QWebSocket>("webSocket", QString(), QWebSocketProtocol::VersionLatest, this))
     , workerThread(Utils::QMake<QThread>("workerThread"))
     , pingTimer(Utils::QMake<QTimer>("pingTimer", this))
@@ -135,19 +136,6 @@ WebSocketStream::WebSocketStream(const char * url, const Subscription & subscrip
         });
         workerThread->start();
     } // else setParents for delete
-}
-
-void WebSocketStream::SetAuthentication(const char key[], const char secret[], const char passphrase[])
-{
-    // todo... impl and use in subscribe, need reconnect? ie this is a logon action
-    // just ensure no subscriptions exist, or does a subrciption object hold the authenticator
-    // so that multiple 'users'\'api keys' could use the api independently
-    authenticator = std::make_unique<Authenticator>(key, QByteArray::fromBase64(secret), passphrase);
-}
-
-void WebSocketStream::ClearAuthentication()
-{
-    authenticator.reset();
 }
 
 // these need to added to a queue and processed sequentially and honouring connected status
@@ -245,7 +233,7 @@ void WebSocketStream::Open()
     QNetworkRequest request(url);
     if (authenticator)
     {
-        // if authenticated sign as GET /users/self/verify
+        // as GET /users/self/verify
         auto timestamp = QString::number(QDateTime::currentSecsSinceEpoch()); // needs to get from server if time drift +-30s!
         auto pathForSignature = "/users/self/verify";
         QByteArray signature = authenticator->ComputeSignature("GET", timestamp, pathForSignature, nullptr);
@@ -253,6 +241,7 @@ void WebSocketStream::Open()
         request.setRawHeader(QByteArray(CbAccessSign), signature);
         request.setRawHeader(QByteArray(CbAccessTimestamp), timestamp.toUtf8());
         request.setRawHeader(QByteArray(CbAccessPassphrase), authenticator->Passphrase());
+        // this only works occasionally, dont always get received\open order messages??
     }
     webSocket->open(request);
 }
@@ -317,11 +306,22 @@ void WebSocketStream::ProcessTicker(const QJsonObject & object)
     callback.OnTick(tick);
 }
 
+//struct OrderUpdate // differnt from rest order
+//{
+//    QString id; // order_id
+//    OrderType type; // order_type
+//    Decimal size;
+//    Decimal price;
+//    MakerSide side;
+//    QString productId;
+//    SequenceNumber sequence;
+//    QDateTime time;
+//};
+
 void WebSocketStream::ProcessReceived(const QJsonObject &object)
 {
-    /*
+    /* + client_oid
 {
-    "type":"received",
     "order_id":"f752b833-f468-46eb-b5e8-e67b137c49b6",
     "order_type":"limit",
     "size":"0.01000000",
@@ -336,9 +336,8 @@ void WebSocketStream::ProcessReceived(const QJsonObject &object)
 
 void WebSocketStream::ProcessOpen(const QJsonObject &object)
 {
-/*
+/*same as update, missing order_type
 {
-    "type":"open",
     "side":"buy",
     "price":"0.10000000",
     "order_id":"f752b833-f468-46eb-b5e8-e67b137c49b6",
@@ -352,9 +351,8 @@ void WebSocketStream::ProcessOpen(const QJsonObject &object)
 
 void WebSocketStream::ProcessDone(const QJsonObject &object)
 {
-/*
+/* same as received, + reason
 {
-    "type":"done",
     "side":"buy",
     "order_id":"f752b833-f468-46eb-b5e8-e67b137c49b6",
     "reason":"canceled",

@@ -6,24 +6,21 @@
 
 #include "consoleutils.h"
 
+#include "flogging.h"
+
 #include <iostream>
 
 namespace
 {
-    // sandbox test key settings
-    constexpr const char ApiKey[] = "86feb99f0b2244a1b756c9aca9c8eb0c";
-    constexpr const char Secret[] = "T9e1Aw7BFB0PJPKqd8VtMDH6agezkEBESWYrJHEoReS2KTgV7zIhDSSnnl5Bc5AqlswSz1rKam080937FTIQWA==";
-    constexpr const char Passphrase[] = "eoxq18akv3u";
     constexpr const char Product[] ="BTC-EUR";
+    Flog::Log flog = Flog::LogManager::GetLog<ConsoleTest>();
 }
 
-ConsoleTest::ConsoleTest()
-    : request(GDL::GetFactory().CreateRequest(Product))
-    , stream(GDL::GetFactory().CreateStream(*this, {{Product}, {Channel::Full}}))
+// "user" channel not getting stream updatres, full does?
+ConsoleTest::ConsoleTest(GDL::Auth * auth)
+    : request(GDL::GetFactory().CreateRequest(Product, auth))
+    , stream(GDL::GetFactory().CreateStream(*this, {{Product}, {Channel::Full, Channel::Matches}}, auth))
 {
-    request->SetAuthentication(ApiKey, Secret, Passphrase);
-    stream->SetAuthentication(ApiKey, Secret, Passphrase);
-
     request->FetchTime().Then([](const ServerTimeResult & result)
     {
         if(result.HasError())
@@ -33,11 +30,14 @@ ConsoleTest::ConsoleTest()
         }
         QDateTime dateTime = result();
         auto now = QDateTime::currentDateTimeUtc();
+        auto delta = now.msecsTo(dateTime);
         std::cout << SGR::Cyan
                   << "HB, ServerTime: " << dateTime
-                  << ", DeltaMs(-latency): " << now.msecsTo(dateTime)
+                  << ", DeltaMs(-latency): " << delta
                   << SGR::Rst
                   << std::endl;
+
+        flog.Info("DeltaMs(-latency) = {0}", delta);
     });
 }
 

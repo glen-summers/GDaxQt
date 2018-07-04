@@ -23,16 +23,12 @@ class RestProvider : public QObject, public GDL::IRequest
 
     QString const baseUrl;
     QString const product;
+    std::unique_ptr<Authenticator> const authenticator;
     QNetworkAccessManager * const manager;
-    std::unique_ptr<Authenticator> authenticator;
 
 public:
-    RestProvider(const char * baseUrl, const char * product);
+    RestProvider(const char * baseUrl, const char * product, GDL::Auth * auth);
     ~RestProvider();
-
-    void SetAuthentication(const char key[], const char secret[], const char passphrase[]) override;
-
-    void ClearAuthentication() override;
 
     Async<ServerTimeResult> FetchTime();
 

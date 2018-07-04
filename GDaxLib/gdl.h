@@ -49,7 +49,6 @@ namespace GDL
         void operator()(IStream*);
     };
 
-    //typedef std::unique_ptr<IStream> StreamPtr;
     typedef std::unique_ptr<IStream, ShutDown> StreamPtr;
     typedef std::unique_ptr<IRequest> RequestPtr;
     typedef std::unique_ptr<IFactory> FactoryPtr;
@@ -61,18 +60,14 @@ namespace GDL
         Connected,
     };
 
-    struct IAuth
+    struct Auth
     {
-        // change sig, to IAuthentor? have one instance?
-        virtual void SetAuthentication(const char key[], const char secret[], const char passphrase[]) = 0;
-        virtual void ClearAuthentication() = 0;
-    protected:
-        virtual ~IAuth() = default;
+        QByteArray key, secret, passphrase;
     };
 
     // connection management is handled internally, stream connection is made in constructor, a snapshot and updates
     // then arrive, a ping thread checks connection and reconnects, connection updates are sent to client
-    struct IStream : IAuth
+    struct IStream
     {
 //        virtual void Subscribe(const Subscription & subscription) = 0;
 //        virtual void Unsubscribe(const Subscription & subscription) = 0;
@@ -80,7 +75,7 @@ namespace GDL
         virtual ~IStream() = default;
     };
 
-    struct IRequest : IAuth
+    struct IRequest
     {
         virtual Async<ServerTimeResult> FetchTime() = 0;
         virtual Async<TradesResult> FetchTrades(unsigned int limit) = 0;
@@ -152,12 +147,10 @@ namespace GDL
     // itf.Callback+= this;
     // itf.Subscribe(Async<Result>);
 
-
     struct IFactory
     {
-        //virtual AuthPtr CreateAuthenticator(/*creds*/) const = 0;
-        virtual StreamPtr CreateStream(IStreamCallbacks &, const Subscription &) const = 0; // +optional authPtr?
-        virtual RequestPtr CreateRequest(const char * product) const = 0; // +optional authPtr?
+        virtual StreamPtr CreateStream(IStreamCallbacks &, const Subscription &, Auth * auth = nullptr) const = 0;
+        virtual RequestPtr CreateRequest(const char * product, Auth * auth = nullptr) const = 0;
         virtual ~IFactory() = default;
     };
 

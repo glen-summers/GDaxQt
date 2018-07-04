@@ -15,6 +15,14 @@
 
 using namespace std::chrono_literals;
 
+namespace
+{
+    // sandbox test key settings
+    constexpr const char ApiKey[] = "86feb99f0b2244a1b756c9aca9c8eb0c";
+    constexpr const char Secret[] = "T9e1Aw7BFB0PJPKqd8VtMDH6agezkEBESWYrJHEoReS2KTgV7zIhDSSnnl5Bc5AqlswSz1rKam080937FTIQWA==";
+    constexpr const char Passphrase[] = "eoxq18akv3u";
+}
+
 int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
@@ -34,7 +42,13 @@ int main(int argc, char *argv[])
 //    restProvider.FetchCandles(start, end, Granularity::Hours);
 
     {//scope
-    ConsoleTest test;
+        GDL::Auth auth { ApiKey, Secret, Passphrase };
+        ConsoleTest test(&auth);
+
+        // stream connect is async, need to wait until stream.State == Connected to ensure get updates
+        // need a Connect().Then([](){ do stuff })?
+        // wait for server time result, todo have a WaitForResult version
+        ConsoleKeyListener::WaitFor(5);
 
 //    auto now = QDateTime::currentDateTimeUtc();
 //    provider.FetchTime([&](ServerTimeResult result)
@@ -53,7 +67,10 @@ int main(int argc, char *argv[])
     // better to model like std::future and use as return value
     // but get() syncronous wait may be not be ideal for qt
     // but can implement a Then([](){}); if truely async need to handle case already completed
-    test.PlaceOrder(Decimal("0.01"), Decimal("0.1"), MakerSide::Buy);
+    for(int i=0;i<10;++i)
+    {
+        test.PlaceOrder(Decimal("0.01"), Decimal("0.1"), MakerSide::Buy);
+    }
     // todo have web socket listen for update + add our order id
     ConsoleKeyListener::WaitFor(5);
 
