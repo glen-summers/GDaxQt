@@ -4,6 +4,8 @@
 #include <QString>
 #include <QByteArray>
 
+#include <memory>
+
 namespace GDL
 {
     struct Auth;

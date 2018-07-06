@@ -21,6 +21,11 @@ ConsoleTest::ConsoleTest(GDL::Auth * auth)
     : request(GDL::GetFactory().CreateRequest(Product, auth))
     , stream(GDL::GetFactory().CreateStream(*this, {{Product}, {Channel::Full, Channel::Matches}}, auth))
 {
+    waitForConnect.exec(); // todo: add timeout
+    flog.Info("Connected");
+
+    const auto & _ = Flog::ScopeLog(flog, Flog::Level::Info, "FetchTime");
+    (void)_;
     request->FetchTime().Then([](const ServerTimeResult & result)
     {
         if(result.HasError())
@@ -38,7 +43,8 @@ ConsoleTest::ConsoleTest(GDL::Auth * auth)
                   << std::endl;
 
         flog.Info("DeltaMs(-latency) = {0}", delta);
-    });
+    }).Wait();
+    // also wait for stream connect here
 }
 
 void ConsoleTest::PlaceOrder(const Decimal &size, const Decimal &price, MakerSide side) const
@@ -108,5 +114,8 @@ void ConsoleTest::OnTick(const Tick &tick)
 
 void ConsoleTest::OnStateChanged(GDL::ConnectedState state)
 {
-
+    if (state == GDL::ConnectedState::Connected)
+    {
+        waitForConnect.quit();
+    }
 }

@@ -38,6 +38,7 @@ class WebSocketStream : public QObject, public GDL::IStream
 
 public:
     explicit WebSocketStream(const char * url, const Subscription & subscription, GDL::IStreamCallbacks & callback, GDL::Auth * auth);
+    ~WebSocketStream();
 
     //void Subscribe(const Subscription & subscription) override;
     //void Unsubscribe(const Subscription & subscription) override;

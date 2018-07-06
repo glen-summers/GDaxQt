@@ -67,22 +67,21 @@ int main(int argc, char *argv[])
     // better to model like std::future and use as return value
     // but get() syncronous wait may be not be ideal for qt
     // but can implement a Then([](){}); if truely async need to handle case already completed
-    for(int i=0;i<10;++i)
-    {
-        test.PlaceOrder(Decimal("0.01"), Decimal("0.1"), MakerSide::Buy);
-    }
-    // todo have web socket listen for update + add our order id
-    ConsoleKeyListener::WaitFor(5);
+        for(int i=0;i<10;++i)
+        {
+            test.PlaceOrder(Decimal("0.01"), Decimal("0.1"), MakerSide::Buy);
+        }
+        // todo have web socket listen for update + add our order id
+        ConsoleKeyListener::WaitFor(5);
 
-    test.Orders();
+        test.Orders();
 
-    ConsoleKeyListener::WaitFor(5);
+        ConsoleKeyListener::WaitFor(5);
 
-    test.CancelOrders();
+        test.CancelOrders();
 
-    ConsoleKeyListener::WaitFor(5);
+        ConsoleKeyListener::WaitFor(5);
     } // scope
-
 
     auto ret = con.Exec();
 

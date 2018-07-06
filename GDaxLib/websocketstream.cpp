@@ -138,6 +138,9 @@ WebSocketStream::WebSocketStream(const char * url, const Subscription & subscrip
     } // else setParents for delete
 }
 
+// prevents ~UniquePtr compile error with incomplete type
+WebSocketStream::~WebSocketStream() = default;
+
 // these need to added to a queue and processed sequentially and honouring connected status
 // and\OR to merge into a single held subcription so can resubscribe on connection errors
 

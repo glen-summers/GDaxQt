@@ -3,11 +3,13 @@
 
 #include "gdl.h"
 
+#include <QEvent>
+
 class ConsoleTest : GDL::IStreamCallbacks
 {
     GDL::RequestPtr request;
     GDL::StreamPtr stream;
-
+    QEventLoop waitForConnect;
 public:
     ConsoleTest(GDL::Auth * auth);
 

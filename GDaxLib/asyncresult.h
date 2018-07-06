@@ -3,6 +3,8 @@
 
 #include "genericresult.h"
 
+#include <QEventLoop>
+
 // assumptions: only works with same thread qobjects and state not changin during construction\assignment
 template <typename Result>
 class AsyncResultImpl : public QObject
@@ -17,13 +19,26 @@ public:
 
     template <typename Func> AsyncResultImpl & Then(Func f) { func = f; return *this; }
 
+    void Wait() const
+    {
+        QNetworkReply * reply = static_cast<QNetworkReply *>(parent());
+        QEventLoop q;
+        QObject::connect(reply, &QNetworkReply::finished, [&](){
+            q.quit();
+        });
+        if (!reply->isFinished())
+        {
+            q.exec();
+        }
+    }
+
 private:
     void Finished()
     {
         QNetworkReply * reply = static_cast<QNetworkReply *>(parent());
         if (func)
         {
-            func(Result{reply});
+            func(reply);
         }
         reply->deleteLater();
     }
@@ -40,7 +55,7 @@ public:
     {}
 
     template <typename Func> Async& Then(Func f) { result->Then(f); return *this; }
+    void Wait() const { result->Wait(); }
 };
-
 
 #endif // ASYNCRESULT_H
